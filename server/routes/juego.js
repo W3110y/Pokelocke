@@ -45,31 +45,50 @@ router.post('/crear', async (req, res) => {
 
 // --- RUTA ACTUALIZADA: UNIRSE A UNA SALA EXISTENTE ---
 router.post('/unirse', async (req, res) => {
-    const { nombre, sala } = req.body; // Ojo: frontend envía "sala", no "partyName" aquí
+    const { nombre, sala } = req.body;
+
+    // 1. Validaciones básicas
+    if (!nombre || !sala) {
+        return res.status(400).json({ mensaje: "Faltan datos (nombre o sala)" });
+    }
 
     try {
-        // VERIFICAR QUE LA SALA EXISTA
+        // 2. VERIFICACIÓN CRÍTICA: ¿Existe la sala?
+        // Buscamos en la colección de 'Sala' que creamos en el paso anterior
         const salaEncontrada = await Sala.findOne({ nombre: sala });
+
         if (!salaEncontrada) {
-            return res.status(404).json({ mensaje: "La sala no existe. Pide al host que la cree." });
+            return res.status(404).json({ mensaje: "La sala no existe. Pídele al Host que la cree primero." });
         }
 
-        // Crear o Recuperar Jugador (Upsert)
+        // 3. (Opcional) Verificar si la sala está llena
+        const jugadoresActuales = await Entrenador.countDocuments({ sala: sala });
+        if (jugadoresActuales >= salaEncontrada.maxJugadores) {
+            return res.status(403).json({ mensaje: "La sala está llena." });
+        }
+
+        // 4. Lógica de "Upsert" del Jugador (Crear o Recuperar)
         let entrenador = await Entrenador.findOne({ nombre: nombre, sala: sala });
+        
         if (!entrenador) {
-            entrenador = new Entrenador({ nombre: nombre, sala: sala, pokemons: [] });
+            entrenador = new Entrenador({ 
+                nombre: nombre, 
+                sala: sala, 
+                pokemons: [] 
+            });
             await entrenador.save();
         }
 
-        // Devolver Jugador + Info de Sala (para stats.html)
+        // 5. RESPUESTA EXITOSA
+        // Devolvemos tanto el usuario como la info de la sala para el frontend
         res.status(200).json({ 
             entrenador: entrenador, 
             salaInfo: salaEncontrada 
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: "Error al unirse" });
+        console.error("Error en /unirse:", error);
+        res.status(500).json({ mensaje: "Error interno del servidor al unirse." });
     }
 });
 
