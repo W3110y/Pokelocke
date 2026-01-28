@@ -74,6 +74,67 @@ function erase() {
 type();
 
 /* ========================================================= */
+/* LOGIC: CREATE PARTY FORM (ACTUALIZADO)                    */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const createForm = document.getElementById('form-create-party');
+
+    if (createForm) {
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 1. Capturar los 5 datos usando los IDs nuevos
+            const formData = {
+                hostName: document.getElementById('host-name').value,
+                partyName: document.getElementById('party-name').value,
+                partySize: document.getElementById('party-size').value,
+                rules: document.getElementById('party-rules').value,
+                description: document.getElementById('party-description').value
+            };
+
+            console.log("📤 Creando sala:", formData);
+
+            // IMPORTANTE: Cambiamos la ruta a /crear
+            // Recuerda poner tu URL de Render si ya desplegaste, o localhost si estás probando
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/crear'; 
+
+            try {
+                const btn = createForm.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerText = "Creando...";
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("✅ ¡Sala creada! Reglas guardadas.");
+                    
+                    // Guardamos la info completa (Usuario + Info de Sala)
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
+                    localStorage.setItem('sala_info', JSON.stringify(data.sala)); // Nuevo: Guardamos reglas localmente
+                    
+                    window.location.href = 'stats.html';
+                } else {
+                    alert("❌ Error: " + (data.mensaje || "Error desconocido"));
+                    btn.disabled = false;
+                    btn.innerText = "Create Party";
+                }
+            } catch (error) {
+                console.error(error);
+                alert("❌ Error de conexión");
+                createForm.querySelector('button').disabled = false;
+            }
+        });
+    }
+});
+
+
+/* ========================================================= */
 /* CLIENTE PARA EL JUEGO Nuzlocke                               */
 /* ========================================================= */
 const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego';

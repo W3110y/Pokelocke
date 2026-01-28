@@ -1,32 +1,75 @@
+
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en" data-bs-theme="light">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokéLocke Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PokeLocke</title>
+
+    <!-- ============================================= -->
+    <!-- IMPORTS (Do not touch these)                  -->
+    <!-- ============================================= -->
+    <!-- 1. BOOTSTRAP: Makes styling easy -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 2. ICONS: For the cool symbols -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- 3. AOS: For the scrolling animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- 4. OUR CUSTOM CSS: The file where we write our own rules -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-
-    <div id="login-screen" class="container">
-        <h1>🏆 PokéLocke Tracker</h1>
-        <div class="card">
-            <input type="text" id="input-nombre" placeholder="Tu Nombre de Entrenador" required>
-            <input type="text" id="input-sala" placeholder="Código de Sala (ej: KANTO)" required>
-            <button onclick="unirsePartida()">Entrar a la Sala</button>
-        </div>
-    </div>
-
-    <div id="dashboard-screen" class="hidden">
-        <header>
-            <h2 id="titulo-sala">Sala: ...</h2>
-            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-        </header>
-
-        <div id="grid-jugadores" class="grid-container">
+    <section id="menu" class="py-5 fade-up">
+        <div class="hero-section text-center d-flex align-items-center justify-content-center">
+            <div class="container" data-aos="fade-up">
+                <h1 class="display-4 fw-bold">PokeLocke Battle Menu</h1>
+                <p class="lead mb-4">Choose an option to get started</p>
+                <div class="menu-grid-ds">
+                    <a href="create.html" class="menu-item item-create">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Create Party</span>
+                    </a>
+                    <a href="join.html" class="menu-item item-join">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Join Party</span>
+                    </a>
+                    <a href="stats.html" class="menu-item item-stats">
+                        <i class="bi bi-bar-chart-fill"></i>
+                        <span>Statistics</span>
+                    </a>
+                    <a href="info.html" class="menu-item item-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Information</span>
+                    </a>
+                </div>
             </div>
-    </div>
+        </div>
+    </section>
 
+    <!-- ============================================= -->
+    <!-- FOOTER                                        -->
+    <!-- ============================================= -->
+    <footer class="py-4 text-center text-body-secondary border-top">
+        <div class="container">
+            <p class="mb-0">© 2025 – Built with Bootstrap</p>
+        </div>
+    </footer>
+
+
+    <!-- ============================================= -->
+    <!-- SCRIPTS (Logic & Animation)                   -->
+    <!-- ============================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Initialize the Animation Library -->
+    <script>
+        AOS.init({ once: true, offset: 120 });
+    </script>
+
+    <!-- Load our custom logic -->
     <script src="script.js"></script>
-</body>
+    </body>
 </html>

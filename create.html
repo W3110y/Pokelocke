@@ -60,9 +60,13 @@
     <!-- ============================================= -->
     <!-- Create Party SECTION                                   -->  
     <!-- ============================================= -->
-    <form id="create-party" class="py-5 fade-up">
+    <form id="form-create-party" class="py-5 fade-up">
         <div class="container" data-aos="fade-up">
             <h2 class="mb-4">Create a New Party</h2>
+            <div class="mb-3">
+                <label for="host-name" class="form-label">Host Name</label>
+                <input type="text" class="form-control" id="host-name" placeholder="Enter your name" required>
+            </div>
             <div class="mb-3">
                 <label for="party-name" class="form-label">Party Name</label>
                 <input type="text" class="form-control" id="party-name" placeholder="Enter party name" required>
@@ -78,10 +82,6 @@
             <div class="mb-3">
                 <label for="party-description" class="form-label">Description</label>
                 <textarea class="form-control" id="party-description" rows="3" placeholder="Enter party description"></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="party-password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="party-password" placeholder="Enter password for your party">
             </div>
             <button type="submit" class="btn btn-primary">Create Party</button>
         </div>
