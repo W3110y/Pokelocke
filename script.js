@@ -145,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. Capturar datos
             const formData = {
-                sala: document.getElementById('partyName').value.trim(), // Nombre de la sala
-                nombre: document.getElementById('playerName').value.trim() // Nombre del jugador
+                nombre: document.getElementById('playerName').value.trim(), // Nombre del jugador
+                sala: document.getElementById('partyName').value.trim() // Nombre de la sala
             };
 
             // 2. Validar

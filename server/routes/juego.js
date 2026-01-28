@@ -45,65 +45,41 @@ router.post('/crear', async (req, res) => {
 
 // --- RUTA ACTUALIZADA: UNIRSE A UNA SALA EXISTENTE ---
 router.post('/unirse', async (req, res) => {
-    const { nombre, sala } = req.body;
-
-    // 1. Validaciones básicas
-    if (!nombre || !sala) {
-        return res.status(400).json({ mensaje: "Faltan datos (nombre o sala)" });
-    }
+    const { nombre, sala } = req.body; // Ojo: frontend envía "sala", no "partyName" aquí
 
     try {
-        // 2. VERIFICACIÓN CRÍTICA: ¿Existe la sala?
-        // Buscamos en la colección de 'Sala' que creamos en el paso anterior
+        // VERIFICAR QUE LA SALA EXISTA
         const salaEncontrada = await Sala.findOne({ nombre: sala });
-
         if (!salaEncontrada) {
-            return res.status(404).json({ mensaje: "La sala no existe. Pídele al Host que la cree primero." });
+            return res.status(404).json({ mensaje: "La sala no existe. Pide al host que la cree." });
         }
 
-        // 3. (Opcional) Verificar si la sala está llena
-        const jugadoresActuales = await Entrenador.countDocuments({ sala: sala });
-        if (jugadoresActuales >= salaEncontrada.maxJugadores) {
-            return res.status(403).json({ mensaje: "La sala está llena." });
-        }
-
-        // 4. Lógica de "Upsert" del Jugador (Crear o Recuperar)
+        // Crear o Recuperar Jugador (Upsert)
         let entrenador = await Entrenador.findOne({ nombre: nombre, sala: sala });
-        
         if (!entrenador) {
-            entrenador = new Entrenador({ 
-                nombre: nombre, 
-                sala: sala, 
-                pokemons: [] 
-            });
+            entrenador = new Entrenador({ nombre: nombre, sala: sala, pokemons: [] });
             await entrenador.save();
         }
 
-        // 5. RESPUESTA EXITOSA
-        // Devolvemos tanto el usuario como la info de la sala para el frontend
+        // Devolver Jugador + Info de Sala (para stats.html)
         res.status(200).json({ 
             entrenador: entrenador, 
             salaInfo: salaEncontrada 
         });
 
     } catch (error) {
-        console.error("Error en /unirse:", error);
-        res.status(500).json({ mensaje: "Error interno del servidor al unirse." });
+        console.error(error);
+        res.status(500).json({ mensaje: "Error al unirse" });
     }
 });
 
-// 3. ACTUALIZAR EQUIPO (PUT)
-router.put('/actualizar', async (req, res) => {
-    const { id, pokemons, medallas } = req.body;
+// --- 3. OBTENER JUGADORES DE UNA SALA ---
+router.get('/sala/:codigoSala', async (req, res) => {
     try {
-        const actualizado = await Entrenador.findByIdAndUpdate(
-            id,
-            { pokemons, medallas, ultimaConexion: Date.now() },
-            { new: true } // Devuelve el dato actualizado
-        );
-        res.status(200).json(actualizado);
+        const jugadores = await Entrenador.find({ sala: req.params.codigoSala });
+        res.json(jugadores);
     } catch (error) {
-        res.status(500).json({ error: "No se pudo actualizar el equipo" });
+        res.status(500).json({ error: "Error al cargar la sala" });
     }
 });
 
