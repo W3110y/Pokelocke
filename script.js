@@ -133,6 +133,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+/* ========================================================= */
+/* LOGIC: JOIN PARTY FORM                                    */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const joinForm = document.getElementById('form-join-party');
+
+    if (joinForm) {
+        joinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 1. Capturar datos
+            const formData = {
+                sala: document.getElementById('partyCode').value.trim(), // Nombre de la sala
+                nombre: document.getElementById('playerName').value.trim() // Nombre del jugador
+            };
+
+            // 2. Validar
+            if (!formData.sala || !formData.nombre) {
+                alert("Por favor rellena ambos campos");
+                return;
+            }
+
+            console.log("🔗 Intentando unirse a:", formData);
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/unirse'; // Usa tu URL de Render si ya está subido
+
+            try {
+                const btn = joinForm.querySelector('button');
+                btn.disabled = true;
+                btn.innerText = "Entrando...";
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Guardamos sesión
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
+                    // Redirigir al Dashboard
+                    window.location.href = 'stats.html';
+                } else {
+                    alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
+                    btn.disabled = false;
+                    btn.innerText = "Join Party";
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("❌ Error de conexión");
+                joinForm.querySelector('button').disabled = false;
+            }
+        });
+    }
+});
 
 /* ========================================================= */
 /* CLIENTE PARA EL JUEGO Nuzlocke                               */
@@ -227,5 +284,86 @@ function renderizarJugadores(jugadores) {
         grid.appendChild(card);
     });
 }
+
+/* ========================================================= */
+/* LOGIC: DASHBOARD / STATS LOADER                           */
+/* ========================================================= */
+async function cargarDashboard() {
+    // 1. Verificar si hay usuario logueado
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) {
+        window.location.href = 'join.html'; // Si no hay sesión, echar al login
+        return;
+    }
+    const usuario = JSON.parse(usuarioRaw);
+
+    // 2. Recuperar info de la sala (Nombre)
+    const salaNombre = usuario.sala; 
+    
+    // Si tenemos la info de la sala guardada localmente (del paso Create), la usamos para renderizar rápido
+    const salaInfoRaw = localStorage.getItem('sala_info');
+    if (salaInfoRaw) {
+        renderizarInfoSala(JSON.parse(salaInfoRaw));
+    }
+
+    // 3. FETCH AL SERVIDOR (Para obtener jugadores actualizados)
+    // Nota: Necesitamos un endpoint que nos devuelva Info de Sala + Jugadores.
+    // Por ahora usaremos el endpoint de sala que devuelve jugadores.
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
+
+    try {
+        const response = await fetch(API_URL);
+        const jugadores = await response.json();
+
+        // Actualizar contador de jugadores
+        document.getElementById('view-player-count').innerText = `Jugadores: ${jugadores.length}`;
+        
+        // Renderizar lista de jugadores
+        const grid = document.getElementById('players-grid');
+        grid.innerHTML = ''; // Limpiar
+
+        jugadores.forEach(jugador => {
+            const esMio = jugador._id === usuario._id;
+            
+            const cardHTML = `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">
+                                ${jugador.nombre} 
+                                ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
+                            </h5>
+                            <p class="card-text text-muted">Última conexión: Hace un momento</p>
+                            <hr>
+                            <div class="text-center py-3 bg-light rounded">
+                                <small>Equipo vacío</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.innerHTML += cardHTML;
+        });
+
+    } catch (error) {
+        console.error("Error cargando dashboard:", error);
+    }
+}
+
+// Helper para pintar textos
+function renderizarInfoSala(sala) {
+    if(document.getElementById('view-party-name')) {
+        document.getElementById('view-party-name').innerText = sala.nombre;
+        document.getElementById('view-host-name').innerText = sala.host;
+        document.getElementById('view-rules').innerText = sala.reglas || "Sin reglas definidas.";
+        document.getElementById('view-desc').innerText = sala.descripcion || "";
+    }
+}
+
+// Ejecutar solo si estamos en stats.html
+if (window.location.pathname.includes('stats.html')) {
+    document.addEventListener('DOMContentLoaded', cargarDashboard);
+}
+
 
 

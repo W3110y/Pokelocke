@@ -64,39 +64,28 @@
     <section id="stats" class="py-5 fade-up">
         <div class="container" data-aos="fade-up">
             <div class="text-center mb-5">
-                <h2 class="fw-bold">Statistics</h2>
-                <p class="text-body-secondary">Detailed statistics about your PokeLocke adventure.</p>
+                <h2 class="fw-bold" id="view-party-name">Cargando Sala...</h2>
+                <p class="text-body-secondary">Host: <span id="view-host-name">...</span></p>
+                <div class="badge bg-primary fs-6 mb-3" id="view-player-count">Jugadores: 0/0</div>
             </div>
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-3 text-center">
-                    <div class="stat-card p-4 border rounded shadow-sm h-100">
-                        <i class="bi bi-bar-chart-fill display-4 mb-3 text-primary"></i>
-                        <h3 class="fw-bold">Total Battles</h3>
-                        <p class="stat-value fs-3">150</p>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card h-100 p-4 shadow-sm border-danger" style="border-left-width: 5px;">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Reglas</h4>
+                        <p id="view-rules" style="white-space: pre-line;">Cargando reglas...</p>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 text-center">
-                    <div class="stat-card p-4 border rounded shadow-sm h-100">
-                        <i class="bi bi-emoji-smile-fill display-4 mb-3 text-primary"></i>
-                        <h3 class="fw-bold">Pokémon Caught</h3>
-                        <p class="stat-value fs-3">75</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 text-center">
-                    <div class="stat-card p-4 border rounded shadow-sm h-100">
-                        <i class="bi bi-eye-fill display-4 mb-3 text-primary"></i>
-                        <h3 class="fw-bold">Pokémon Seen</h3>
-                        <p class="stat-value fs-3">120</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 text-center">
-                    <div class="stat-card p-4 border rounded shadow-sm h-100">
-                        <i class="bi bi-star-fill display-4 mb-3 text-primary"></i>
-                        <h3 class="fw-bold">Favorite Pokémon</h3>
-                        <p class="stat-value fs-3">Pikachu</p>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4 shadow-sm border-info" style="border-left-width: 5px;">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-info me-2"></i>Descripción</h4>
+                        <p id="view-desc" style="white-space: pre-line;">Sin descripción.</p>
                     </div>
                 </div>
             </div>
+
+            <h3 class="fw-bold mb-4 border-bottom pb-2">Entrenadores</h3>
+            <div id="players-grid" class="row g-4">
+                </div>
         </div>
     </section>
 
