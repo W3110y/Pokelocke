@@ -172,10 +172,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Guardamos sesión
-                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
-                    // Redirigir al Dashboard
-                    window.location.href = 'stats.html';
+                // data ahora trae { entrenador: {...}, salaInfo: {...} }
+                
+                // 1. Guardamos al usuario
+                localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
+                
+                // 2. IMPORTANTE: Guardamos la info de la sala también
+                // Esto es vital para que stats.html pueda mostrar las reglas y descripción
+                if (data.salaInfo) {
+                    localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
+                }
+
+                alert("✅ ¡Te has unido a " + data.entrenador.sala + "!");
+                window.location.href = 'stats.html';
                 } else {
                     alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
                     btn.disabled = false;

@@ -43,13 +43,52 @@ router.post('/crear', async (req, res) => {
     }
 });
 
-// 2. VER SALA COMPLETA (GET)
-router.get('/sala/:codigo', async (req, res) => {
+// --- RUTA ACTUALIZADA: UNIRSE A UNA SALA EXISTENTE ---
+router.post('/unirse', async (req, res) => {
+    const { nombre, sala } = req.body;
+
+    // 1. Validaciones básicas
+    if (!nombre || !sala) {
+        return res.status(400).json({ mensaje: "Faltan datos (nombre o sala)" });
+    }
+
     try {
-        const jugadores = await Entrenador.find({ sala: req.params.codigo });
-        res.status(200).json(jugadores);
+        // 2. VERIFICACIÓN CRÍTICA: ¿Existe la sala?
+        // Buscamos en la colección de 'Sala' que creamos en el paso anterior
+        const salaEncontrada = await Sala.findOne({ nombre: sala });
+
+        if (!salaEncontrada) {
+            return res.status(404).json({ mensaje: "La sala no existe. Pídele al Host que la cree primero." });
+        }
+
+        // 3. (Opcional) Verificar si la sala está llena
+        const jugadoresActuales = await Entrenador.countDocuments({ sala: sala });
+        if (jugadoresActuales >= salaEncontrada.maxJugadores) {
+            return res.status(403).json({ mensaje: "La sala está llena." });
+        }
+
+        // 4. Lógica de "Upsert" del Jugador (Crear o Recuperar)
+        let entrenador = await Entrenador.findOne({ nombre: nombre, sala: sala });
+        
+        if (!entrenador) {
+            entrenador = new Entrenador({ 
+                nombre: nombre, 
+                sala: sala, 
+                pokemons: [] 
+            });
+            await entrenador.save();
+        }
+
+        // 5. RESPUESTA EXITOSA
+        // Devolvemos tanto el usuario como la info de la sala para el frontend
+        res.status(200).json({ 
+            entrenador: entrenador, 
+            salaInfo: salaEncontrada 
+        });
+
     } catch (error) {
-        res.status(500).json({ error: "Error al cargar la sala" });
+        console.error("Error en /unirse:", error);
+        res.status(500).json({ mensaje: "Error interno del servidor al unirse." });
     }
 });
 
