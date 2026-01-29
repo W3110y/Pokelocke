@@ -72,88 +72,66 @@ function erase() {
 }
 
 type();
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // --- CONFIGURACIÓN URL (Usa localhost o Render según corresponda) ---
-    // const API_BASE = 'https://tu-app.onrender.com/api/juego';
-    const API_BASE = 'https://pokelocke-8kjm.onrender.com/api/juego';
-
     // ==========================================
     // 1. LÓGICA CREAR PARTIDA
     // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
     const createForm = document.getElementById('form-create-party');
-    
+
     if (createForm) {
         createForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // <--- ESTO EVITA QUE LA PÁGINA SE RECARGUE SOLA
+            e.preventDefault();
 
-            // Capturamos datos usando los IDs corregidos del Paso A
+            // 1. Capturar los 5 datos usando los IDs nuevos
             const formData = {
-                hostName: document.getElementById('host-name').value.trim(),
-                partyName: document.getElementById('party-name').value.trim(),
+                hostName: document.getElementById('host-name').value,
+                partyName: document.getElementById('party-name').value,
                 partySize: document.getElementById('party-size').value,
                 rules: document.getElementById('party-rules').value,
                 description: document.getElementById('party-description').value
             };
 
+            console.log("📤 Creando sala:", formData);
+
+            // IMPORTANTE: Cambiamos la ruta a /crear
+            // Recuerda poner tu URL de Render si ya desplegaste, o localhost si estás probando
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/crear'; 
+
             try {
-                const res = await fetch(`${API_BASE}/crear`, {
+                const btn = createForm.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerText = "Creando...";
+
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                const data = await res.json();
 
-                if (res.ok) {
-                    // Guardar datos y REDIRIGIR
-                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
-                    localStorage.setItem('sala_info', JSON.stringify(data.sala));
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("✅ ¡Sala creada! Reglas guardadas.");
                     
-                    console.log("Redirigiendo a stats.html...");
-                    window.location.href = 'stats.html'; 
-                } else {
-                    alert("Error: " + data.mensaje);
-                }
-            } catch (error) { console.error(error); alert("Error de conexión"); }
-        });
-    }
-
-    // ==========================================
-    // 2. LÓGICA UNIRSE PARTIDA
-    // ==========================================
-    const joinForm = document.getElementById('form-join-party');
-
-    if (joinForm) { // Ahora SÍ encontrará el formulario gracias al ID del Paso B
-        joinForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = {
-                nombre: document.getElementById('playerName').value.trim(),
-                sala: document.getElementById('partyName').value.trim()
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/unirse`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                const data = await res.json();
-
-                if (res.ok) {
+                    // Guardamos la info completa (Usuario + Info de Sala)
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
-                    // Si el backend devuelve info de sala, la guardamos
-                    if(data.salaInfo) localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
+                    localStorage.setItem('sala_info', JSON.stringify(data.sala)); // Nuevo: Guardamos reglas localmente
                     
                     window.location.href = 'stats.html';
                 } else {
-                    alert("Error: " + data.mensaje);
+                    alert("❌ Error: " + (data.mensaje || "Error desconocido"));
+                    btn.disabled = false;
+                    btn.innerText = "Create Party";
                 }
-            } catch (error) { console.error(error); alert("Error de conexión"); }
+            } catch (error) {
+                console.error(error);
+                alert("❌ Error de conexión");
+                createForm.querySelector('button').disabled = false;
+            }
         });
     }
 });
+
 
 /* ========================================================= */
 /* LOGIC: DASHBOARD LOADER (MEJORADO)                        */
