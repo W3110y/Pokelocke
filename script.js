@@ -173,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     // Guardamos sesión
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
+                    if (data.salaInfo) {
+                        console.log("📥 Guardando información de la sala en local...");
+                        localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
+                    } else {
+                        console.warn("⚠️ OJO: El servidor no envió 'salaInfo'.");
+                }
                     // Redirigir al Dashboard
                     window.location.href = 'stats.html';
                 } else {
