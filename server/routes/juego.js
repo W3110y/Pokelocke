@@ -118,3 +118,6 @@ router.get('/sala/:codigoSala', async (req, res) => {
         res.status(500).json({ error: "Error interno al cargar la sala" });
     }
 });
+
+// ¡ESTA LÍNEA ES LA QUE FALTABA O FALLABA!
+module.exports = router;
