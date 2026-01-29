@@ -192,84 +192,82 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ========================================================= */
-/* LOGIC: DASHBOARD / STATS LOADER                           */
+/* LOGIC: DASHBOARD LOADER (Para stats.html)                 */
 /* ========================================================= */
+
 async function cargarDashboard() {
-    // 1. Verificar si hay usuario logueado
+    // 1. Verificar sesión
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) {
-        window.location.href = 'join.html'; // Si no hay sesión, echar al login
+        window.location.href = 'join.html'; // Si no hay usuario, mandar al login
         return;
     }
     const usuario = JSON.parse(usuarioRaw);
-
-    // 2. Recuperar info de la sala (Nombre)
     const salaNombre = usuario.sala; 
-    
-    // Si tenemos la info de la sala guardada localmente (del paso Create), la usamos para renderizar rápido
-    const salaInfoRaw = localStorage.getItem('sala_info');
-    if (salaInfoRaw) {
-        renderizarInfoSala(JSON.parse(salaInfoRaw));
-    }
 
-    // 3. FETCH AL SERVIDOR (Para obtener jugadores actualizados)
-    // Nota: Necesitamos un endpoint que nos devuelva Info de Sala + Jugadores.
-    // Por ahora usaremos el endpoint de sala que devuelve jugadores.
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
+    // URL de tu API (Asegúrate que coincida con tu servidor: localhost o Render)
+    // const API_URL = `https://TU-APP-EN-RENDER.onrender.com/api/juego/sala/${salaNombre}`;
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`; 
 
     try {
         const response = await fetch(API_URL);
-        const jugadores = await response.json();
-
-        // Actualizar contador de jugadores
-        document.getElementById('view-player-count').innerText = `Jugadores: ${jugadores.length}`;
         
-        // Renderizar lista de jugadores
-        const grid = document.getElementById('players-grid');
-        grid.innerHTML = ''; // Limpiar
+        if (!response.ok) {
+            throw new Error("No se pudo cargar la sala");
+        }
 
-        jugadores.forEach(jugador => {
-            const esMio = jugador._id === usuario._id;
+        // Recibimos el objeto combinado del Backend
+        const data = await response.json();
+        const { sala, jugadores } = data;
+
+        // --- A. PINTAR DATOS DE LA SALA (Host, Reglas, Desc) ---
+        // Usamos los IDs que pusimos en el HTML de stats.html
+        if (document.getElementById('view-party-name')) {
+            document.getElementById('view-party-name').innerText = sala.nombre;
+            document.getElementById('view-host-name').innerText = sala.host;
+            document.getElementById('view-player-count').innerText = `Jugadores: ${jugadores.length}/${sala.maxJugadores}`;
+            document.getElementById('view-rules').innerText = sala.reglas || "Sin reglas definidas.";
+            document.getElementById('view-desc').innerText = sala.descripcion || "Sin descripción.";
+        }
+
+        // --- B. PINTAR LISTA DE JUGADORES ---
+        const grid = document.getElementById('players-grid');
+        if (grid) {
+            grid.innerHTML = ''; // Limpiar lo que hubiera antes
             
-            const cardHTML = `
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">
-                                ${jugador.nombre} 
-                                ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
-                            </h5>
-                            <p class="card-text text-muted">Última conexión: Hace un momento</p>
-                            <hr>
-                            <div class="text-center py-3 bg-light rounded">
-                                <small>Equipo vacío</small>
+            jugadores.forEach(jugador => {
+                const esMio = jugador._id === usuario._id;
+                
+                // HTML de la tarjeta del jugador
+                const cardHTML = `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold text-uppercase">
+                                    <i class="bi bi-person-circle me-2"></i>${jugador.nombre} 
+                                    ${esMio ? '<span class="badge bg-primary ms-2" style="font-size: 0.6em">TÚ</span>' : ''}
+                                    ${jugador.nombre === sala.host ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6em">HOST</span>' : ''}
+                                </h5>
+                                <hr>
+                                <div class="text-center py-3 bg-body-tertiary rounded">
+                                    <small class="text-muted">Equipo vacío</small>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            grid.innerHTML += cardHTML;
-        });
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
 
     } catch (error) {
         console.error("Error cargando dashboard:", error);
+        alert("Error al cargar los datos de la sala. Revisa la consola.");
     }
 }
 
-// Helper para pintar textos
-function renderizarInfoSala(sala) {
-    if(document.getElementById('view-party-name')) {
-        document.getElementById('view-party-name').innerText = sala.nombre;
-        document.getElementById('view-host-name').innerText = sala.host;
-        document.getElementById('view-rules').innerText = sala.reglas || "Sin reglas definidas.";
-        document.getElementById('view-desc').innerText = sala.descripcion || "";
-    }
-}
-
-// Ejecutar solo si estamos en stats.html
+// EJECUTAR AUTOMÁTICAMENTE:
+// Si estamos en la página de stats, lanzar la carga
 if (window.location.pathname.includes('stats.html')) {
     document.addEventListener('DOMContentLoaded', cargarDashboard);
 }
-
-
-
