@@ -133,6 +133,64 @@ type();
 });
 
 /* ========================================================= */
+/* LOGIC: JOIN PARTY FORM                                    */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const joinForm = document.getElementById('form-join-party');
+
+    if (joinForm) {
+        joinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 1. Capturar datos
+            const formData = {
+                nombre: document.getElementById('playerName').value.trim(), // Nombre del jugador
+                sala: document.getElementById('partyName').value.trim() // Nombre de la sala
+            };
+
+            // 2. Validar
+            if (!formData.nombre || !formData.sala) {
+                alert("Por favor rellena ambos campos");
+                return;
+            }
+
+            console.log("🔗 Intentando unirse a:", formData);
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/unirse'; // Usa tu URL de Render si ya está subido
+
+            try {
+                const btn = joinForm.querySelector('button');
+                btn.disabled = true;
+                btn.innerText = "Entrando...";
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Guardamos sesión
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
+                    // Redirigir al Dashboard
+                    window.location.href = 'stats.html';
+                } else {
+                    alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
+                    btn.disabled = false;
+                    btn.innerText = "Join Party";
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("❌ Error de conexión");
+                joinForm.querySelector('button').disabled = false;
+            }
+        });
+    }
+});
+
+/* ========================================================= */
 /* LOGIC: DASHBOARD / STATS LOADER                           */
 /* ========================================================= */
 async function cargarDashboard() {
