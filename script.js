@@ -73,131 +73,84 @@ function erase() {
 
 type();
 
-/* ========================================================= */
-/* LOGIC: CREATE PARTY FORM (ACTUALIZADO)                    */
-/* ========================================================= */
-const createForm = document.getElementById('form-create-party');
-
-if (createForm) {
-    createForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Capturar datos y limpiar espacios (trim)
-        const formData = {
-            hostName: document.getElementById('host-name').value.trim(),
-            partyName: document.getElementById('party-name').value.trim(),
-            partySize: document.getElementById('party-size').value,
-            rules: document.getElementById('party-rules').value,
-            description: document.getElementById('party-description').value
-        };
-
-        console.log("📤 Enviando:", formData);
-
-        // REVISA QUE ESTA URL SEA CORRECTA (Render o Localhost)
-        const API_URL = 'http://localhost:3000/api/juego/crear'; 
-
-        try {
-            const btn = createForm.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerText = "Creando...";
-
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            console.log("Estado respuesta:", response.status); // Ver si es 201
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.mensaje || "Error en el servidor");
-            }
-
-            const data = await response.json();
-            console.log("✅ Datos recibidos del servidor:", data);
-
-            // VERIFICACIÓN CRÍTICA ANTES DE GUARDAR
-            if (!data.entrenador || !data.sala) {
-                throw new Error("El servidor no devolvió los objetos 'entrenador' o 'sala'");
-            }
-
-            // Guardar en localStorage
-            localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
-            localStorage.setItem('sala_info', JSON.stringify(data.sala));
-            
-            console.log("💾 Datos guardados. Redirigiendo...");
-            
-            // REDIRECCIÓN MANUAL
-            window.location.assign('stats.html'); // .assign es más robusto a veces que .href
-
-        } catch (error) {
-            console.error("❌ ERROR CRÍTICO:", error);
-            alert("Hubo un error: " + error.message);
-            // Reactivar botón
-            const btn = createForm.querySelector('button[type="submit"]');
-            if(btn) {
-                btn.disabled = false;
-                btn.innerText = "Create Party";
-            }
-        }
-    });
-}
-
-/* ========================================================= */
-/* LOGIC: JOIN PARTY FORM                                    */
-/* ========================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    const joinForm = document.getElementById('form-join-party');
 
-    if (joinForm) {
-        joinForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    // --- CONFIGURACIÓN URL (Usa localhost o Render según corresponda) ---
+    // const API_BASE = 'https://tu-app.onrender.com/api/juego';
+    const API_BASE = 'https://pokelocke-8kjm.onrender.com/api/juego';
 
-            // 1. Capturar datos
+    // ==========================================
+    // 1. LÓGICA CREAR PARTIDA
+    // ==========================================
+    const createForm = document.getElementById('form-create-party');
+    
+    if (createForm) {
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // <--- ESTO EVITA QUE LA PÁGINA SE RECARGUE SOLA
+
+            // Capturamos datos usando los IDs corregidos del Paso A
             const formData = {
-                nombre: document.getElementById('playerName').value.trim(), // Nombre del jugador
-                sala: document.getElementById('partyCode').value.trim() // Nombre de la sala
+                hostName: document.getElementById('host-name').value.trim(),
+                partyName: document.getElementById('party-name').value.trim(),
+                partySize: document.getElementById('party-size').value,
+                rules: document.getElementById('party-rules').value,
+                description: document.getElementById('party-description').value
             };
 
-            // 2. Validar
-            if (!formData.nombre || !formData.sala) {
-                alert("Por favor rellena ambos campos");
-                return;
-            }
-
-            console.log("🔗 Intentando unirse a:", formData);
-            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/unirse'; // Usa tu URL de Render si ya está subido
-
             try {
-                const btn = joinForm.querySelector('button');
-                btn.disabled = true;
-                btn.innerText = "Entrando...";
-
-                const response = await fetch(API_URL, {
+                const res = await fetch(`${API_BASE}/crear`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
+                const data = await res.json();
 
-                const data = await response.json();
+                if (res.ok) {
+                    // Guardar datos y REDIRIGIR
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
+                    localStorage.setItem('sala_info', JSON.stringify(data.sala));
+                    
+                    console.log("Redirigiendo a stats.html...");
+                    window.location.href = 'stats.html'; 
+                } else {
+                    alert("Error: " + data.mensaje);
+                }
+            } catch (error) { console.error(error); alert("Error de conexión"); }
+        });
+    }
 
-                if (response.ok) {
-                    // Guardamos sesión
-                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
-                    // Redirigir al Dashboard
+    // ==========================================
+    // 2. LÓGICA UNIRSE PARTIDA
+    // ==========================================
+    const joinForm = document.getElementById('form-join-party');
+
+    if (joinForm) { // Ahora SÍ encontrará el formulario gracias al ID del Paso B
+        joinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                nombre: document.getElementById('playerName').value.trim(),
+                sala: document.getElementById('partyName').value.trim()
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/unirse`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
+                    // Si el backend devuelve info de sala, la guardamos
+                    if(data.salaInfo) localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
+                    
                     window.location.href = 'stats.html';
                 } else {
-                    alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
-                    btn.disabled = false;
-                    btn.innerText = "Join Party";
+                    alert("Error: " + data.mensaje);
                 }
-
-            } catch (error) {
-                console.error(error);
-                alert("❌ Error de conexión");
-                joinForm.querySelector('button').disabled = false;
-            }
+            } catch (error) { console.error(error); alert("Error de conexión"); }
         });
     }
 });
