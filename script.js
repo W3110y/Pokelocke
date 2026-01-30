@@ -200,66 +200,64 @@ document.addEventListener('DOMContentLoaded', () => {
 /* LOGIC: DASHBOARD / STATS LOADER                           */
 /* ========================================================= */
 async function cargarDashboard() {
-    // 1. Verificaciones de seguridad (si hay usuario, etc...)
+    // 1. Verificar si hay usuario logueado
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) { window.location.href = 'join.html'; return; }
-    
+    if (!usuarioRaw) {
+        window.location.href = 'join.html'; // Si no hay sesión, echar al login
+        return;
+    }
     const usuario = JSON.parse(usuarioRaw);
-    const salaNombre = usuario.sala; 
 
-    // 2. PEDIMOS EL INFORME AL SERVIDOR
-    // (Asegúrate que esta URL es correcta, usa localhost si estás probando en local)
+    // 2. Recuperar info de la sala (Nombre)
+    const salaNombre = usuario.sala; 
+    
+    // Si tenemos la info de la sala guardada localmente (del paso Create), la usamos para renderizar rápido
+    const salaInfoRaw = localStorage.getItem('sala_info');
+    if (salaInfoRaw) {
+        renderizarInfoSala(JSON.parse(salaInfoRaw));
+    }
+
+    // 3. FETCH AL SERVIDOR (Para obtener jugadores actualizados)
+    // Nota: Necesitamos un endpoint que nos devuelva Info de Sala + Jugadores.
+    // Por ahora usaremos el endpoint de sala que devuelve jugadores.
     const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
 
     try {
         const response = await fetch(API_URL);
+        const jugadores = await response.json();
+
+        // Actualizar contador de jugadores
+        document.getElementById('view-player-count').innerText = `Jugadores: ${jugadores.length}/ ${usuario.salaInfo.maxJugadores}`;
         
-        if (response.ok) {
-            // AQUI ESTA EL CAMBIO CLAVE:
-            const data = await response.json(); 
+        // Renderizar lista de jugadores
+        const grid = document.getElementById('players-grid');
+        grid.innerHTML = ''; // Limpiar
+
+        jugadores.forEach(jugador => {
+            const esMio = jugador._id === usuario._id;
             
-            // Desempaquetamos el regalo:
-            const infoSala = data.sala;            // Aquí está el tamaño (maxJugadores)
-            const listaJugadores = data.jugadores; // Aquí está la lista de gente
-
-            // --- A. PINTAR EL TAMAÑO DEL GRUPO ---
-            const contador = document.getElementById('view-player-count');
-            if (contador) {
-                // Ahora sí tenemos el dato 'maxJugadores' que viene de infoSala
-                contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
-            }
-
-            // --- B. PINTAR A LOS JUGADORES ---
-            const grid = document.getElementById('players-grid');
-            if (grid) {
-                grid.innerHTML = ''; // Limpiar lo anterior
-
-                listaJugadores.forEach(jugador => {
-                    const esMio = jugador._id === usuario._id;
-                    const esHost = jugador.nombre === infoSala.host; // Sabemos quién es host gracias a infoSala
-
-                    // Crear tarjeta visual
-                    const cardHTML = `
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
-                                <div class="card-body">
-                                    <h5 class="card-title fw-bold">
-                                        <i class="bi bi-person-circle"></i> ${jugador.nombre}
-                                        ${esMio ? '<span class="badge bg-primary ms-1">TÚ</span>' : ''}
-                                        ${esHost ? '<span class="badge bg-warning text-dark ms-1">HOST</span>' : ''}
-                                    </h5>
-                                    <hr>
-                                    <small class="text-muted">Equipo Vacío</small>
-                                </div>
+            const cardHTML = `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">
+                                ${jugador.nombre} 
+                                ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
+                            </h5>
+                            <p class="card-text text-muted">Última conexión: Hace un momento</p>
+                            <hr>
+                            <div class="text-center py-3 bg-light rounded">
+                                <small>Equipo vacío</small>
                             </div>
                         </div>
-                    `;
-                    grid.innerHTML += cardHTML;
-                });
-            }
-        } 
+                    </div>
+                </div>
+            `;
+            grid.innerHTML += cardHTML;
+        });
+
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error cargando dashboard:", error);
     }
 }
 
