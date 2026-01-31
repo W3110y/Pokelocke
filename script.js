@@ -268,15 +268,21 @@ async function cargarDashboard() {
                                 // Color del borde según el tipo (Opcional, detalle visual pro)
                                 // const tipoPrincipal = poke.tipos ? poke.tipos[0] : 'normal';
 
+                                // --- LÓGICA DE PROTECCIÓN ---
+                                // Si es mío: Permitimos click y ponemos cursor de mano.
+                                // Si NO es mío: Quitamos el click y ponemos cursor normal o de ayuda.
+                                const accionClick = esMio ? `onclick='abrirDetalles(${JSON.stringify(poke)})'` : '';
+                                const estiloCursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
+                                const efectoHover = esMio ? "onmouseover=\"this.style.transform='scale(1.2)'\" onmouseout=\"this.style.transform='scale(1)'\"" : "";
+
                                 equipoHTML += `
                                     <div class="text-center position-relative p-1" title="${poke.mote}">
                                         <img src="${imagenSrc}" 
                                         alt="${poke.especie}" 
                                         class="poke-sprite"
-                                        style="width: 60px; height: 60px; image-rendering: pixelated; cursor: pointer; transition: transform 0.2s;" 
-                                        onclick='abrirDetalles(${JSON.stringify(poke)})'
-                                        onmouseover="this.style.transform='scale(1.2)'"
-                                        onmouseout="this.style.transform='scale(1)'"
+                                        style="width: 60px; height: 60px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor}" 
+                                        ${accionClick}
+                                        ${efectoHover}
                                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
                                         
                                         <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill" 
