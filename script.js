@@ -249,73 +249,115 @@ async function cargarDashboard() {
             if (grid) {
                 grid.innerHTML = ''; // Limpiar grid previo
 
+                /* DENTRO DE cargarDashboard (script.js) -> listaJugadores.forEach */
+
                 listaJugadores.forEach(jugador => {
                     const esMio = jugador._id === usuario._id;
-                    // Comparamos nombres para saber quién es el Host real
-                    const esHost = jugador.nombre === infoSala.host; 
+                    const esHost = jugador.nombre === infoSala.host;
 
-                    // A. Generar HTML de los Pokémon
-                    let equipoHTML = '';
-                    if (jugador.pokemons && jugador.pokemons.length > 0) {
-                        equipoHTML = '<div class="d-flex justify-content-center flex-wrap gap-2">';
+                    // 1. CLASIFICAR POKÉMONS (Separar en 3 listas)
+                    // -------------------------------------------------------
+                    const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
+                    const caja = jugador.pokemons.filter(p => p.estado === 'caja');
+                    const cementerio = jugador.pokemons.filter(p => p.estado === 'cementerio');
+
+                    // 2. FUNCIÓN GENERADORA DE IMÁGENES (Para no repetir código)
+                    // -------------------------------------------------------
+                    const generarGrid = (lista, esGris = false) => {
+                        if (lista.length === 0) return '<div class="text-center py-3 text-muted small">Vacío</div>';
                         
-                        jugador.pokemons.forEach(poke => {
-                            if (poke.estado === 'equipo') {
-                                
-                                // Usamos la imagen guardada. Si es un pokemon viejo (sin imagen guardada), ponemos la pokeball.
-                                const imagenSrc = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-                                
-                                // Color del borde según el tipo (Opcional, detalle visual pro)
-                                // const tipoPrincipal = poke.tipos ? poke.tipos[0] : 'normal';
+                        return `<div class="d-flex justify-content-center flex-wrap gap-2">` + 
+                        lista.map(poke => {
+                            // Lógica de interacción (solo si es mío y no está muerto, o sí, según reglas)
+                            // Permitimos editar incluso muertos para corregir errores
+                            const accionClick = esMio ? `onclick='abrirDetalles(${JSON.stringify(poke)})'` : '';
+                            const estiloCursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
+                            const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.6;' : ''; // Efecto muerte
+                            
+                            // Imagen o Pokeball
+                            const imgUrl = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
 
-                                // --- LÓGICA DE PROTECCIÓN ---
-                                // Si es mío: Permitimos click y ponemos cursor de mano.
-                                // Si NO es mío: Quitamos el click y ponemos cursor normal o de ayuda.
-                                const accionClick = esMio ? `onclick='abrirDetalles(${JSON.stringify(poke)})'` : '';
-                                const estiloCursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
-                                const efectoHover = esMio ? "onmouseover=\"this.style.transform='scale(1.2)'\" onmouseout=\"this.style.transform='scale(1)'\"" : "";
+                            return `
+                            <div class="text-center position-relative p-1" title="${poke.mote}">
+                                <img src="${imgUrl}" 
+                                    class="poke-sprite"
+                                    style="width: 50px; height: 50px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor} ${filtroGris}"
+                                    ${accionClick}
+                                    onmouseover="this.style.transform='scale(1.2)'"
+                                    onmouseout="this.style.transform='scale(1)'"
+                                    onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill border border-light" 
+                                    style="font-size: 0.55em; padding: 1px 4px;">L.${poke.nivel}</span>
+                            </div>`;
+                        }).join('') + `</div>`;
+                    };
 
-                                equipoHTML += `
-                                    <div class="text-center position-relative p-1" title="${poke.mote}">
-                                        <img src="${imagenSrc}" 
-                                        alt="${poke.especie}" 
-                                        class="poke-sprite"
-                                        style="width: 60px; height: 60px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor}" 
-                                        ${accionClick}
-                                        ${efectoHover}
-                                        onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                                        
-                                        <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill" 
-                                            style="font-size: 0.6em; padding: 2px 6px;">
-                                            Lv.${poke.nivel}
-                                        </span>
-                                    </div>
-                                `;
-                            }
-                        });
-                        equipoHTML += '</div>';
-                    } else {
-                        equipoHTML = '<div class="text-center py-2 bg-light rounded"><small class="text-secondary">Equipo Vacío</small></div>';
-                    }
+                    // 3. GENERAR HTML DE LAS PESTAÑAS (TABS)
+                    // -------------------------------------------------------
+                    // Necesitamos IDs únicos para que las pestañas de Pepe no abran las de Juan
+                    const tabIdEquipo = `pills-equipo-${jugador._id}`;
+                    const tabIdCaja = `pills-caja-${jugador._id}`;
+                    const tabIdCementerio = `pills-dead-${jugador._id}`;
 
-                    // B. Insertar en la tarjeta (Sustituimos el bloque "Equipo Vacío" estático por la variable equipoHTML)
                     const cardHTML = `
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
-                                <div class="card-body">
-                                    <h5 class="card-title fw-bold">
-                                        <i class="bi bi-person-circle"></i> ${jugador.nombre} 
-                                        ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
-                                        ${esHost ? '<span class="badge bg-warning text-dark ms-1">HOST</span>' : ''}
-                                    </h5>
-                                    <hr>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
+                            
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                <h5 class="card-title fw-bold mb-0 text-truncate">
+                                    <i class="bi bi-person-circle"></i> ${jugador.nombre}
+                                    ${esMio ? '<span class="badge bg-primary ms-1" style="font-size:0.5em">TÚ</span>' : ''}
+                                    ${esHost ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.5em">HOST</span>' : ''}
+                                </h5>
+                                <span class="badge bg-dark">${equipo.length}/6</span>
+                            </div>
+
+                            <div class="card-body p-2">
+                                <ul class="nav nav-pills nav-fill mb-3 small" id="pills-tab-${jugador._id}" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active py-1" data-bs-toggle="pill" data-bs-target="#${tabIdEquipo}" type="button">
+                                            Equipo
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link py-1 position-relative" data-bs-toggle="pill" data-bs-target="#${tabIdCaja}" type="button">
+                                            PC
+                                            ${caja.length > 0 ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.5em">${caja.length}</span>` : ''}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link py-1" data-bs-toggle="pill" data-bs-target="#${tabIdCementerio}" type="button">
+                                            ☠️
+                                            ${cementerio.length > 0 ? `<span class="badge bg-secondary ms-1" style="font-size:0.6em">${cementerio.length}</span>` : ''}
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="pills-tabContent-${jugador._id}">
                                     
-                                    ${equipoHTML}
-                                    
+                                    <div class="tab-pane fade show active" id="${tabIdEquipo}" role="tabpanel">
+                                        <div class="bg-light rounded p-2" style="min-height: 100px;">
+                                            ${generarGrid(equipo, false)}
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="${tabIdCaja}" role="tabpanel">
+                                        <div class="bg-body-secondary rounded p-2" style="min-height: 100px;">
+                                            ${generarGrid(caja, false)}
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="${tabIdCementerio}" role="tabpanel">
+                                        <div class="bg-dark bg-opacity-10 rounded p-2" style="min-height: 100px;">
+                                            ${generarGrid(cementerio, true)} </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
+                    </div>
                     `;
+
                     grid.innerHTML += cardHTML;
                 });
             }
