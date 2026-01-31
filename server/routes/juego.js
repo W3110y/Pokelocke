@@ -120,4 +120,50 @@ router.get('/sala/:codigoSala', async (req, res) => {
     }
 });
 
+// --- 4. REGISTRAR CAPTURA (Añadir Pokémon al equipo) ---
+router.put('/capturar', async (req, res) => {
+    // Recibimos: ID del entrenador y los datos del bicho
+    const { entrenadorId, pokemon } = req.body;
+
+    // 1. Validaciones de seguridad
+    if (!entrenadorId || !pokemon || !pokemon.especie) {
+        return res.status(400).json({ mensaje: "Faltan datos de la captura" });
+    }
+
+    try {
+        // 2. Buscar al entrenador en la Base de Datos
+        const entrenador = await Entrenador.findById(entrenadorId);
+        
+        if (!entrenador) {
+            return res.status(404).json({ mensaje: "Entrenador no encontrado" });
+        }
+
+        // 3. Añadir el Pokémon al Array 'pokemons'
+        // Usamos push para meterlo al final de la lista
+        entrenador.pokemons.push({
+            especie: pokemon.especie.toLowerCase(), // Estandarizamos a minúsculas
+            mote: pokemon.mote || pokemon.especie,  // Si no hay mote, usa la especie
+            nivel: pokemon.nivel || 5,
+            estado: pokemon.estado || "equipo",     // 'equipo', 'caja', 'cementerio'
+            tipo: pokemon.tipo || "normal",         // Lo usaremos para colores
+            fechaCaptura: new Date()
+        });
+
+        // 4. Guardar cambios en MongoDB
+        await entrenador.save();
+
+        console.log(`✅ Captura registrada: ${pokemon.especie} para ${entrenador.nombre}`);
+
+        // 5. Devolver el entrenador actualizado
+        res.json({ 
+            mensaje: "Captura exitosa", 
+            entrenador: entrenador 
+        });
+
+    } catch (error) {
+        console.error("Error al capturar:", error);
+        res.status(500).json({ mensaje: "Error interno al guardar el Pokémon" });
+    }
+});
+
 module.exports = router;

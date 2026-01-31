@@ -209,7 +209,7 @@ async function cargarDashboard() {
     const usuario = JSON.parse(usuarioRaw);
     // DEBUG: Verificar que ahora sí leemos bien el nombre
     console.log("👤 Usuario cargado:", usuario);
-    
+
     const salaNombre = usuario.sala; 
     if (!salaNombre) {
         console.error("❌ ERROR CRÍTICO: El nombre de la sala es undefined. Revisa el localStorage.");
@@ -254,20 +254,45 @@ async function cargarDashboard() {
                     // Comparamos nombres para saber quién es el Host real
                     const esHost = jugador.nombre === infoSala.host; 
 
-                    // Crear tarjeta HTML
+                    // A. Generar HTML de los Pokémon
+                    let equipoHTML = '';
+                    if (jugador.pokemons && jugador.pokemons.length > 0) {
+                        equipoHTML = '<div class="d-flex justify-content-center flex-wrap gap-2">';
+                        
+                        jugador.pokemons.forEach(poke => {
+                            // Solo mostramos los del equipo vivo
+                            if (poke.estado === 'equipo') {
+                                // URL MÁGICA DE POKEAPI
+                                const sprite = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie.toLowerCase()}.png`;
+                                
+                                equipoHTML += `
+                                    <div class="text-center" title="${poke.mote} (Nv.${poke.nivel})">
+                                        <img src="${sprite}" alt="${poke.especie}" style="width: 50px; height: 50px;" 
+                                            onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                        <div style="font-size: 0.7em;" class="fw-bold">${poke.nivel}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+                        equipoHTML += '</div>';
+                    } else {
+                        equipoHTML = '<div class="text-center py-2 bg-light rounded"><small class="text-secondary">Equipo Vacío</small></div>';
+                    }
+
+                    // B. Insertar en la tarjeta (Sustituimos el bloque "Equipo Vacío" estático por la variable equipoHTML)
                     const cardHTML = `
                         <div class="col-md-6 col-lg-4">
                             <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
                                 <div class="card-body">
                                     <h5 class="card-title fw-bold">
-                                        <i class="bi bi-person-circle"></i> ${jugador.nombre}
-                                        ${esMio ? '<span class="badge bg-primary ms-1">TÚ</span>' : ''}
+                                        <i class="bi bi-person-circle"></i> ${jugador.nombre} 
+                                        ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
                                         ${esHost ? '<span class="badge bg-warning text-dark ms-1">HOST</span>' : ''}
                                     </h5>
                                     <hr>
-                                    <div class="text-center py-2 bg-light rounded">
-                                        <small class="text-muted">Equipo Vacío</small>
-                                    </div>
+                                    
+                                    ${equipoHTML}
+                                    
                                 </div>
                             </div>
                         </div>
@@ -298,4 +323,82 @@ function renderizarInfoSala(sala) {
 if (window.location.pathname.includes('stats.html')) {
     document.addEventListener('DOMContentLoaded', cargarDashboard);
 }
+
+/* ========================================================= */
+/* LOGIC: CAPTURAR POKÉMON (NUEVO)                           */
+/* ========================================================= */
+async function guardarCaptura() {
+    // 1. Recuperar usuario actual (Necesitamos su ID)
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return alert("Error: No hay sesión activa");
+    const usuario = JSON.parse(usuarioRaw);
+
+    // 2. Capturar datos del formulario
+    const especie = document.getElementById('poke-especie').value.trim();
+    const mote = document.getElementById('poke-mote').value.trim();
+    const nivel = document.getElementById('poke-nivel').value;
+    const estado = document.getElementById('poke-estado').value;
+
+    if (!especie) {
+        alert("¡Debes escribir la especie del Pokémon!");
+        return;
+    }
+
+    // 3. Preparar el objeto a enviar
+    const payload = {
+        entrenadorId: usuario._id, // ID de Mongo del usuario
+        pokemon: {
+            especie: especie,
+            mote: mote || especie,
+            nivel: parseInt(nivel),
+            estado: estado,
+            tipo: "normal" // Por ahora genérico
+        }
+    };
+
+    // 4. Enviar al Servidor
+    const API_URL = 'http://localhost:3000/api/juego/capturar'; // Ajusta si usas Render
+
+    try {
+        const btn = document.querySelector('#captureModal .btn-primary');
+        const textoOriginal = btn.innerText;
+        btn.innerText = "Guardando...";
+        btn.disabled = true;
+
+        const response = await fetch(API_URL, {
+            method: 'PUT', // Usamos PUT porque actualizamos al entrenador
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // A. Cerrar Modal (usando Bootstrap)
+            const modalEl = document.getElementById('captureModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // B. Limpiar formulario
+            document.getElementById('form-captura').reset();
+
+            // C. Recargar datos para ver el nuevo pokemon
+            cargarDashboard();
+            
+            alert(`¡${data.entrenador.pokemons.slice(-1)[0].especie} atrapado!`);
+        } else {
+            alert("Error: " + data.mensaje);
+        }
+
+        // Restaurar botón
+        btn.innerText = textoOriginal;
+        btn.disabled = false;
+
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión al guardar");
+    }
+}
+
+
 
