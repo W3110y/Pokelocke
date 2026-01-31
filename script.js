@@ -255,12 +255,12 @@ async function cargarDashboard() {
                     const esMio = jugador._id === usuario._id;
                     const esHost = jugador.nombre === infoSala.host;
 
-                    // 1. CLASIFICAR: Dividimos los pokemons en 3 arrays según su estado
+                    // CLASIFICAR: Dividimos los pokemons en 3 arrays según su estado
                     const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
                     const caja = jugador.pokemons.filter(p => p.estado === 'caja');
                     const cementerio = jugador.pokemons.filter(p => p.estado === 'cementerio');
 
-                    // 2. HELPER: Función para generar la cuadrícula de imágenes
+                    // HELPER: Función para generar la cuadrícula de imágenes
                     // Esto evita repetir código 3 veces. Maneja clicks, imágenes y estilos.
                     const generarGrid = (lista, esGris = false) => {
                         if (lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic">Vacío</div>';
@@ -291,7 +291,7 @@ async function cargarDashboard() {
                         }).join('') + `</div>`;
                     };
 
-                    // 3. GENERAR IDs ÚNICOS (Vital para que las pestañas funcionen independientemente)
+                    // GENERAR IDs ÚNICOS (Vital para que las pestañas funcionen independientemente)
                     const tabIdEquipo = `pills-equipo-${jugador._id}`;
                     const tabIdCaja = `pills-caja-${jugador._id}`;
                     const tabIdCementerio = `pills-dead-${jugador._id}`;
@@ -310,17 +310,50 @@ async function cargarDashboard() {
                         const accionClick = esMio ? `onclick='actualizarMedallas(${i})'` : '';
                         const cursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
 
-                        medallasHTML += `
-                            <i class="bi ${icono}" 
-                            style="font-size: 1.2rem; ${cursor} opacity: ${opacidad}; transition: all 0.2s;" 
-                            title="Medalla ${i}"
-                            ${accionClick}>
-                            </i>
-                        `;
+                        // DEFINICIÓN DE COLORES (Kanto Badges: Roca, Cascada, Trueno, Arcoiris, Alma, Pantano, Volcán, Tierra)
+                        const badgeColors = [
+                            '#9da5ae', // Boulder (Gris)
+                            '#358df5', // Cascade (Azul)
+                            '#f6b62d', // Thunder (Naranja/Amarillo)
+                            '#5ac746', // Rainbow (Verde)
+                            '#d64ecb', // Soul (Rosa)
+                            '#f5c949', // Marsh (Amarillo Oro)
+                            '#e84535', // Volcano (Rojo)
+                            '#2aa63d'  // Earth (Verde Oscuro/Tierra)
+                        ];
+
+                        // CONSTRUCCIÓN DEL HTML DEL MEDALLERO
+                        let medallasHTML = '<div class="medal-case">';
+                        
+                        badgeColors.forEach((color, index) => {
+                            const numeroMedalla = index + 1;
+                            const tieneMedalla = numeroMedalla <= (jugador.medallas || 0);
+                            
+                            // Clases dinámicas
+                            const claseEarned = tieneMedalla ? 'earned' : '';
+                            const claseClickable = esMio ? 'clickable' : '';
+                            
+                            // Evento onclick: Si hago clic en la 3, actualizo a 3. 
+                            // Lógica "Toggle": Si hago clic en la medalla 3 y YA tengo 3, bajo a 2 (para poder quitármela).
+                            let eventoClick = '';
+                            if (esMio) {
+                                // Si ya tengo esta medalla y es la última que tengo, al clicarla bajo 1. Si no, subo hasta ella.
+                                const nuevaCantidad = (tieneMedalla && jugador.medallas === numeroMedalla) ? numeroMedalla - 1 : numeroMedalla;
+                                eventoClick = `onclick="actualizarMedallas(${nuevaCantidad})"`;
+                            }
+
+                            medallasHTML += `
+                                <div class="gym-badge ${claseEarned} ${claseClickable}" 
+                                    style="--badge-color: ${color};" 
+                                    title="Medalla ${numeroMedalla}"
+                                    ${eventoClick}>
+                                </div>
+                            `;
+                        });
                     }
                     medallasHTML += '</div>';
 
-                    // 4. CONSTRUIR LA TARJETA CON PESTAÑAS (HTML Complejo)
+                    // CONSTRUIR LA TARJETA CON PESTAÑAS (HTML Complejo)
                     const cardHTML = `
                     <div class="col-md-6 col-lg-4">
                         <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
@@ -581,7 +614,7 @@ async function actualizarMedallas(nuevaCantidad) {
     // Para simplificar: Al hacer clic en la X, establecemos que tengo X medallas.
     
     try {
-        const res = await fetch('http://localhost:3000/api/juego/medallas', {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/medallas', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
