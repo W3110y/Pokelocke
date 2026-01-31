@@ -120,36 +120,51 @@ router.get('/sala/:codigoSala', async (req, res) => {
     }
 });
 
-// --- 4. REGISTRAR CAPTURA (Añadir Pokémon al equipo) ---
-/* EN SERVER/ROUTES/JUEGO.JS */
+// --- 4. REGISTRAR CAPTURA (Con límite de 6 y Nivel 100) ---
 router.put('/capturar', async (req, res) => {
     const { entrenadorId, pokemon } = req.body;
-
-    // Validación básica
     if (!entrenadorId || !pokemon) return res.status(400).json({ mensaje: "Datos incompletos" });
 
     try {
         const entrenador = await Entrenador.findById(entrenadorId);
         if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
 
-        // AÑADIMOS EL POKÉMON CON LOS NUEVOS CAMPOS
+        // A. VALIDACIÓN DE NIVEL (Clamp)
+        let nivelFinal = parseInt(pokemon.nivel) || 5;
+        if (nivelFinal > 100) nivelFinal = 100;
+        if (nivelFinal < 1) nivelFinal = 1;
+
+        // B. VALIDACIÓN DE EQUIPO LLENO (Regla de los 6)
+        let estadoFinal = pokemon.estado || "equipo";
+        let mensajeExtra = "";
+
+        if (estadoFinal === 'equipo') {
+            const enEquipo = entrenador.pokemons.filter(p => p.estado === 'equipo').length;
+            if (enEquipo >= 6) {
+                estadoFinal = 'caja'; // Desvío automático al PC
+                mensajeExtra = " (Equipo lleno: Enviado a la Caja)";
+            }
+        }
+
+        // C. GUARDADO
         entrenador.pokemons.push({
-            id: pokemon.id,         // ID numérico (ej: 25)
+            id: pokemon.id,
             especie: pokemon.especie.toLowerCase(),
             mote: pokemon.mote || pokemon.especie,
-            nivel: pokemon.nivel || 5,
-            estado: pokemon.estado || "equipo",
-            
-            // --- NUEVOS CAMPOS CLAVE ---
-            imagen: pokemon.imagen, // Guardamos la URL exacta que nos dio PokeAPI
-            tipos: pokemon.tipos,   // Guardamos un array ej: ["electric"]
-            // ---------------------------
-            
+            nivel: nivelFinal,     // Usamos el nivel validado
+            estado: estadoFinal,   // Usamos el estado validado
+            imagen: pokemon.imagen,
+            tipos: pokemon.tipos,
             fechaCaptura: new Date()
         });
 
         await entrenador.save();
-        res.json({ mensaje: "Captura registrada", entrenador });
+
+        res.json({ 
+            mensaje: "Captura registrada" + mensajeExtra, 
+            entrenador,
+            estadoAsignado: estadoFinal // Devolvemos esto para avisar al frontend
+        });
 
     } catch (error) {
         console.error(error);
@@ -157,29 +172,40 @@ router.put('/capturar', async (req, res) => {
     }
 });
 
-// --- 5. EDITAR POKÉMON (Actualizar nivel, estado, mote) ---
+// --- 5. EDITAR POKÉMON (Con validación de hueco en equipo) ---
 router.put('/pokemon/editar', async (req, res) => {
     const { entrenadorId, pokemonId, nuevosDatos } = req.body;
 
     try {
-        // Usamos el operador $set de MongoDB para buscar un pokemon específico dentro del array
-        // 'pokemons.$.nivel' significa: "El nivel del elemento que coincidió en la búsqueda"
-        const resultado = await Entrenador.updateOne(
-            { _id: entrenadorId, "pokemons._id": pokemonId },
-            { 
-                $set: {
-                    "pokemons.$.mote": nuevosDatos.mote,
-                    "pokemons.$.nivel": nuevosDatos.nivel,
-                    "pokemons.$.estado": nuevosDatos.estado
-                }
-            }
-        );
+        // 1. Buscamos el documento completo para poder validar lógicamente
+        const entrenador = await Entrenador.findById(entrenadorId);
+        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
 
-        if (resultado.modifiedCount > 0) {
-            res.json({ mensaje: "Pokémon actualizado" });
-        } else {
-            res.status(404).json({ mensaje: "No se encontró el Pokémon o no hubo cambios" });
+        // 2. Encontramos el sub-documento (el pokemon específico)
+        const poke = entrenador.pokemons.id(pokemonId);
+        if (!poke) return res.status(404).json({ mensaje: "Pokémon no encontrado" });
+
+        // 3. VALIDACIÓN DE NIVEL
+        let nuevoNivel = parseInt(nuevosDatos.nivel);
+        if (nuevoNivel > 100) nuevoNivel = 100;
+        if (nuevoNivel < 1) nuevoNivel = 1;
+
+        // 4. VALIDACIÓN DE MOVIMIENTO A EQUIPO
+        // Si intentamos moverlo al equipo (y no estaba ya ahí), verificamos hueco.
+        if (nuevosDatos.estado === 'equipo' && poke.estado !== 'equipo') {
+            const enEquipo = entrenador.pokemons.filter(p => p.estado === 'equipo').length;
+            if (enEquipo >= 6) {
+                return res.status(400).json({ mensaje: "¡Tu equipo está lleno (6/6)! Envía uno a la caja primero." });
+            }
         }
+
+        // 5. Aplicar cambios
+        poke.mote = nuevosDatos.mote;
+        poke.nivel = nuevoNivel;
+        poke.estado = nuevosDatos.estado;
+
+        await entrenador.save();
+        res.json({ mensaje: "Pokémon actualizado correctamente" });
 
     } catch (error) {
         console.error("Error al editar:", error);

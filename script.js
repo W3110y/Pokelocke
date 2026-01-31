@@ -398,6 +398,17 @@ async function guardarCaptura() {
         });
 
         if (responseServer.ok) {
+            const dataRespuesta = await responseServer.json(); // Leemos la respuesta del backend
+    
+            // Feedback inteligente
+            let mensaje = `✅ ¡${mote || dataApi.name} capturado!`;
+    
+            // Si el servidor lo mandó a la caja forzosamente, avisamos
+            if (dataRespuesta.estadoAsignado === 'caja' && estado === 'equipo') {
+                mensaje += "\n📦 Tu equipo estaba lleno, así que se envió al PC.";
+            }
+
+            alert(mensaje);
             // Éxito
             const modalEl = document.getElementById('captureModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -449,6 +460,17 @@ async function guardarCambiosPokemon() {
         nivel: parseInt(document.getElementById('edit-nivel').value),
         estado: document.getElementById('edit-estado').value
     };
+    let inputNivel = parseInt(document.getElementById('edit-nivel').value);
+    
+    // Validación Frontend Rápida
+    if (inputNivel > 100) {
+        alert("El nivel máximo es 100.");
+        return; // Cortamos aquí
+    }
+    if (inputNivel < 1) {
+        alert("El nivel mínimo es 1.");
+        return;
+    }
 
     try {
         const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon/editar', {
