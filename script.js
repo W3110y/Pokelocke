@@ -271,9 +271,13 @@ async function cargarDashboard() {
                                 equipoHTML += `
                                     <div class="text-center position-relative p-1" title="${poke.mote}">
                                         <img src="${imagenSrc}" 
-                                            alt="${poke.especie}" 
-                                            style="width: 60px; height: 60px; image-rendering: pixelated;" 
-                                            onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                        alt="${poke.especie}" 
+                                        class="poke-sprite"
+                                        style="width: 60px; height: 60px; image-rendering: pixelated; cursor: pointer; transition: transform 0.2s;" 
+                                        onclick='abrirDetalles(${JSON.stringify(poke)})'
+                                        onmouseover="this.style.transform='scale(1.2)'"
+                                        onmouseout="this.style.transform='scale(1)'"
+                                        onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
                                         
                                         <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill" 
                                             style="font-size: 0.6em; padding: 2px 6px;">
@@ -407,5 +411,66 @@ async function guardarCaptura() {
     }
 }
 
+/* ========================================================= */
+/* LOGIC: EDICIÓN DE POKÉMON                                 */
+/* ========================================================= */
 
+// 1. Abrir el modal con los datos cargados
+function abrirDetalles(poke) {
+    // Solo permitimos editar si es MI pokemon (seguridad visual)
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    
+    // Rellenar modal
+    document.getElementById('detail-title').innerText = poke.especie.toUpperCase();
+    document.getElementById('detail-img').src = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+    document.getElementById('edit-mote').value = poke.mote;
+    document.getElementById('edit-nivel').value = poke.nivel;
+    document.getElementById('edit-estado').value = poke.estado;
+    document.getElementById('edit-poke-id').value = poke._id; // Guardamos el ID de mongo
+
+    // Mostrar Modal
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+}
+
+// 2. Enviar cambios al servidor
+async function guardarCambiosPokemon() {
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    const pokeId = document.getElementById('edit-poke-id').value;
+    
+    const nuevosDatos = {
+        mote: document.getElementById('edit-mote').value,
+        nivel: parseInt(document.getElementById('edit-nivel').value),
+        estado: document.getElementById('edit-estado').value
+    };
+
+    try {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon/editar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                pokemonId: pokeId,
+                nuevosDatos: nuevosDatos
+            })
+        });
+
+        if (res.ok) {
+            // Cerrar modal y recargar
+            const modalEl = document.getElementById('detailsModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            cargarDashboard(); // Refrescar para ver cambios (ej: si murió, desaparecerá del equipo)
+        } else {
+            alert("Error al actualizar");
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// (Opcional) Función borrarPokemon() se puede implementar luego
+function borrarPokemon() {
+    alert("Funcionalidad de liberar pendiente de implementar");
+}
 

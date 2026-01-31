@@ -91,7 +91,7 @@
     <!-- ============================================= -->
     <!-- CAPTURE BUTTON & MODAL                        -->
     <!-- ============================================= -->
-    <section class="py-5 bg-body-tertiary">
+    <section>
         <div class="fixed-bottom container p-4 text-end" style="z-index: 1000; pointer-events: none;">
             <button class="btn btn-primary rounded-circle shadow-lg p-3" 
                 style="width: 60px; height: 60px; pointer-events: auto;" 
@@ -140,6 +140,59 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" onclick="guardarCaptura()">Guardar Pokémon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- DETAILS MODAL                                 -->  
+    <!-- ============================================= -->
+    <section>   
+        <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+            
+                <div class="modal-header bg-dark text-white" id="modal-details-header">
+                    <h5 class="modal-title fw-bold" id="detail-title">Detalles</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <img id="detail-img" src="" class="mb-3" style="width: 120px; image-rendering: pixelated;">
+                
+                    <form id="form-editar">
+                        <input type="hidden" id="edit-poke-id"> <div class="row g-2">
+                            <div class="col-8">
+                                <label class="form-label small text-muted">Mote</label>
+                                <input type="text" id="edit-mote" class="form-control fw-bold text-center">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-muted">Nivel</label>
+                                <input type="number" id="edit-nivel" class="form-control text-center">
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                        <label class="form-label small text-muted">Estado Actual</label>
+                                <select id="edit-estado" class="form-select text-center">
+                                    <option value="equipo">🟢 En el Equipo</option>
+                                    <option value="caja">📦 En la Caja (PC)</option>
+                                    <option value="cementerio">💀 Muerto (F)</option>
+                                </select>
+                             </div>
+                    </form>
+                </div>
+
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="borrarPokemon()">
+                            <i class="bi bi-trash"></i> Liberar
+                        </button>
+                        
+                        <button type="button" class="btn btn-primary" onclick="guardarCambiosPokemon()">
+                            <i class="bi bi-save"></i> Guardar Cambios
+                        </button>
                     </div>
                 </div>
             </div>

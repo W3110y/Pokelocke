@@ -157,4 +157,34 @@ router.put('/capturar', async (req, res) => {
     }
 });
 
+// --- 5. EDITAR POKÉMON (Actualizar nivel, estado, mote) ---
+router.put('/pokemon/editar', async (req, res) => {
+    const { entrenadorId, pokemonId, nuevosDatos } = req.body;
+
+    try {
+        // Usamos el operador $set de MongoDB para buscar un pokemon específico dentro del array
+        // 'pokemons.$.nivel' significa: "El nivel del elemento que coincidió en la búsqueda"
+        const resultado = await Entrenador.updateOne(
+            { _id: entrenadorId, "pokemons._id": pokemonId },
+            { 
+                $set: {
+                    "pokemons.$.mote": nuevosDatos.mote,
+                    "pokemons.$.nivel": nuevosDatos.nivel,
+                    "pokemons.$.estado": nuevosDatos.estado
+                }
+            }
+        );
+
+        if (resultado.modifiedCount > 0) {
+            res.json({ mensaje: "Pokémon actualizado" });
+        } else {
+            res.status(404).json({ mensaje: "No se encontró el Pokémon o no hubo cambios" });
+        }
+
+    } catch (error) {
+        console.error("Error al editar:", error);
+        res.status(500).json({ mensaje: "Error interno" });
+    }
+});
+
 module.exports = router;
