@@ -263,13 +263,19 @@ async function cargarDashboard() {
                             // Solo mostramos los del equipo vivo
                             if (poke.estado === 'equipo') {
                                 // URL MÁGICA DE POKEAPI
-                                const sprite = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie.toLowerCase()}.png`;
-                                
+                                const sprite = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie}.png`;
+                                // AÑADIMOS style="image-rendering: pixelated;" PARA QUE SE VEA NÍTIDO
                                 equipoHTML += `
-                                    <div class="text-center" title="${poke.mote} (Nv.${poke.nivel})">
-                                        <img src="${sprite}" alt="${poke.especie}" style="width: 50px; height: 50px;" 
+                                    <div class="text-center position-relative" title="${poke.mote} (Nv.${poke.nivel})">
+                                        <img src="${sprite}" 
+                                            alt="${poke.especie}" 
+                                            style="width: 60px; height: 60px; image-rendering: pixelated;" 
                                             onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                                        <div style="font-size: 0.7em;" class="fw-bold">${poke.nivel}</div>
+                                        
+                                        <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark text-white rounded-pill" 
+                                            style="font-size: 0.6rem; padding: 2px 6px;">
+                                            Lv.${poke.nivel}
+                                        </span>
                                     </div>
                                 `;
                             }
@@ -325,48 +331,61 @@ if (window.location.pathname.includes('stats.html')) {
 }
 
 /* ========================================================= */
-/* LOGIC: CAPTURAR POKÉMON (NUEVO)                           */
+/* LOGIC: CAPTURAR POKÉMON (CON VALIDACIÓN POKEAPI)          */
 /* ========================================================= */
 async function guardarCaptura() {
-    // 1. Recuperar usuario actual (Necesitamos su ID)
+    // 1. Verificar sesión
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) return alert("Error: No hay sesión activa");
     const usuario = JSON.parse(usuarioRaw);
 
-    // 2. Capturar datos del formulario
-    const especie = document.getElementById('poke-especie').value.trim();
+    // 2. Obtener datos del formulario
+    let nombreInput = document.getElementById('poke-especie').value.trim().toLowerCase();
     const mote = document.getElementById('poke-mote').value.trim();
     const nivel = document.getElementById('poke-nivel').value;
     const estado = document.getElementById('poke-estado').value;
 
-    if (!especie) {
-        alert("¡Debes escribir la especie del Pokémon!");
+    if (!nombreInput) {
+        alert("Escribe un nombre de Pokémon");
         return;
     }
 
-    // 3. Preparar el objeto a enviar
-    const payload = {
-        entrenadorId: usuario._id, // ID de Mongo del usuario
-        pokemon: {
-            especie: especie,
-            mote: mote || especie,
-            nivel: parseInt(nivel),
-            estado: estado,
-            tipo: "normal" // Por ahora genérico
-        }
-    };
-
-    // 4. Enviar al Servidor
-    const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/capturar'; // Ajusta si usas Render
+    // UI: Mostrar que estamos trabajando
+    const btn = document.querySelector('#captureModal .btn-primary');
+    const textoOriginal = btn.innerText;
+    btn.innerText = "Verificando...";
+    btn.disabled = true;
 
     try {
-        const btn = document.querySelector('#captureModal .btn-primary');
-        const textoOriginal = btn.innerText;
-        btn.innerText = "Guardando...";
-        btn.disabled = true;
+        // 3. PASO NUEVO: Validar existencia en PokeAPI
+        // Esto corrige errores de tipeo (ej: "Pikachu " -> "pikachu")
+        // Y nos asegura que la imagen existirá.
+        const apiCheck = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreInput}`);
+        
+        if (!apiCheck.ok) {
+            throw new Error("Pokémon no encontrado. Revisa el nombre (en inglés).");
+        }
+
+        const dataPoke = await apiCheck.json();
+        const nombreOficial = dataPoke.name; // Usamos el nombre REAL de la API (ej: "mr-mime")
+
+        // 4. Preparar envío a NUESTRO servidor
+        const payload = {
+            entrenadorId: usuario._id,
+            pokemon: {
+                especie: nombreOficial, // Guardamos el nombre validado
+                mote: mote || nombreOficial, // Si no hay mote, ponemos el nombre oficial bonito
+                nivel: parseInt(nivel),
+                estado: estado,
+                tipo: dataPoke.types[0].type.name // ¡Bonus! Guardamos su tipo real (fuego, agua...)
+            }
+        };
+
+        // 5. Guardar en tu Backend
+        const API_URL = 'http://localhost:3000/api/juego/capturar'; 
 
         const response = await fetch(API_URL, {
-            method: 'PUT', // Usamos PUT porque actualizamos al entrenador
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
@@ -374,29 +393,27 @@ async function guardarCaptura() {
         const data = await response.json();
 
         if (response.ok) {
-            // A. Cerrar Modal (usando Bootstrap)
+            // Éxito total
             const modalEl = document.getElementById('captureModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
-
-            // B. Limpiar formulario
             document.getElementById('form-captura').reset();
-
-            // C. Recargar datos para ver el nuevo pokemon
-            cargarDashboard();
             
-            alert(`¡${data.entrenador.pokemons.slice(-1)[0].especie} atrapado!`);
+            cargarDashboard(); // Recargar para ver el sprite
+            
+            // Feedback visual agradable
+            alert(`✅ ¡${mote || nombreOficial} registrado correctamente!`);
         } else {
-            alert("Error: " + data.mensaje);
+            alert("Error del servidor: " + data.mensaje);
         }
-
-        // Restaurar botón
-        btn.innerText = textoOriginal;
-        btn.disabled = false;
 
     } catch (error) {
         console.error(error);
-        alert("Error de conexión al guardar");
+        alert("❌ Error: " + error.message);
+    } finally {
+        // Restaurar botón pase lo que pase
+        btn.innerText = textoOriginal;
+        btn.disabled = false;
     }
 }
 
