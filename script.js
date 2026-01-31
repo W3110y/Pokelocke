@@ -262,21 +262,33 @@ async function cargarDashboard() {
                         jugador.pokemons.forEach(poke => {
                             // Solo mostramos los del equipo vivo
                             if (poke.estado === 'equipo') {
-                                const nombreSprite = poke.especie.toLowerCase(); // Convertir a minúsculas para la URL
-                                const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${nombreSprite}.png`;
-
-                                equipoHTML += `
-                                    <div class="text-center position-relative" title="${poke.mote}">
-                                        <img src="${spriteUrl}" 
-                                            alt="${poke.especie}" 
-                                            style="width: 50px; height: 50px; image-rendering: pixelated;"
-                                            onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';">
+                            // --- LÓGICA DE IMAGEN ROBUSTA ---
+                                        let imageUrl = '';
                                         
-                                        <span class="badge bg-dark rounded-pill" style="font-size: 0.6em">L.${poke.nivel}</span>
-                                    </div>
-                                `;
-                            }
-                        });
+                                        if (poke.id) {
+                                            // OPCIÓN A (MEJOR): Usar ID y Arte Oficial HD
+                                            imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${poke.id}.png`;
+                                        } else {
+                                            // OPCIÓN B (LEGACY): Si es un pokemon viejo sin ID, usamos el nombre
+                                            // Esto evita que se rompan los que capturaste ayer
+                                            imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie}.png`;
+                                        }
+
+                                        equipoHTML += `
+                                            <div class="text-center position-relative" title="${poke.mote}">
+                                                <img src="${imageUrl}" 
+                                                    alt="${poke.especie}" 
+                                                    style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));" 
+                                                    onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                                
+                                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark rounded-pill border border-light" 
+                                                    style="font-size: 0.6em;">
+                                                    L.${poke.nivel}
+                                                </span>
+                                            </div>
+                                        `;
+                                    }
+                                });
                         equipoHTML += '</div>';
                     } else {
                         equipoHTML = '<div class="text-center py-2 bg-light rounded"><small class="text-secondary">Equipo Vacío</small></div>';
@@ -394,6 +406,7 @@ async function guardarCaptura() {
         const payload = {
             entrenadorId: usuario._id,
             pokemon: {
+                id: datosPokeApi.id, // <--- NUEVO: Enviamos el ID real (ej: 6 para Charizard)
                 especie: datosPokeApi.name, // Usamos el nombre REAL de la API (ej: 'mr-mime')
                 mote: mote || datosPokeApi.name, 
                 nivel: parseInt(nivel),

@@ -141,6 +141,7 @@ router.put('/capturar', async (req, res) => {
         // 3. Añadir el Pokémon al Array 'pokemons'
         // Usamos push para meterlo al final de la lista
         entrenador.pokemons.push({
+            id: pokemon.id, // <--- NUEVO: Guardamos el ID numérico (ej: 6)
             especie: pokemon.especie.toLowerCase(), // Estandarizamos a minúsculas
             mote: pokemon.mote || pokemon.especie,  // Si no hay mote, usa la especie
             nivel: pokemon.nivel || 5,
@@ -151,8 +152,6 @@ router.put('/capturar', async (req, res) => {
 
         // 4. Guardar cambios en MongoDB
         await entrenador.save();
-
-        console.log(`✅ Captura registrada: ${pokemon.especie} para ${entrenador.nombre}`);
 
         // 5. Devolver el entrenador actualizado
         res.json({ 
