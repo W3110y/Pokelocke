@@ -200,231 +200,172 @@ document.addEventListener('DOMContentLoaded', () => {
 /* LOGIC: DASHBOARD / STATS LOADER                           */
 /* ========================================================= */
 async function cargarDashboard() {
-    // 1. Verificar seguridad (Usuario logueado)
+    // 1. INYECTAR ESTILOS CSS (Solución al problema de "desaparición")
+    // Esto asegura que los estilos existan sin tocar el HTML
+    if (!document.getElementById('dynamic-medal-styles')) {
+        const styleSheet = document.createElement("style");
+        styleSheet.id = "dynamic-medal-styles";
+        styleSheet.innerText = `
+            /* Estuche de Medallas */
+            .medal-case {
+                background: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 8px;
+                display: flex;
+                justify-content: space-between;
+                gap: 4px;
+                margin-bottom: 12px;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            }
+            /* La Medalla (Hueco) */
+            .gym-badge {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: #2b2b2b;
+                border: 2px solid #3d3d3d;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+            /* Medalla Conseguida (Brillante) */
+            .gym-badge.earned {
+                background: var(--badge-color);
+                border-color: white;
+                box-shadow: 0 0 8px var(--badge-color);
+                transform: scale(1.1);
+            }
+            /* Brillo */
+            .gym-badge.earned::after {
+                content: '';
+                position: absolute;
+                top: 3px; left: 3px;
+                width: 6px; height: 3px;
+                background: rgba(255,255,255,0.6);
+                border-radius: 50%;
+                transform: rotate(-45deg);
+            }
+            /* Interacción */
+            .gym-badge.clickable { cursor: pointer; }
+            .gym-badge.clickable:hover { transform: scale(1.2); }
+        `;
+        document.head.appendChild(styleSheet);
+    }
+
+    // 2. LÓGICA DE CARGA DE DATOS
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) {
-        window.location.href = 'join.html'; 
-        return;
-    }
-    const usuario = JSON.parse(usuarioRaw);
-    // DEBUG: Verificar que ahora sí leemos bien el nombre
-    console.log("👤 Usuario cargado:", usuario);
-
-    const salaNombre = usuario.sala; 
-    if (!salaNombre) {
-        console.error("❌ ERROR CRÍTICO: El nombre de la sala es undefined. Revisa el localStorage.");
-        return;
-    }
+    if (!usuarioRaw) { window.location.href = 'join.html'; return; }
     
-    // 2. Pintar Info Estática rápida (mientras carga internet)
-    const salaInfoRaw = localStorage.getItem('sala_info');
-    if (salaInfoRaw) {
-        renderizarInfoSala(JSON.parse(salaInfoRaw));
-    }
+    const usuario = JSON.parse(usuarioRaw);
+    const salaNombre = usuario.sala; 
 
-    // 3. PEDIR DATOS EN TIEMPO REAL AL SERVIDOR
-    // Asegúrate de usar tu URL correcta (localhost o Render)
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
-    console.log("🌍 Pidiendo datos a:", API_URL);
+    // Info estática rápida
+    const salaInfoRaw = localStorage.getItem('sala_info');
+    if (salaInfoRaw) renderizarInfoSala(JSON.parse(salaInfoRaw));
+
+    // FETCH AL SERVIDOR
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`; // ¡Asegúrate que esta URL es la tuya!
 
     try {
         const response = await fetch(API_URL);
         
         if (response.ok) {
-            // AQUI ESTÁ LA SOLUCIÓN: Recibimos el paquete completo
             const data = await response.json(); 
-            
-            const infoSala = data.sala;            // Datos de la sala (capacidad, host)
-            const listaJugadores = data.jugadores; // Lista de personas
-            
-            // --- A. ACTUALIZAR EL CONTADOR DE JUGADORES ---
-            // Ahora sí tenemos ambos números para mostrar "2 / 4"
-            const contador = document.getElementById('view-player-count');
-            if (contador) {
-                contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
-            }
+            const infoSala = data.sala;
+            const listaJugadores = data.jugadores;
 
-            // --- B. PINTAR LAS TARJETAS DE LOS JUGADORES ---
+            // Actualizar contador
+            const contador = document.getElementById('view-player-count');
+            if (contador) contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
+
+            // Renderizar Grid de Jugadores
             const grid = document.getElementById('players-grid');
             if (grid) {
-                grid.innerHTML = ''; // Limpiar grid previo
-
-                /* DENTRO DE cargarDashboard (script.js) -> listaJugadores.forEach */
+                grid.innerHTML = ''; // Limpiar
 
                 listaJugadores.forEach(jugador => {
                     const esMio = jugador._id === usuario._id;
                     const esHost = jugador.nombre === infoSala.host;
 
-                    // CLASIFICAR: Dividimos los pokemons en 3 arrays según su estado
+                    // A. CLASIFICAR POKÉMONS
                     const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
                     const caja = jugador.pokemons.filter(p => p.estado === 'caja');
                     const cementerio = jugador.pokemons.filter(p => p.estado === 'cementerio');
 
-                    // HELPER: Función para generar la cuadrícula de imágenes
-                    // Esto evita repetir código 3 veces. Maneja clicks, imágenes y estilos.
-                    const generarGrid = (lista, esGris = false) => {
-                        if (lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic">Vacío</div>';
-                        
+                    // B. GENERADOR DE IMÁGENES (GRID)
+                    const generarGrid = (lista, esGris) => {
+                        if (lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic opacity-50">Vacío</div>';
                         return `<div class="d-flex justify-content-center flex-wrap gap-2">` + 
                         lista.map(poke => {
-                            // Lógica de interacción: Solo si es mío permitimos click
                             const accionClick = esMio ? `onclick='abrirDetalles(${JSON.stringify(poke)})'` : '';
-                            const estiloCursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
-                            const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.7;' : ''; // Estilo para muertos
-                            
-                            // Usamos la imagen guardada o la pokeball de error
+                            const estilo = esMio ? 'cursor:pointer;' : 'cursor:default;';
+                            const gris = esGris ? 'filter:grayscale(100%); opacity:0.6;' : '';
                             const imgUrl = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-
+                            
                             return `
                             <div class="text-center position-relative p-1" title="${poke.mote}">
-                                <img src="${imgUrl}" 
-                                    class="poke-sprite"
-                                    style="width: 50px; height: 50px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor} ${filtroGris}"
-                                    ${accionClick}
-                                    onmouseover="this.style.transform='scale(1.2)'"
-                                    onmouseout="this.style.transform='scale(1)'"
-                                    onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                                
-                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark bg-opacity-75 rounded-pill border border-secondary" 
-                                    style="font-size: 0.55em; padding: 1px 4px;">L.${poke.nivel}</span>
+                                <img src="${imgUrl}" class="poke-sprite" 
+                                     style="width:50px; height:50px; image-rendering:pixelated; ${estilo} ${gris}"
+                                     ${accionClick}
+                                     onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark rounded-pill border border-secondary" style="font-size:0.55em;">L.${poke.nivel}</span>
                             </div>`;
                         }).join('') + `</div>`;
                     };
 
-                    // GENERAR IDs ÚNICOS (Vital para que las pestañas funcionen independientemente)
-                    const tabIdEquipo = `pills-equipo-${jugador._id}`;
-                    const tabIdCaja = `pills-caja-${jugador._id}`;
-                    const tabIdCementerio = `pills-dead-${jugador._id}`;
-                    
-                    // GENERADOR DE MEDALLAS
-                    const totalMedallas = 8; // Kanto tiene 8, puedes cambiarlo a 16 si quieres
-                    let medallasHTML = '<div class="d-flex justify-content-center gap-1 mb-3 bg-light rounded-pill p-1 border" style="width: fit-content; margin: 0 auto;">';
-                    
-                    for (let i = 1; i <= totalMedallas; i++) {
-                        const tieneMedalla = i <= (jugador.medallas || 0);
-                        // Icono: Check si la tiene, Círculo si no
-                        const icono = tieneMedalla ? 'bi-patch-check-fill text-warning' : 'bi-circle text-muted';
-                        const opacidad = tieneMedalla ? '1' : '0.3';
+                    // C. GENERADOR DE MEDALLAS (Colores Kanto)
+                    const badgeColors = ['#9da5ae', '#358df5', '#f6b62d', '#5ac746', '#d64ecb', '#f5c949', '#e84535', '#2aa63d'];
+                    let medallasHTML = '<div class="medal-case">';
+                    badgeColors.forEach((color, idx) => {
+                        const num = idx + 1;
+                        const tiene = num <= (jugador.medallas || 0);
+                        const evento = (esMio) ? `onclick="actualizarMedallas(${tiene && jugador.medallas === num ? num - 1 : num})"` : '';
                         
-                        // Solo yo puedo hacer clic en MIS medallas
-                        const accionClick = esMio ? `onclick='actualizarMedallas(${i})'` : '';
-                        const cursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
-
-                        // DEFINICIÓN DE COLORES (Kanto Badges: Roca, Cascada, Trueno, Arcoiris, Alma, Pantano, Volcán, Tierra)
-                        const badgeColors = [
-                            '#9da5ae', // Boulder (Gris)
-                            '#358df5', // Cascade (Azul)
-                            '#f6b62d', // Thunder (Naranja/Amarillo)
-                            '#5ac746', // Rainbow (Verde)
-                            '#d64ecb', // Soul (Rosa)
-                            '#f5c949', // Marsh (Amarillo Oro)
-                            '#e84535', // Volcano (Rojo)
-                            '#2aa63d'  // Earth (Verde Oscuro/Tierra)
-                        ];
-
-                        // CONSTRUCCIÓN DEL HTML DEL MEDALLERO
-                        let medallasHTML = '<div class="medal-case">';
-                        
-                        badgeColors.forEach((color, index) => {
-                            const numeroMedalla = index + 1;
-                            const tieneMedalla = numeroMedalla <= (jugador.medallas || 0);
-                            
-                            // Clases dinámicas
-                            const claseEarned = tieneMedalla ? 'earned' : '';
-                            const claseClickable = esMio ? 'clickable' : '';
-                            
-                            // Evento onclick: Si hago clic en la 3, actualizo a 3. 
-                            // Lógica "Toggle": Si hago clic en la medalla 3 y YA tengo 3, bajo a 2 (para poder quitármela).
-                            let eventoClick = '';
-                            if (esMio) {
-                                // Si ya tengo esta medalla y es la última que tengo, al clicarla bajo 1. Si no, subo hasta ella.
-                                const nuevaCantidad = (tieneMedalla && jugador.medallas === numeroMedalla) ? numeroMedalla - 1 : numeroMedalla;
-                                eventoClick = `onclick="actualizarMedallas(${nuevaCantidad})"`;
-                            }
-
-                            medallasHTML += `
-                                <div class="gym-badge ${claseEarned} ${claseClickable}" 
-                                    style="--badge-color: ${color};" 
-                                    title="Medalla ${numeroMedalla}"
-                                    ${eventoClick}>
-                                </div>
-                            `;
-                        });
-                    }
+                        medallasHTML += `<div class="gym-badge ${tiene ? 'earned' : ''} ${esMio ? 'clickable' : ''}" 
+                                              style="--badge-color: ${color};" title="Medalla ${num}" ${evento}></div>`;
+                    });
                     medallasHTML += '</div>';
 
-                    // CONSTRUIR LA TARJETA CON PESTAÑAS (HTML Complejo)
-                    const cardHTML = `
-                    <div class="col-md-6 col-lg-4">
+                    // D. CONSTRUIR TARJETA FINAL
+                    const tabIdEq = `t-eq-${jugador._id}`;
+                    const tabIdPc = `t-pc-${jugador._id}`;
+                    const tabIdDead = `t-dd-${jugador._id}`;
+
+                    grid.innerHTML += `
+                    <div class="col-md-6 col-lg-4 fade-up">
                         <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
-                            
                             <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2">
-                                <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 70%;">
+                                <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width:70%;">
                                     <i class="bi bi-person-circle"></i> ${jugador.nombre}
-                                    ${esMio ? '<span class="badge bg-primary ms-1" style="font-size:0.5em">TÚ</span>' : ''}
-                                    ${esHost ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.5em">HOST</span>' : ''}
+                                    ${esMio ? '<span class="badge bg-primary ms-1" style="font-size:0.6em">TÚ</span>' : ''}
+                                    ${esHost ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.6em">HOST</span>' : ''}
                                 </h5>
-                                <span class="badge bg-secondary" title="Pokémon vivos">${equipo.length + caja.length} Vivos</span>
+                                <span class="badge bg-secondary">${equipo.length + caja.length} Vivos</span>
                             </div>
 
                             <div class="card-body p-2">
                                 ${medallasHTML}
-                                <ul class="nav nav-pills nav-fill mb-2 small" role="tablist" style="font-size: 0.85rem;">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active py-1" data-bs-toggle="pill" data-bs-target="#${tabIdEquipo}" type="button">
-                                            Equipo
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link py-1 position-relative" data-bs-toggle="pill" data-bs-target="#${tabIdCaja}" type="button">
-                                            PC
-                                            ${caja.length > 0 ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.5em">${caja.length}</span>` : ''}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link py-1" data-bs-toggle="pill" data-bs-target="#${tabIdCementerio}" type="button">
-                                            ☠️
-                                            ${cementerio.length > 0 ? `<span class="badge bg-secondary ms-1" style="font-size:0.6em">${cementerio.length}</span>` : ''}
-                                        </button>
-                                    </li>
+
+                                <ul class="nav nav-pills nav-fill mb-2 small" role="tablist">
+                                    <li class="nav-item"><button class="nav-link active py-1" data-bs-toggle="pill" data-bs-target="#${tabIdEq}">Equipo</button></li>
+                                    <li class="nav-item"><button class="nav-link py-1 position-relative" data-bs-toggle="pill" data-bs-target="#${tabIdPc}">
+                                        PC ${caja.length ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.5em">${caja.length}</span>` : ''}
+                                    </button></li>
+                                    <li class="nav-item"><button class="nav-link py-1" data-bs-toggle="pill" data-bs-target="#${tabIdDead}">☠️</button></li>
                                 </ul>
 
                                 <div class="tab-content">
-                                    
-                                    <div class="tab-pane fade show active" id="${tabIdEquipo}" role="tabpanel">
-                                        <div class="bg-body-tertiary border rounded p-2" style="min-height: 100px;">
-                                            ${generarGrid(equipo, false)}
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="${tabIdCaja}" role="tabpanel">
-                                        <div class="bg-body-secondary border rounded p-2" style="min-height: 100px;">
-                                            ${generarGrid(caja, false)}
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="${tabIdCementerio}" role="tabpanel">
-                                        <div class="bg-dark bg-opacity-10 border rounded p-2" style="min-height: 100px;">
-                                            ${generarGrid(cementerio, true)}
-                                        </div>
-                                    </div>
-
+                                    <div class="tab-pane fade show active" id="${tabIdEq}"><div class="bg-body-tertiary border rounded p-2" style="min-height:100px;">${generarGrid(equipo, false)}</div></div>
+                                    <div class="tab-pane fade" id="${tabIdPc}"><div class="bg-body-secondary border rounded p-2" style="min-height:100px;">${generarGrid(caja, false)}</div></div>
+                                    <div class="tab-pane fade" id="${tabIdDead}"><div class="bg-dark bg-opacity-10 border rounded p-2" style="min-height:100px;">${generarGrid(cementerio, true)}</div></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    `;
-
-                    grid.innerHTML += cardHTML;
+                    </div>`;
                 });
             }
-        } else {
-            console.error("Error del servidor:", response.status);
         }
-
-    } catch (error) {
-        console.error("Error de conexión cargando dashboard:", error);
-    }
+    } catch (error) { console.error("Error dashboard:", error); }
 }
 
 // Helper para pintar textos
