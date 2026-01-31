@@ -260,35 +260,29 @@ async function cargarDashboard() {
                         equipoHTML = '<div class="d-flex justify-content-center flex-wrap gap-2">';
                         
                         jugador.pokemons.forEach(poke => {
-                            // Solo mostramos los del equipo vivo
                             if (poke.estado === 'equipo') {
-                            // --- LÓGICA DE IMAGEN ROBUSTA ---
-                                        let imageUrl = '';
-                                        
-                                        if (poke.id) {
-                                            // OPCIÓN A (MEJOR): Usar ID y Arte Oficial HD
-                                            imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${poke.id}.png`;
-                                        } else {
-                                            // OPCIÓN B (LEGACY): Si es un pokemon viejo sin ID, usamos el nombre
-                                            // Esto evita que se rompan los que capturaste ayer
-                                            imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie}.png`;
-                                        }
+                                
+                                // Usamos la imagen guardada. Si es un pokemon viejo (sin imagen guardada), ponemos la pokeball.
+                                const imagenSrc = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                                
+                                // Color del borde según el tipo (Opcional, detalle visual pro)
+                                // const tipoPrincipal = poke.tipos ? poke.tipos[0] : 'normal';
 
-                                        equipoHTML += `
-                                            <div class="text-center position-relative" title="${poke.mote}">
-                                                <img src="${imageUrl}" 
-                                                    alt="${poke.especie}" 
-                                                    style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));" 
-                                                    onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                                                
-                                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark rounded-pill border border-light" 
-                                                    style="font-size: 0.6em;">
-                                                    L.${poke.nivel}
-                                                </span>
-                                            </div>
-                                        `;
-                                    }
-                                });
+                                equipoHTML += `
+                                    <div class="text-center position-relative p-1" title="${poke.mote}">
+                                        <img src="${imagenSrc}" 
+                                            alt="${poke.especie}" 
+                                            style="width: 60px; height: 60px; image-rendering: pixelated;" 
+                                            onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                                        
+                                        <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill" 
+                                            style="font-size: 0.6em; padding: 2px 6px;">
+                                            Lv.${poke.nivel}
+                                        </span>
+                                    </div>
+                                `;
+                            }
+                        });
                         equipoHTML += '</div>';
                     } else {
                         equipoHTML = '<div class="text-center py-2 bg-light rounded"><small class="text-secondary">Equipo Vacío</small></div>';
@@ -340,115 +334,75 @@ if (window.location.pathname.includes('stats.html')) {
 }
 
 /* ========================================================= */
-/* LOGIC: CAPTURAR POKÉMON (VERSIÓN ESTRICTA)                */
+/* LOGIC: CAPTURAR POKÉMON                                   */
 /* ========================================================= */
 async function guardarCaptura() {
-    console.log("🔵 Iniciando proceso de captura...");
-
-    // 1. RECUPERAR DATOS DEL FORMULARIO
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) return alert("Error: No hay sesión activa");
     const usuario = JSON.parse(usuarioRaw);
 
-    const inputNombre = document.getElementById('poke-especie').value.trim().toLowerCase(); // Forzamos minúsculas
+    const inputNombre = document.getElementById('poke-especie').value.trim().toLowerCase();
     const mote = document.getElementById('poke-mote').value.trim();
     const nivel = document.getElementById('poke-nivel').value;
     const estado = document.getElementById('poke-estado').value;
 
-    if (!inputNombre) {
-        alert("❌ Por favor, escribe el nombre del Pokémon.");
-        return;
-    }
+    if (!inputNombre) return alert("Escribe un nombre de Pokémon");
 
-    // UI: Bloquear botón para evitar doble click
     const btn = document.querySelector('#captureModal .btn-primary');
-    const textoOriginal = btn.innerText;
-    btn.innerText = "🔍 Verificando en PokeAPI...";
+    const txtOriginal = btn.innerText;
+    btn.innerText = "Buscando en PokeAPI...";
     btn.disabled = true;
 
-    let datosPokeApi = null;
-
     try {
-        // ======================================================
-        // FASE 1: VALIDACIÓN CON POKEAPI (EXTERNO)
-        // ======================================================
-        console.log(`🌍 Consultando PokeAPI por: ${inputNombre}`);
+        // 1. CONSULTAR POKEAPI
         const responseApi = await fetch(`https://pokeapi.co/api/v2/pokemon/${inputNombre}`);
-
-        if (!responseApi.ok) {
-            // SI ENTRA AQUÍ, ES QUE EL NOMBRE ESTÁ MAL ESCRITO
-            throw new Error(`El Pokémon "${inputNombre}" no existe. Revisa la ortografía (inglés).`);
-        }
-
-        // Si llegamos aquí, el Pokémon existe. Guardamos sus datos oficiales.
-        datosPokeApi = await responseApi.json();
-        console.log("✅ Pokémon validado:", datosPokeApi.name);
-
-    } catch (errorValidacion) {
-        // ERROR DE VALIDACIÓN: PARAMOS TODO AQUÍ
-        console.error("❌ Fallo validación:", errorValidacion);
-        alert(errorValidacion.message);
+        if (!responseApi.ok) throw new Error("Pokémon no encontrado. Revisa el nombre.");
         
-        // Restauramos el botón y SALIMOS de la función
-        btn.innerText = textoOriginal;
-        btn.disabled = false;
-        return; // <--- ESTO ES VITAL: NO SIGUE EJECUTANDO
-    }
+        const dataApi = await responseApi.json();
 
-    try {
-        // ======================================================
-        // FASE 2: GUARDAR EN TU SERVIDOR (INTERNO)
-        // Solo llegamos aquí si la Fase 1 fue exitosa
-        // ======================================================
-        console.log("💾 Guardando en base de datos...");
-        btn.innerText = "💾 Guardando...";
+        // 2. EXTRAER DATOS VALIOSOS (Aquí está la magia)
+        // Extraemos la imagen pixelart frontal
+        const spriteOficial = dataApi.sprites.front_default; 
+        // Extraemos los tipos (ej: ['fire', 'flying'])
+        const tipos = dataApi.types.map(t => t.type.name);
 
+        // 3. PREPARAR ENVÍO AL BACKEND
         const payload = {
             entrenadorId: usuario._id,
             pokemon: {
-                id: datosPokeApi.id, // <--- NUEVO: Enviamos el ID real (ej: 6 para Charizard)
-                especie: datosPokeApi.name, // Usamos el nombre REAL de la API (ej: 'mr-mime')
-                mote: mote || datosPokeApi.name, 
+                id: dataApi.id,
+                especie: dataApi.name,
+                mote: mote || dataApi.name, // Capitalizar primera letra quedaría mejor, pero así vale
                 nivel: parseInt(nivel),
                 estado: estado,
-                tipo: datosPokeApi.types[0].type.name // Guardamos el tipo (fire, water...)
+                imagen: spriteOficial, // <--- ENVIAMOS LA URL EXACTA
+                tipos: tipos           // <--- ENVIAMOS LOS TIPOS
             }
         };
 
-        const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/capturar'; // Ajusta si usas Render
-
-        const responseServer = await fetch(API_URL, {
+        // 4. GUARDAR EN TU BASE DE DATOS
+        const responseServer = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/capturar', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const dataServer = await responseServer.json();
-
         if (responseServer.ok) {
-            // ÉXITO TOTAL
-            alert(`✨ ¡${mote || datosPokeApi.name} registrado con éxito!`);
-            
-            // Cerrar modal
+            // Éxito
             const modalEl = document.getElementById('captureModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
-            
-            // Limpiar formulario
             document.getElementById('form-captura').reset();
-            
-            // Recargar Dashboard para ver la imagen
             cargarDashboard();
+            alert(`✅ ¡${mote || dataApi.name} capturado!`);
         } else {
-            throw new Error(dataServer.mensaje || "Error al guardar en el servidor");
+            throw new Error("Error al guardar en servidor");
         }
 
-    } catch (errorServidor) {
-        console.error("❌ Error del servidor:", errorServidor);
-        alert("Error de conexión: " + errorServidor.message);
+    } catch (error) {
+        alert("❌ Error: " + error.message);
     } finally {
-        // Restaurar botón siempre al final
-        btn.innerText = textoOriginal;
+        btn.innerText = txtOriginal;
         btn.disabled = false;
     }
 }
