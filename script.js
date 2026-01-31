@@ -255,26 +255,24 @@ async function cargarDashboard() {
                     const esMio = jugador._id === usuario._id;
                     const esHost = jugador.nombre === infoSala.host;
 
-                    // 1. CLASIFICAR POKÉMONS (Separar en 3 listas)
-                    // -------------------------------------------------------
+                    // 1. CLASIFICAR: Dividimos los pokemons en 3 arrays según su estado
                     const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
                     const caja = jugador.pokemons.filter(p => p.estado === 'caja');
                     const cementerio = jugador.pokemons.filter(p => p.estado === 'cementerio');
 
-                    // 2. FUNCIÓN GENERADORA DE IMÁGENES (Para no repetir código)
-                    // -------------------------------------------------------
+                    // 2. HELPER: Función para generar la cuadrícula de imágenes
+                    // Esto evita repetir código 3 veces. Maneja clicks, imágenes y estilos.
                     const generarGrid = (lista, esGris = false) => {
-                        if (lista.length === 0) return '<div class="text-center py-3 text-muted small">Vacío</div>';
+                        if (lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic">Vacío</div>';
                         
                         return `<div class="d-flex justify-content-center flex-wrap gap-2">` + 
                         lista.map(poke => {
-                            // Lógica de interacción (solo si es mío y no está muerto, o sí, según reglas)
-                            // Permitimos editar incluso muertos para corregir errores
+                            // Lógica de interacción: Solo si es mío permitimos click
                             const accionClick = esMio ? `onclick='abrirDetalles(${JSON.stringify(poke)})'` : '';
                             const estiloCursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
-                            const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.6;' : ''; // Efecto muerte
+                            const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.7;' : ''; // Estilo para muertos
                             
-                            // Imagen o Pokeball
+                            // Usamos la imagen guardada o la pokeball de error
                             const imgUrl = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
 
                             return `
@@ -286,34 +284,34 @@ async function cargarDashboard() {
                                     onmouseover="this.style.transform='scale(1.2)'"
                                     onmouseout="this.style.transform='scale(1)'"
                                     onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-secondary rounded-pill border border-light" 
+                                
+                                <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark bg-opacity-75 rounded-pill border border-secondary" 
                                     style="font-size: 0.55em; padding: 1px 4px;">L.${poke.nivel}</span>
                             </div>`;
                         }).join('') + `</div>`;
                     };
 
-                    // 3. GENERAR HTML DE LAS PESTAÑAS (TABS)
-                    // -------------------------------------------------------
-                    // Necesitamos IDs únicos para que las pestañas de Pepe no abran las de Juan
+                    // 3. GENERAR IDs ÚNICOS (Vital para que las pestañas funcionen independientemente)
                     const tabIdEquipo = `pills-equipo-${jugador._id}`;
                     const tabIdCaja = `pills-caja-${jugador._id}`;
                     const tabIdCementerio = `pills-dead-${jugador._id}`;
 
+                    // 4. CONSTRUIR LA TARJETA CON PESTAÑAS (HTML Complejo)
                     const cardHTML = `
                     <div class="col-md-6 col-lg-4">
                         <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
                             
-                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                <h5 class="card-title fw-bold mb-0 text-truncate">
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2">
+                                <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 70%;">
                                     <i class="bi bi-person-circle"></i> ${jugador.nombre}
                                     ${esMio ? '<span class="badge bg-primary ms-1" style="font-size:0.5em">TÚ</span>' : ''}
                                     ${esHost ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.5em">HOST</span>' : ''}
                                 </h5>
-                                <span class="badge bg-dark">${equipo.length}/6</span>
+                                <span class="badge bg-secondary" title="Pokémon vivos">${equipo.length + caja.length} Vivos</span>
                             </div>
 
                             <div class="card-body p-2">
-                                <ul class="nav nav-pills nav-fill mb-3 small" id="pills-tab-${jugador._id}" role="tablist">
+                                <ul class="nav nav-pills nav-fill mb-2 small" role="tablist" style="font-size: 0.85rem;">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active py-1" data-bs-toggle="pill" data-bs-target="#${tabIdEquipo}" type="button">
                                             Equipo
@@ -333,23 +331,24 @@ async function cargarDashboard() {
                                     </li>
                                 </ul>
 
-                                <div class="tab-content" id="pills-tabContent-${jugador._id}">
+                                <div class="tab-content">
                                     
                                     <div class="tab-pane fade show active" id="${tabIdEquipo}" role="tabpanel">
-                                        <div class="bg-light rounded p-2" style="min-height: 100px;">
+                                        <div class="bg-light border rounded p-2" style="min-height: 100px;">
                                             ${generarGrid(equipo, false)}
                                         </div>
                                     </div>
 
                                     <div class="tab-pane fade" id="${tabIdCaja}" role="tabpanel">
-                                        <div class="bg-body-secondary rounded p-2" style="min-height: 100px;">
+                                        <div class="bg-body-secondary border rounded p-2" style="min-height: 100px;">
                                             ${generarGrid(caja, false)}
                                         </div>
                                     </div>
 
                                     <div class="tab-pane fade" id="${tabIdCementerio}" role="tabpanel">
-                                        <div class="bg-dark bg-opacity-10 rounded p-2" style="min-height: 100px;">
-                                            ${generarGrid(cementerio, true)} </div>
+                                        <div class="bg-dark bg-opacity-10 border rounded p-2" style="min-height: 100px;">
+                                            ${generarGrid(cementerio, true)}
+                                        </div>
                                     </div>
 
                                 </div>
