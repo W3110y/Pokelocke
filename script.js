@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     // Guardamos sesión
-                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data));
+                    localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     if (data.salaInfo) {
                         console.log("📥 Guardando información de la sala en local...");
                         localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
@@ -207,7 +207,14 @@ async function cargarDashboard() {
         return;
     }
     const usuario = JSON.parse(usuarioRaw);
+    // DEBUG: Verificar que ahora sí leemos bien el nombre
+    console.log("👤 Usuario cargado:", usuario);
+    
     const salaNombre = usuario.sala; 
+    if (!salaNombre) {
+        console.error("❌ ERROR CRÍTICO: El nombre de la sala es undefined. Revisa el localStorage.");
+        return;
+    }
     
     // 2. Pintar Info Estática rápida (mientras carga internet)
     const salaInfoRaw = localStorage.getItem('sala_info');
@@ -218,6 +225,7 @@ async function cargarDashboard() {
     // 3. PEDIR DATOS EN TIEMPO REAL AL SERVIDOR
     // Asegúrate de usar tu URL correcta (localhost o Render)
     const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
+    console.log("🌍 Pidiendo datos a:", API_URL);
 
     try {
         const response = await fetch(API_URL);
