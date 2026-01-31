@@ -93,12 +93,30 @@ router.post('/unirse', async (req, res) => {
 });
 
 // --- 3. OBTENER JUGADORES DE UNA SALA ---
+// --- 3. OBTENER INFORME COMPLETO DE SALA (DASHBOARD) ---
 router.get('/sala/:codigoSala', async (req, res) => {
     try {
-        const jugadores = await Entrenador.find({ sala: req.params.codigoSala });
-        res.json(jugadores);
+        const { codigoSala } = req.params;
+
+        // A. Buscar la FICHA de la sala (Para saber el Host y el Máximo de jugadores)
+        const infoSala = await Sala.findOne({ nombre: codigoSala });
+        
+        if (!infoSala) {
+            return res.status(404).json({ mensaje: "Sala no encontrada" });
+        }
+
+        // B. Buscar la LISTA de jugadores
+        const jugadores = await Entrenador.find({ sala: codigoSala });
+
+        // C. Enviar AMBOS datos en un solo paquete
+        res.json({
+            sala: infoSala,      // Aquí viaja maxJugadores, host, reglas...
+            jugadores: jugadores // Aquí viaja el array de entrenadores
+        });
+
     } catch (error) {
-        res.status(500).json({ error: "Error al cargar la sala" });
+        console.error("Error al cargar sala:", error);
+        res.status(500).json({ error: "Error interno al cargar la sala" });
     }
 });
 

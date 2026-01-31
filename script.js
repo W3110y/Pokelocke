@@ -200,64 +200,79 @@ document.addEventListener('DOMContentLoaded', () => {
 /* LOGIC: DASHBOARD / STATS LOADER                           */
 /* ========================================================= */
 async function cargarDashboard() {
-    // 1. Verificar si hay usuario logueado
+    // 1. Verificar seguridad (Usuario logueado)
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) {
-        window.location.href = 'join.html'; // Si no hay sesión, echar al login
+        window.location.href = 'join.html'; 
         return;
     }
     const usuario = JSON.parse(usuarioRaw);
-
-    // 2. Recuperar info de la sala (Nombre)
     const salaNombre = usuario.sala; 
     
-    // Si tenemos la info de la sala guardada localmente (del paso Create), la usamos para renderizar rápido
+    // 2. Pintar Info Estática rápida (mientras carga internet)
     const salaInfoRaw = localStorage.getItem('sala_info');
     if (salaInfoRaw) {
         renderizarInfoSala(JSON.parse(salaInfoRaw));
     }
 
-    // 3. FETCH AL SERVIDOR (Para obtener jugadores actualizados)
-    // Nota: Necesitamos un endpoint que nos devuelva Info de Sala + Jugadores.
-    // Por ahora usaremos el endpoint de sala que devuelve jugadores.
+    // 3. PEDIR DATOS EN TIEMPO REAL AL SERVIDOR
+    // Asegúrate de usar tu URL correcta (localhost o Render)
     const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
 
     try {
         const response = await fetch(API_URL);
-        const jugadores = await response.json();
-
-        // Actualizar contador de jugadores
-        document.getElementById('view-player-count').innerText = `Jugadores: ${jugadores.length}/ ${usuario.salaInfo.maxJugadores}`;
         
-        // Renderizar lista de jugadores
-        const grid = document.getElementById('players-grid');
-        grid.innerHTML = ''; // Limpiar
-
-        jugadores.forEach(jugador => {
-            const esMio = jugador._id === usuario._id;
+        if (response.ok) {
+            // AQUI ESTÁ LA SOLUCIÓN: Recibimos el paquete completo
+            const data = await response.json(); 
             
-            const cardHTML = `
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">
-                                ${jugador.nombre} 
-                                ${esMio ? '<span class="badge bg-primary ms-2">TÚ</span>' : ''}
-                            </h5>
-                            <p class="card-text text-muted">Última conexión: Hace un momento</p>
-                            <hr>
-                            <div class="text-center py-3 bg-light rounded">
-                                <small>Equipo vacío</small>
+            const infoSala = data.sala;            // Datos de la sala (capacidad, host)
+            const listaJugadores = data.jugadores; // Lista de personas
+            
+            // --- A. ACTUALIZAR EL CONTADOR DE JUGADORES ---
+            // Ahora sí tenemos ambos números para mostrar "2 / 4"
+            const contador = document.getElementById('view-player-count');
+            if (contador) {
+                contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
+            }
+
+            // --- B. PINTAR LAS TARJETAS DE LOS JUGADORES ---
+            const grid = document.getElementById('players-grid');
+            if (grid) {
+                grid.innerHTML = ''; // Limpiar grid previo
+
+                listaJugadores.forEach(jugador => {
+                    const esMio = jugador._id === usuario._id;
+                    // Comparamos nombres para saber quién es el Host real
+                    const esHost = jugador.nombre === infoSala.host; 
+
+                    // Crear tarjeta HTML
+                    const cardHTML = `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm ${esMio ? 'border-primary' : ''}">
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold">
+                                        <i class="bi bi-person-circle"></i> ${jugador.nombre}
+                                        ${esMio ? '<span class="badge bg-primary ms-1">TÚ</span>' : ''}
+                                        ${esHost ? '<span class="badge bg-warning text-dark ms-1">HOST</span>' : ''}
+                                    </h5>
+                                    <hr>
+                                    <div class="text-center py-2 bg-light rounded">
+                                        <small class="text-muted">Equipo Vacío</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
-            grid.innerHTML += cardHTML;
-        });
+                    `;
+                    grid.innerHTML += cardHTML;
+                });
+            }
+        } else {
+            console.error("Error del servidor:", response.status);
+        }
 
     } catch (error) {
-        console.error("Error cargando dashboard:", error);
+        console.error("Error de conexión cargando dashboard:", error);
     }
 }
 
