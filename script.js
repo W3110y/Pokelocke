@@ -72,9 +72,9 @@ function erase() {
 }
 
 type();
-    // ==========================================
-    // 1. LÓGICA CREAR PARTIDA
-    // ==========================================
+// ==========================================
+// LÓGICA CREAR PARTIDA
+// ==========================================
     document.addEventListener('DOMContentLoaded', () => {
     const createForm = document.getElementById('form-create-party');
 
@@ -116,6 +116,10 @@ type();
                     // Guardamos la info completa (Usuario + Info de Sala)
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     localStorage.setItem('sala_info', JSON.stringify(data.sala)); // Nuevo: Guardamos reglas localmente
+
+                    // --- NUEVO: GUARDAR EN HISTORIAL ---
+                    guardarPartidaEnHistorial(data.entrenador, data.sala);
+                    // -----------------------------------
                     
                     window.location.href = 'stats.html';
                 } else {
@@ -174,11 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Guardamos sesión
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     if (data.salaInfo) {
-                        console.log("📥 Guardando información de la sala en local...");
                         localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
                     } else {
                         console.warn("⚠️ OJO: El servidor no envió 'salaInfo'.");
-                }
+                    }
+                    // --- NUEVO: GUARDAR EN HISTORIAL ---
+                    // Asegúrate de que data.salaInfo existe (el backend ya lo envía)
+                    if (data.salaInfo) {
+                        guardarPartidaEnHistorial(data.entrenador, data.salaInfo);
+                    }
                     // Redirigir al Dashboard
                     window.location.href = 'stats.html';
                 } else {
@@ -570,4 +578,127 @@ async function actualizarMedallas(nuevaCantidad) {
     } catch (error) {
         console.error(error);
     }
+}
+
+/* ========================================================= */
+/* LOGIC: GESTOR DE HISTORIAL (MIS GRUPOS)                   */
+/* ========================================================= */
+function guardarPartidaEnHistorial(datosEntrenador, datosSala) {
+    // 1. Recuperar historial existente o crear array vacío
+    let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+
+    // 2. Crear el objeto de la nueva sesión
+    const nuevaSesion = {
+        sala: datosSala.nombre,
+        host: datosSala.host,
+        maxJugadores: datosSala.maxJugadores,
+        miNombre: datosEntrenador.nombre,
+        miId: datosEntrenador._id,
+        fechaAcceso: new Date().toISOString()
+    };
+
+    // 3. Evitar duplicados: Si ya existe esta sala, la actualizamos/borramos para ponerla primera
+    historial = historial.filter(s => s.sala !== datosSala.nombre);
+    
+    // 4. Añadir al principio (la más reciente)
+    historial.unshift(nuevaSesion);
+
+    // 5. Guardar en LocalStorage
+    localStorage.setItem('pokelocke_history', JSON.stringify(historial));
+}
+
+/* ========================================================= */
+/* LOGIC: PÁGINA MIS GRUPOS (groups.html)                    */
+/* ========================================================= */
+function cargarMisGrupos() {
+    const grid = document.getElementById('groups-grid');
+    const emptyState = document.getElementById('empty-state');
+    
+    // Solo ejecutamos si estamos en la página correcta
+    if (!grid) return;
+
+    // 1. Leer historial
+    const historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+
+    if (historial.length === 0) {
+        emptyState.classList.remove('d-none');
+        return;
+    }
+
+    // 2. Generar tarjetas
+    grid.innerHTML = '';
+    historial.forEach((sesion, index) => {
+        // Colores aleatorios para dar vida (basado en la primera letra)
+        const colores = ['primary', 'success', 'danger', 'warning', 'info', 'indigo'];
+        const color = colores[sesion.sala.length % colores.length]; 
+        const bgClass = sesion.sala.length % 2 === 0 ? 'bg-gradient' : '';
+
+        const cardHTML = `
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 hover-scale" style="transition: transform 0.2s;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-circle bg-${color} ${bgClass} text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.5rem;">
+                            ${sesion.sala.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="badge bg-secondary opacity-50"><i class="bi bi-person"></i> ${sesion.miNombre}</span>
+                    </div>
+                    
+                    <h4 class="card-title fw-bold mb-1">${sesion.sala}</h4>
+                    <p class="text-muted small mb-3">Host: ${sesion.host}</p>
+                    
+                    <div class="d-grid">
+                        <button onclick="reanudarPartida(${index})" class="btn btn-outline-${color} fw-bold">
+                            Entrar <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-muted small">
+                    Último acceso: ${new Date(sesion.fechaAcceso).toLocaleDateString()}
+                </div>
+            </div>
+        </div>
+        `;
+        grid.innerHTML += cardHTML;
+    });
+}
+
+// Función para entrar a una partida específica desde el historial
+window.reanudarPartida = function(index) {
+    const historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+    const sesion = historial[index];
+
+    if (sesion) {
+        // 1. "Simulamos" el login reconstruyendo el objeto usuario
+        const usuarioReconstruido = {
+            _id: sesion.miId,
+            nombre: sesion.miNombre,
+            sala: sesion.sala
+        };
+
+        const salaInfoReconstruida = {
+            nombre: sesion.sala,
+            host: sesion.host,
+            maxJugadores: sesion.maxJugadores
+        };
+
+        // 2. Establecer como sesión activa
+        localStorage.setItem('usuario_pokelocke', JSON.stringify(usuarioReconstruido));
+        localStorage.setItem('sala_info', JSON.stringify(salaInfoReconstruida));
+
+        // 3. Redirigir
+        window.location.href = 'stats.html';
+    }
+};
+
+function borrarHistorial() {
+    if(confirm("¿Estás seguro de que quieres olvidar todas las salas guardadas? Tendrás que volver a unirte manualmente.")) {
+        localStorage.removeItem('pokelocke_history');
+        location.reload(); // Recargar página para verla vacía
+    }
+}
+
+// Auto-ejecutar carga si estamos en groups.html
+if (window.location.pathname.includes('groups.html')) {
+    document.addEventListener('DOMContentLoaded', cargarMisGrupos);
 }
