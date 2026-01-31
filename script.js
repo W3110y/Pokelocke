@@ -357,7 +357,7 @@ async function guardarCaptura() {
     };
 
     // 4. Enviar al Servidor
-    const API_URL = 'http://localhost:3000/api/juego/capturar'; // Ajusta si usas Render
+    const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/capturar'; // Ajusta si usas Render
 
     try {
         const btn = document.querySelector('#captureModal .btn-primary');
