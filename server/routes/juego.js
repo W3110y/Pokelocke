@@ -213,4 +213,24 @@ router.put('/pokemon/editar', async (req, res) => {
     }
 });
 
+// --- 6. ACTUALIZAR MEDALLAS ---
+router.put('/medallas', async (req, res) => {
+    const { entrenadorId, cantidad } = req.body;
+
+    try {
+        const entrenador = await Entrenador.findByIdAndUpdate(
+            entrenadorId,
+            { medallas: cantidad },
+            { new: true } // Para devolver el dato actualizado
+        );
+
+        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
+
+        res.json({ mensaje: "Medallas actualizadas", medallas: entrenador.medallas });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: "Error al actualizar medallas" });
+    }
+});
+
 module.exports = router;

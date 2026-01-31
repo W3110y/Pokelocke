@@ -295,6 +295,30 @@ async function cargarDashboard() {
                     const tabIdEquipo = `pills-equipo-${jugador._id}`;
                     const tabIdCaja = `pills-caja-${jugador._id}`;
                     const tabIdCementerio = `pills-dead-${jugador._id}`;
+                    
+                    // GENERADOR DE MEDALLAS
+                    const totalMedallas = 8; // Kanto tiene 8, puedes cambiarlo a 16 si quieres
+                    let medallasHTML = '<div class="d-flex justify-content-center gap-1 mb-3 bg-light rounded-pill p-1 border" style="width: fit-content; margin: 0 auto;">';
+                    
+                    for (let i = 1; i <= totalMedallas; i++) {
+                        const tieneMedalla = i <= (jugador.medallas || 0);
+                        // Icono: Check si la tiene, Círculo si no
+                        const icono = tieneMedalla ? 'bi-patch-check-fill text-warning' : 'bi-circle text-muted';
+                        const opacidad = tieneMedalla ? '1' : '0.3';
+                        
+                        // Solo yo puedo hacer clic en MIS medallas
+                        const accionClick = esMio ? `onclick='actualizarMedallas(${i})'` : '';
+                        const cursor = esMio ? 'cursor: pointer;' : 'cursor: default;';
+
+                        medallasHTML += `
+                            <i class="bi ${icono}" 
+                            style="font-size: 1.2rem; ${cursor} opacity: ${opacidad}; transition: all 0.2s;" 
+                            title="Medalla ${i}"
+                            ${accionClick}>
+                            </i>
+                        `;
+                    }
+                    medallasHTML += '</div>';
 
                     // 4. CONSTRUIR LA TARJETA CON PESTAÑAS (HTML Complejo)
                     const cardHTML = `
@@ -311,6 +335,7 @@ async function cargarDashboard() {
                             </div>
 
                             <div class="card-body p-2">
+                                ${medallasHTML}
                                 <ul class="nav nav-pills nav-fill mb-2 small" role="tablist" style="font-size: 0.85rem;">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active py-1" data-bs-toggle="pill" data-bs-target="#${tabIdEquipo}" type="button">
@@ -334,7 +359,7 @@ async function cargarDashboard() {
                                 <div class="tab-content">
                                     
                                     <div class="tab-pane fade show active" id="${tabIdEquipo}" role="tabpanel">
-                                        <div class="bg-light border rounded p-2" style="min-height: 100px;">
+                                        <div class="bg-body-tertiary border rounded p-2" style="min-height: 100px;">
                                             ${generarGrid(equipo, false)}
                                         </div>
                                     </div>
@@ -543,3 +568,32 @@ function borrarPokemon() {
     alert("Funcionalidad de liberar pendiente de implementar");
 }
 
+/* ========================================================= */
+/* LOGIC: MEDALLAS                                           */
+/* ========================================================= */
+async function actualizarMedallas(nuevaCantidad) {
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    // Lógica de "Toggle": Si hago clic en la medalla 3 y ya tengo 3, bajo a 2 (deshacer)
+    // Pero si tengo 2 y hago clic en 3, subo a 3.
+    // Para simplificar: Al hacer clic en la X, establecemos que tengo X medallas.
+    
+    try {
+        const res = await fetch('http://localhost:3000/api/juego/medallas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                cantidad: nuevaCantidad
+            })
+        });
+
+        if (res.ok) {
+            cargarDashboard(); // Recargamos para ver el brillo
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
