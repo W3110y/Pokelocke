@@ -673,11 +673,11 @@ function cargarMisGrupos() {
         <div class="col-md-6 col-lg-4 fade-up"> <div class="card h-100 shadow-sm group-card border-0">
                 <div class="card-body position-relative">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="rounded-circle bg-${color} bg-gradient text-white d-flex align-items-center justify-content-center shadow-sm" 
+                        <div class="rounded-circle bg-${color} bg-gradient d-flex align-items-center justify-content-center shadow-sm" 
                              style="width: 50px; height: 50px; font-size: 1.5rem; font-weight: bold;">
                             ${sesion.sala.charAt(0).toUpperCase()}
                         </div>
-                        <span class="badge bg-light text-dark border">
+                        <span class="badge text-dark border">
                             <i class="bi bi-person"></i> ${sesion.miNombre}
                         </span>
                     </div>
