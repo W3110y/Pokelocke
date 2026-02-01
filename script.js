@@ -416,8 +416,34 @@ async function cargarDashboard() {
                     </div>`;
                 });
             }
+        }else {
+            // =================================================
+            // CASO ERROR: La sala no existe (IMPLEMENTACIÓN NUEVA)
+            // =================================================
+            if (response.status === 404) {
+                // 1. Aviso al usuario
+                alert("⛔ LA SALA YA NO EXISTE\n\nEl Host ha eliminado este grupo permanentemente.\nSe eliminará de tu historial.");
+
+                // 2. Limpieza del Historial Local (Borrar la sala zombie)
+                let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+                // Filtramos para quitar la sala actual
+                historial = historial.filter(s => s.sala !== salaNombre);
+                localStorage.setItem('pokelocke_history', JSON.stringify(historial));
+
+                // 3. Limpieza de Sesión
+                localStorage.removeItem('usuario_pokelocke');
+                localStorage.removeItem('sala_info');
+
+                // 4. Redirección segura
+                window.location.href = 'groups.html';
+                return; // Cortamos ejecución
+            }
         }
-    } catch (error) { console.error("Error dashboard:", error); }
+    } catch (error) { 
+        console.error("Error dashboard:", error); 
+        // Opcional: Manejar error de conexión (servidor apagado)
+        alert("Error de conexión con el servidor.");
+    }
 }
 
 // Helper para pintar textos
