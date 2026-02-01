@@ -1,36 +1,24 @@
 
 /* ========================================================= */
-/* THEME TOGGLER                                             */
+/* LOGIC: THEME SWITCHER (Light/Dark)                        */
 /* ========================================================= */
-
-const getPreferredTheme = () => {
-    const stored = localStorage.getItem("theme");
-    if (stored) return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-};
-
-const setTheme = theme => {
-    document.documentElement.setAttribute("data-bs-theme", theme);
-    localStorage.setItem("theme", theme);
-    updateIcon(theme);
-};
-
-const updateIcon = theme => {
-    const icon = document.getElementById("theme-icon");
-    if (!icon) return;
-
-    icon.classList.remove("bi-sun-fill", "bi-moon-stars-fill");
-    icon.classList.add(theme === "dark" ? "bi-moon-stars-fill" : "bi-sun-fill");
-};
-
-setTheme(getPreferredTheme());
-
-document.addEventListener("DOMContentLoaded", () => {
-    const themeBtn = document.getElementById("theme-toggle");
-    themeBtn.addEventListener("click", () => {
-        const current = document.documentElement.getAttribute("data-bs-theme");
-        setTheme(current === "dark" ? "light" : "dark");
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Recuperar tema guardado o usar 'dark' por defecto
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    
+    // 2. Controlar el botón
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // Aplicar cambio
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    }
 });
 
 /* ========================================================= */

@@ -21,29 +21,64 @@
 </head>
 
 <body>
-    <section id="menu" class="py-5 fade-up">
-        <div class="hero-section text-center d-flex align-items-center justify-content-center">
-            <div class="container" data-aos="fade-up">
-                <h1 class="display-4 fw-bold">PokeLocke Battle Menu</h1>
-                <p class="lead mb-4">Choose an option to get started</p>
-                <div class="menu-grid-ds">
-                    <a href="create.html" class="menu-item item-create">
-                        <i class="bi bi-plus-circle-fill"></i>
-                        <span>Create Party</span>
-                    </a>
-                    <a href="join.html" class="menu-item item-join">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Join Party</span>
-                    </a>
-                    <a href="groups.html" class="menu-item item-stats">
-                        <i class="bi bi-bar-chart-fill"></i>
-                        <span>My Groups</span>
-                    </a>
-                    <a href="info.html" class="menu-item item-info">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <span>Information</span>
+    <section class="d-flex align-items-center min-vh-100 py-5">
+        <div class="container">
+            
+            <div class="text-center mb-5" data-aos="fade-down">
+                <h1 class="display-3 fw-bold mb-3">Tu Nuzlocke, <span class="text-primary">Evolucionado</span></h1>
+                <p class="lead text-muted">Gestiona tu equipo, comparte tu partida y compite con amigos.</p>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                    <a href="create.html" class="text-decoration-none">
+                        <div class="card h-100 text-center p-4">
+                            <div class="card-body">
+                                <i class="bi bi-plus-circle-fill text-primary" style="font-size: 3rem;"></i>
+                                <h4 class="card-title mt-3">Crear Sala</h4>
+                                <p class="small text-muted">Inicia una nueva aventura como Host.</p>
+                            </div>
+                        </div>
                     </a>
                 </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                    <a href="join.html" class="text-decoration-none">
+                        <div class="card h-100 text-center p-4">
+                            <div class="card-body">
+                                <i class="bi bi-box-arrow-in-right text-success" style="font-size: 3rem;"></i>
+                                <h4 class="card-title mt-3">Unirse</h4>
+                                <p class="small text-muted">Entra a una partida existente con código.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                    <a href="groups.html" class="text-decoration-none">
+                        <div class="card h-100 text-center p-4">
+                            <div class="card-body">
+                                <i class="bi bi-grid-fill text-warning" style="font-size: 3rem;"></i>
+                                <h4 class="card-title mt-3">Mis Grupos</h4>
+                                <p class="small text-muted">Historial de tus partidas guardadas.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+                    <a href="info.html" class="text-decoration-none">
+                        <div class="card h-100 text-center p-4">
+                            <div class="card-body">
+                                <i class="bi bi-info-circle-fill text-info" style="font-size: 3rem;"></i>
+                                <h4 class="card-title mt-3">Info</h4>
+                                <p class="small text-muted">Reglas y guía de la aplicación.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
             </div>
         </div>
     </section>

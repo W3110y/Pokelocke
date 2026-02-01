@@ -1,89 +1,85 @@
 /* ========================================================= */
-/* 1. CONFIGURACIÓN BASE Y FUENTES                           */
+/* 1. FUENTES Y VARIABLES DINÁMICAS                          */
 /* ========================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-    /* Paleta Futurista */
-    --bg-deep: #0f172a;       /* Fondo oscuro profundo */
-    --primary-color: #6366f1; /* Indigo brillante */
-    --accent-color: #ec4899;  /* Rosa neón */
-    --text-main: #f8fafc;     /* Blanco hielo */
-    --text-muted: #94a3b8;    /* Gris azulado */
-    
-    /* Variables del Efecto Cristal */
-    --glass-bg: rgba(15, 23, 42, 0.75); 
+    /* Variables comunes */
+    --primary-color: #6366f1; /* Indigo */
+    --accent-color: #ec4899;  /* Rosa */
+    --glass-blur: blur(12px);
+}
+
+/* --- MODO OSCURO (Por defecto o activado) --- */
+[data-bs-theme="dark"] {
+    --bg-deep: #0f172a;       /* Azul noche */
+    --text-main: #f8fafc;     /* Blanco */
+    --text-muted: #94a3b8;    /* Gris claro */
+    --glass-bg: rgba(15, 23, 42, 0.7); 
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-    --glass-blur: blur(16px);
-    --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.25);
+    --card-hover-bg: rgba(30, 41, 59, 0.8);
+}
+
+/* --- MODO CLARO (Activado por botón) --- */
+[data-bs-theme="light"] {
+    --bg-deep: #f0f4f8;       /* Gris azulado muy claro */
+    --text-main: #1e293b;     /* Azul oscuro casi negro */
+    --text-muted: #64748b;    /* Gris medio */
+    --glass-bg: rgba(255, 255, 255, 0.6); 
+    --glass-border: 1px solid rgba(0, 0, 0, 0.05);
+    --card-hover-bg: rgba(255, 255, 255, 0.9);
 }
 
 body {
     font-family: 'Outfit', sans-serif;
     background-color: var(--bg-deep);
     color: var(--text-main);
-    /* Fondo con degradados sutiles fijos */
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
-    background-attachment: fixed;
+    transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100vh;
+    /* Patrón de fondo sutil */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+    background-attachment: fixed;
 }
 
 /* ========================================================= */
-/* 2. NAVBAR (MODO CRISTAL)                                  */
+/* 2. NAVBAR & TARJETAS (Glassmorphism)                      */
 /* ========================================================= */
 .navbar {
-    background: var(--glass-bg) !important; /* Importante para quitar el gris de bootstrap */
-    backdrop-filter: var(--glass-blur);     /* El desenfoque mágico */
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-bottom: var(--glass-border);
-    z-index: 1000;
 }
 
-.navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
-    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; /* Texto con degradado */
-}
-
-.nav-link {
-    color: var(--text-muted) !important;
-    transition: color 0.3s ease;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-}
-
-.nav-link:hover, .nav-link.active {
-    color: var(--primary-color) !important;
-    text-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
-}
-
-/* ========================================================= */
-/* 3. TARJETAS (CARD STYLE)                                  */
-/* ========================================================= */
 .card, .group-card {
-    background: rgba(30, 41, 59, 0.6) !important; /* Fondo semi-transparente */
-    backdrop-filter: blur(12px);
+    background: var(--glass-bg) !important;
     border: var(--glass-border) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     color: var(--text-main);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .card:hover, .group-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), var(--shadow-glow);
+    background: var(--card-hover-bg) !important;
     border-color: var(--primary-color) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
 
-.card-title {
-    color: var(--text-main);
-    font-weight: 600;
+/* ========================================================= */
+/* 3. PARCHE DE LEGIBILIDAD (Soluciona textos oscuros)       */
+/* ========================================================= */
+/* Esto fuerza a que los títulos usen nuestro color, ignorando bootstrap */
+h1, h2, h3, h4, h5, .card-title {
+    color: var(--text-main) !important;
+}
+
+/* En modo oscuro, si algo tiene la clase 'text-dark', lo forzamos a blanco */
+[data-bs-theme="dark"] .text-dark {
+    color: var(--text-main) !important;
 }
 
 .text-muted {
@@ -91,90 +87,26 @@ body {
 }
 
 /* ========================================================= */
-/* 4. BOTONES & UI ELEMENTS                                  */
+/* 4. BOTONES                                                */
 /* ========================================================= */
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), #4f46e5);
     border: none;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-primary:hover {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
-    transform: scale(1.05);
-}
-
-/* Badges / Etiquetas */
-.badge {
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
-/* ========================================================= */
-/* 5. THEME SWITCH (SOL/LUNA) - ADAPTADO                     */
-/* ========================================================= */
-.theme-switch {
-    width: 50px;
-    height: 26px;
-    background-color: rgba(255,255,255,0.1); /* Fondo sutil */
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 50px;
-    position: relative;
-    cursor: pointer;
-    padding: 0;
-}
-
-.switch-handle {
-    width: 20px;
-    height: 20px;
-    background: var(--text-main);
-    border-radius: 50%;
-    position: absolute;
-    top: 2px; left: 3px;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
-    box-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
-
-.switch-handle i {
-    color: #f59e0b; /* Sol naranja */
-    font-size: 12px;
-}
-
-/* Estado Oscuro (Activo por defecto en este tema) */
-[data-bs-theme="dark"] .theme-switch {
-    background-color: rgba(99, 102, 241, 0.2);
-    border-color: var(--primary-color) !important;
-}
-
-[data-bs-theme="dark"] .switch-handle {
-    transform: translateX(24px);
-    background: var(--primary-color);
-    box-shadow: 0 0 10px var(--primary-color);
-}
-
-[data-bs-theme="dark"] .switch-handle i {
     color: white;
 }
 
-/* ========================================================= */
-/* Estilos específicos para las tarjetas de grupos */
-
-.group-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.1);
+/* Switch Theme */
+.theme-switch {
+    width: 50px; height: 26px;
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 50px; position: relative; border: none;
 }
-.group-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    border-color: var(--bs-primary);
+.switch-handle {
+    width: 20px; height: 20px;
+    background: white; border-radius: 50%;
+    position: absolute; top: 3px; left: 3px;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.3s;
 }
-.group-avatar {
-    width: 60px; 
-    height: 60px; 
-    font-size: 1.8rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+[data-bs-theme="dark"] .theme-switch { background: rgba(99, 102, 241, 0.4); }
+[data-bs-theme="dark"] .switch-handle { transform: translateX(24px); }
