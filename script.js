@@ -584,10 +584,8 @@ async function actualizarMedallas(nuevaCantidad) {
 /* LOGIC: GESTOR DE HISTORIAL (MIS GRUPOS)                   */
 /* ========================================================= */
 function guardarPartidaEnHistorial(datosEntrenador, datosSala) {
-    // 1. Recuperar historial existente o crear array vacío
     let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-
-    // 2. Crear el objeto de la nueva sesión
+    
     const nuevaSesion = {
         sala: datosSala.nombre,
         host: datosSala.host,
@@ -597,64 +595,82 @@ function guardarPartidaEnHistorial(datosEntrenador, datosSala) {
         fechaAcceso: new Date().toISOString()
     };
 
-    // 3. Evitar duplicados: Si ya existe esta sala, la actualizamos/borramos para ponerla primera
+    // Eliminar si ya existe para ponerlo el primero (evitar duplicados)
     historial = historial.filter(s => s.sala !== datosSala.nombre);
-    
-    // 4. Añadir al principio (la más reciente)
     historial.unshift(nuevaSesion);
-
-    // 5. Guardar en LocalStorage
+    
     localStorage.setItem('pokelocke_history', JSON.stringify(historial));
 }
-
 /* ========================================================= */
-/* LOGIC: PÁGINA MIS GRUPOS (groups.html)                    */
+/* LOGIC: PÁGINA MIS GRUPOS (groups.html) - VERSIÓN CORREGIDA */
 /* ========================================================= */
 function cargarMisGrupos() {
     const grid = document.getElementById('groups-grid');
     const emptyState = document.getElementById('empty-state');
     
-    // Solo ejecutamos si estamos en la página correcta
+    // VALIDACIÓN CRÍTICA: Si no existe el grid, no estamos en groups.html. Salimos.
     if (!grid) return;
 
-    // 1. Leer historial
-    const historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+    console.log("📂 Cargando historial de grupos...");
 
-    if (historial.length === 0) {
-        emptyState.classList.remove('d-none');
-        return;
+    // 1. LIMPIEZA INICIAL
+    // Esto borra el spinner de "Cargando..." inmediatamente.
+    grid.innerHTML = ''; 
+
+    // 2. RECUPERAR DATOS
+    let historial = [];
+    try {
+        const raw = localStorage.getItem('pokelocke_history');
+        historial = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        console.error("Error leyendo historial", e);
+        historial = [];
     }
 
-    // 2. Generar tarjetas
-    grid.innerHTML = '';
+    // 3. CASO: HISTORIAL VACÍO
+    if (historial.length === 0) {
+        if (emptyState) emptyState.classList.remove('d-none'); // Mostrar mensaje "No hay grupos"
+        return; // Terminamos aquí
+    }
+
+    // 4. CASO: HAY DATOS -> RENDERIZAR TARJETAS
+    // Aseguramos que el mensaje de vacío esté oculto
+    if (emptyState) emptyState.classList.add('d-none');
+
     historial.forEach((sesion, index) => {
-        // Colores aleatorios para dar vida (basado en la primera letra)
+        // Validación de datos corruptos
+        if (!sesion.sala) return;
+
         const colores = ['primary', 'success', 'danger', 'warning', 'info', 'indigo'];
         const color = colores[sesion.sala.length % colores.length]; 
-        const bgClass = sesion.sala.length % 2 === 0 ? 'bg-gradient' : '';
+        
+        // Fecha formateada
+        const fecha = sesion.fechaAcceso ? new Date(sesion.fechaAcceso).toLocaleDateString() : 'Desconocida';
 
         const cardHTML = `
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 hover-scale" style="transition: transform 0.2s;">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-circle bg-${color} ${bgClass} text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.5rem;">
+        <div class="col-md-6 col-lg-4 fade-up"> <div class="card h-100 shadow-sm group-card border-0">
+                <div class="card-body position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-${color} bg-gradient text-white d-flex align-items-center justify-content-center shadow-sm" 
+                             style="width: 50px; height: 50px; font-size: 1.5rem; font-weight: bold;">
                             ${sesion.sala.charAt(0).toUpperCase()}
                         </div>
-                        <span class="badge bg-secondary opacity-50"><i class="bi bi-person"></i> ${sesion.miNombre}</span>
+                        <span class="badge bg-light text-dark border">
+                            <i class="bi bi-person"></i> ${sesion.miNombre}
+                        </span>
                     </div>
                     
-                    <h4 class="card-title fw-bold mb-1">${sesion.sala}</h4>
-                    <p class="text-muted small mb-3">Host: ${sesion.host}</p>
+                    <h4 class="card-title fw-bold text-dark mb-1">${sesion.sala}</h4>
+                    <p class="text-muted small mb-4">Host: ${sesion.host || 'Desconocido'}</p>
                     
                     <div class="d-grid">
-                        <button onclick="reanudarPartida(${index})" class="btn btn-outline-${color} fw-bold">
-                            Entrar <i class="bi bi-arrow-right"></i>
+                        <button onclick="reanudarPartida(${index})" class="btn btn-outline-${color} fw-bold stretched-link">
+                            Entrar <i class="bi bi-box-arrow-in-right ms-2"></i>
                         </button>
                     </div>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-muted small">
-                    Último acceso: ${new Date(sesion.fechaAcceso).toLocaleDateString()}
+                <div class="card-footer bg-transparent border-0 text-muted" style="font-size: 0.75rem;">
+                    Último acceso: ${fecha}
                 </div>
             </div>
         </div>
@@ -663,30 +679,23 @@ function cargarMisGrupos() {
     });
 }
 
-// Función para entrar a una partida específica desde el historial
+// LÓGICA DE REANUDAR (Igual que antes)
 window.reanudarPartida = function(index) {
     const historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
     const sesion = historial[index];
 
     if (sesion) {
-        // 1. "Simulamos" el login reconstruyendo el objeto usuario
-        const usuarioReconstruido = {
-            _id: sesion.miId,
-            nombre: sesion.miNombre,
-            sala: sesion.sala
-        };
+        const usuarioReconstruido = { _id: sesion.miId, nombre: sesion.miNombre, sala: sesion.sala };
+        const salaInfoReconstruida = { nombre: sesion.sala, host: sesion.host, maxJugadores: sesion.maxJugadores };
 
-        const salaInfoReconstruida = {
-            nombre: sesion.sala,
-            host: sesion.host,
-            maxJugadores: sesion.maxJugadores
-        };
-
-        // 2. Establecer como sesión activa
         localStorage.setItem('usuario_pokelocke', JSON.stringify(usuarioReconstruido));
         localStorage.setItem('sala_info', JSON.stringify(salaInfoReconstruida));
+        
+        // Actualizar fecha de acceso antes de entrar
+        sesion.fechaAcceso = new Date().toISOString();
+        historial[index] = sesion;
+        localStorage.setItem('pokelocke_history', JSON.stringify(historial));
 
-        // 3. Redirigir
         window.location.href = 'stats.html';
     }
 };
