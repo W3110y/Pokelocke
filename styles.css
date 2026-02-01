@@ -1,107 +1,161 @@
-
 /* ========================================================= */
-/* THEME SWITCH                                               */
+/* 1. CONFIGURACIÓN BASE Y FUENTES                           */
 /* ========================================================= */
-.theme-switch {
-    width: 60px;
-    height: 30px;
-    background-color: #d1d5db;
-    border-radius: 50px;
-    position: relative;
-    transition: .3s;
-}
-.switch-handle {
-    width: 24px;
-    height: 24px;
-    background:white;
-    border-radius: 50%;
-    position: absolute;
-    top:3px; left:3px;
-    display:flex; align-items:center; justify-content:center;
-    transition: .3s;
-}
-.switch-handle i {
-    color: #f59e0b;
-    font-size: 14px;
-}
-
-/* Dark mode overrides */
-[data-bs-theme="dark"] .theme-switch {
-    background-color:#6366f1;
-}
-[data-bs-theme="dark"] .switch-handle {
-    transform: translateX(30px);
-}
-[data-bs-theme="dark"] .switch-handle i {
-    color:#6366f1;
-}
-/* Mobile Fixes */
-@media (max-width: 768px) {
-    .timeline-line { left: 30px; transform: none; }
-    .timeline-dot { left: 30px; margin: 0; right: auto; } /* Reset centering */
-    .timeline-content { width: 100%; padding-left: 80px; }
-    .content-left, .content-right { text-align: left; margin: 0; }
-    .tech-card::before { display: none; }
-}
-
-/* Dark Mode */
-[data-bs-theme="dark"] .tech-card { background: #212529; border-color: #374151; }
-[data-bs-theme="dark"] .timeline-dot { background: #0d1117; }
-[data-bs-theme="dark"] .timeline-line { background: #374151; }
-
-/* ========================================================= */
-/* POKEMON BATTLE MENU                                      */
-/* ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-    --fuente-juego: 'VT323', monospace;
+    /* Paleta Futurista */
+    --bg-deep: #0f172a;       /* Fondo oscuro profundo */
+    --primary-color: #6366f1; /* Indigo brillante */
+    --accent-color: #ec4899;  /* Rosa neón */
+    --text-main: #f8fafc;     /* Blanco hielo */
+    --text-muted: #94a3b8;    /* Gris azulado */
+    
+    /* Variables del Efecto Cristal */
+    --glass-bg: rgba(15, 23, 42, 0.75); 
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(16px);
+    --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.25);
 }
 
-h1, h2, h3, .navbar-brand, .btn, .nav-link {
-    font-family: var(--fuente-juego);
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    /* Fondo con degradados sutiles fijos */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* ========================================================= */
+/* 2. NAVBAR (MODO CRISTAL)                                  */
+/* ========================================================= */
+.navbar {
+    background: var(--glass-bg) !important; /* Importante para quitar el gris de bootstrap */
+    backdrop-filter: var(--glass-blur);     /* El desenfoque mágico */
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: var(--glass-border);
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; /* Texto con degradado */
+}
+
+.nav-link {
+    color: var(--text-muted) !important;
+    transition: color 0.3s ease;
     text-transform: uppercase;
+    font-size: 0.85rem;
     letter-spacing: 1px;
 }
-/* Aumenta un poco el tamaño porque estas fuentes suelen ser pequeñas */
-h1 { font-size: 3.5rem; }
-h2 { font-size: 2.5rem; }
 
-/* ========================================================= */
-/* CARD STYLES                                             */
-/* ========================================================= */
-
-.card, .stat-card {
-    border: 4px solid #333; /* Borde grueso */
-    border-radius: 8px; /* Menos redondeado */
-    box-shadow: 4px 4px 0px rgba(0,0,0,0.2); /* Sombra dura, no difuminada */
+.nav-link:hover, .nav-link.active {
+    color: var(--primary-color) !important;
+    text-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
 }
 
 /* ========================================================= */
-/* MENU GRID STYLES                                        */
+/* 3. TARJETAS (CARD STYLE)                                  */
 /* ========================================================= */
+.card, .group-card {
+    background: rgba(30, 41, 59, 0.6) !important; /* Fondo semi-transparente */
+    backdrop-filter: blur(12px);
+    border: var(--glass-border) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    color: var(--text-main);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+}
 
-.menu-grid-ds {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Dos columnas */
-    gap: 15px;
-    max-width: 600px;
-    margin: 0 auto;
+.card:hover, .group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), var(--shadow-glow);
+    border-color: var(--primary-color) !important;
 }
-.menu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    background-color: var(--bs-tertiary-bg);
-    border: 4px solid var(--bs-primary);
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.1s;
+
+.card-title {
+    color: var(--text-main);
+    font-weight: 600;
 }
-.menu-item:active { transform: scale(0.95); } /* Efecto de pulsar botón */
-.menu-item i { font-size: 3rem; margin-bottom: 0.5rem; }
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* ========================================================= */
+/* 4. BOTONES & UI ELEMENTS                                  */
+/* ========================================================= */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+    transform: scale(1.05);
+}
+
+/* Badges / Etiquetas */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================================= */
+/* 5. THEME SWITCH (SOL/LUNA) - ADAPTADO                     */
+/* ========================================================= */
+.theme-switch {
+    width: 50px;
+    height: 26px;
+    background-color: rgba(255,255,255,0.1); /* Fondo sutil */
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 50px;
+    position: relative;
+    cursor: pointer;
+    padding: 0;
+}
+
+.switch-handle {
+    width: 20px;
+    height: 20px;
+    background: var(--text-main);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; left: 3px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.switch-handle i {
+    color: #f59e0b; /* Sol naranja */
+    font-size: 12px;
+}
+
+/* Estado Oscuro (Activo por defecto en este tema) */
+[data-bs-theme="dark"] .theme-switch {
+    background-color: rgba(99, 102, 241, 0.2);
+    border-color: var(--primary-color) !important;
+}
+
+[data-bs-theme="dark"] .switch-handle {
+    transform: translateX(24px);
+    background: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+[data-bs-theme="dark"] .switch-handle i {
+    color: white;
+}
 
 /* ========================================================= */
 /* Estilos específicos para las tarjetas de grupos */
