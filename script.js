@@ -303,6 +303,30 @@ async function cargarDashboard() {
             const contador = document.getElementById('view-player-count');
             if (contador) contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
 
+            // --- NUEVO: BOTÓN DE BORRAR SALA (SOLO PARA EL HOST) ---
+            // Buscamos dónde poner el botón. Lo pondremos en la cabecera, junto al botón de "Volver".
+            // Asumimos que tienes un contenedor en stats.html para acciones, o lo inyectamos en el nav.
+            
+            // Verificamos si YO soy el host comparando mi nombre con el de la sala
+            const soyHost = infoSala.host === usuario.nombre;
+            const botonExistente = document.getElementById('btn-borrar-sala');
+
+            if (soyHost && !botonExistente) {
+                // Creamos el botón dinámicamente
+                const btnDelete = document.createElement('button');
+                btnDelete.id = 'btn-borrar-sala';
+                btnDelete.className = 'btn btn-danger btn-sm ms-2';
+                btnDelete.innerHTML = '<i class="bi bi-trash-fill"></i> Borrar Sala';
+                btnDelete.onclick = borrarSala; // La función que crearemos en el paso 3
+
+                // Lo insertamos en el contenedor del botón "Volver" (container mt-3)
+                const contenedorBotones = document.querySelector('.container.mt-3');
+                if (contenedorBotones) {
+                    contenedorBotones.appendChild(btnDelete);
+                }
+            }
+            // -------------------------------------------------------
+
             // Renderizar Grid de Jugadores
             const grid = document.getElementById('players-grid');
             if (grid) {
@@ -748,4 +772,56 @@ function borrarHistorial() {
 // Auto-ejecutar carga si estamos en groups.html
 if (window.location.pathname.includes('groups.html')) {
     document.addEventListener('DOMContentLoaded', cargarMisGrupos);
+}
+
+/* ========================================================= */
+/* LOGIC: BORRAR SALA (HOST ONLY)                            */
+/* ========================================================= */
+async function borrarSala() {
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
+
+    if (!usuario || !salaInfo) return;
+
+    // 1. Confirmación de seguridad (Doble confirmación es mejor)
+    const confirmacion = confirm(`⚠️ ¿PELIGRO: Estás a punto de borrar la sala "${salaInfo.nombre}"?\n\n- Se borrarán todos los datos.\n- Se expulsará a los jugadores.\n- El nombre quedará libre.\n\n¿Estás seguro?`);
+    
+    if (!confirmacion) return;
+
+    try {
+        // 2. Llamada al Backend
+        const response = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/sala', { // Ajusta tu URL si es Render
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombreSala: salaInfo.nombre,
+                hostNombre: usuario.nombre
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ " + data.mensaje);
+
+            // 3. Limpieza Local (Borrar del Historial)
+            let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+            // Filtramos para quitar la sala que acabamos de borrar
+            historial = historial.filter(s => s.sala !== salaInfo.nombre);
+            localStorage.setItem('pokelocke_history', JSON.stringify(historial));
+
+            // 4. Limpiar sesión activa
+            localStorage.removeItem('usuario_pokelocke');
+            localStorage.removeItem('sala_info');
+
+            // 5. Redirigir al inicio
+            window.location.href = 'index.html';
+        } else {
+            alert("❌ Error: " + data.mensaje);
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión al intentar borrar.");
+    }
 }

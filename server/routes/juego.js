@@ -233,4 +233,37 @@ router.put('/medallas', async (req, res) => {
     }
 });
 
+// --- 7. BORRAR SALA (SOLO HOST) ---
+router.delete('/sala', async (req, res) => {
+    const { nombreSala, hostNombre } = req.body;
+
+    try {
+        // 1. Buscar la sala para verificar que existe y el host es correcto
+        const sala = await Sala.findOne({ nombre: nombreSala });
+
+        if (!sala) {
+            return res.status(404).json({ mensaje: "Sala no encontrada" });
+        }
+
+        // 2. Verificación de seguridad básica
+        if (sala.host !== hostNombre) {
+            return res.status(403).json({ mensaje: "Solo el Host puede borrar la sala" });
+        }
+
+        // 3. ELIMINACIÓN EN CASCADA
+        // A. Borramos todos los entrenadores de esa sala
+        await Entrenador.deleteMany({ sala: nombreSala });
+        
+        // B. Borramos la sala
+        await Sala.deleteOne({ nombre: nombreSala });
+
+        console.log(`🗑️ Sala '${nombreSala}' y sus jugadores han sido eliminados.`);
+        res.json({ mensaje: "Sala eliminada y nombre liberado con éxito" });
+
+    } catch (error) {
+        console.error("Error al borrar sala:", error);
+        res.status(500).json({ mensaje: "Error interno del servidor" });
+    }
+});
+
 module.exports = router;
