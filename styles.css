@@ -110,3 +110,108 @@ h1, h2, h3, h4, h5, .card-title {
 }
 [data-bs-theme="dark"] .theme-switch { background: rgba(99, 102, 241, 0.4); }
 [data-bs-theme="dark"] .switch-handle { transform: translateX(24px); }
+
+/* ========================================================= */
+/* APP UI: HEADER & DOCK NAVIGATION                          */
+/* ========================================================= */
+
+/* 1. Header Superior Minimalista */
+.app-header {
+    background: transparent; /* Totalmente transparente */
+    pointer-events: none; /* Deja pasar clicks a lo de abajo excepto en el logo */
+    z-index: 1000;
+}
+.app-header .navbar-brand {
+    pointer-events: auto; /* Reactivamos clicks en el logo */
+    background: var(--glass-bg);
+    backdrop-filter: blur(5px);
+    padding: 5px 15px;
+    border-radius: 50px;
+    border: var(--glass-border);
+    font-size: 1.2rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* 2. Dock Inferior Flotante */
+.app-dock {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    width: auto;
+    max-width: 90%;
+}
+
+.dock-container {
+    background: rgba(15, 23, 42, 0.85); /* Fondo oscuro semitransparente */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Espacio entre iconos */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    transition: all 0.3s ease;
+}
+
+/* Modo Claro: Ajuste del fondo del Dock */
+[data-bs-theme="light"] .dock-container {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 3. Items del Dock (Iconos) */
+.dock-item {
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    position: relative;
+}
+
+/* Hover & Active Effects */
+.dock-item:hover, .dock-item.active {
+    color: var(--text-main);
+    background: var(--primary-color);
+    transform: translateY(-5px) scale(1.1); /* Efecto salto */
+    box-shadow: 0 5px 15px var(--shadow-glow);
+}
+
+/* Indicador de página activa (Puntito abajo) */
+.dock-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    width: 6px;
+    height: 6px;
+    background: var(--text-main);
+    border-radius: 50%;
+}
+
+/* El separador vertical */
+.dock-divider {
+    width: 1px;
+    height: 25px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 5px;
+}
+[data-bs-theme="light"] .dock-divider { background: rgba(0,0,0,0.1); }
+
+/* Ajuste del cuerpo para que el Dock no tape contenido */
+body {
+    padding-bottom: 100px !important; /* Espacio extra al final */
+    padding-top: 20px; /* Espacio arriba para el logo */
+}

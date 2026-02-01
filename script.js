@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeBtn = document.getElementById('theme-toggle');
     const themeIcon = themeBtn ? themeBtn.querySelector('i') : null;
 
-    // Función auxiliar para actualizar el icono visualmente
     const updateIcon = (theme) => {
         if (!themeIcon) return;
+        // Icono simple: Luna llena vs Sol
         if (theme === 'dark') {
-            themeIcon.className = 'bi bi-moon-stars-fill text-white'; // Luna
+            themeIcon.className = 'bi bi-moon-stars-fill';
         } else {
-            themeIcon.className = 'bi bi-sun-fill text-warning'; // Sol
+            themeIcon.className = 'bi bi-sun-fill text-warning';
         }
     };
 
@@ -854,3 +854,25 @@ async function borrarSala() {
         alert("Error de conexión al intentar borrar.");
     }
 }
+
+/* ========================================================= */
+/* UI: AUTO-HIGHLIGHT DOCK ICON                              */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Detectar página actual
+    const path = window.location.pathname;
+    const page = path.split("/").pop() || 'index.html'; // Si es raíz, es index
+
+    // 2. Buscar enlaces en el dock
+    const dockLinks = document.querySelectorAll('.dock-item');
+
+    dockLinks.forEach(link => {
+        // Obtenemos el href del enlace (ej: create.html)
+        const href = link.getAttribute('href');
+        
+        // Si el href coincide con la página actual, añadimos clase 'active'
+        if (href && (href === page || (page === '' && href === 'index.html'))) {
+            link.classList.add('active');
+        }
+    });
+});
