@@ -282,6 +282,16 @@ async function cargarDashboard() {
             const infoSala = data.sala;
             const listaJugadores = data.jugadores;
 
+            // --- INICIO DE LA CORRECCIÓN ---
+            // 1. ACTUALIZAR VISUALMENTE LAS REGLAS (Con datos frescos del servidor)
+            // Esto sobrescribe lo que cargó localStorage al principio, asegurando que esté al día.
+            renderizarInfoSala(infoSala); 
+
+            // 2. ACTUALIZAR LOCALSTORAGE (Para la próxima vez)
+            // Guardamos la info nueva en 'sala_info' para que esté disponible offline si fuera necesario
+            localStorage.setItem('sala_info', JSON.stringify(infoSala));
+            // --- FIN DE LA CORRECCIÓN ---
+
             // Actualizar contador
             const contador = document.getElementById('view-player-count');
             if (contador) contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
@@ -585,22 +595,27 @@ async function actualizarMedallas(nuevaCantidad) {
 /* ========================================================= */
 function guardarPartidaEnHistorial(datosEntrenador, datosSala) {
     let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-    
+
     const nuevaSesion = {
         sala: datosSala.nombre,
         host: datosSala.host,
         maxJugadores: datosSala.maxJugadores,
+        // --- AÑADIMOS ESTOS DOS CAMPOS ---
+        reglas: datosSala.reglas || "Sin reglas definidas",
+        descripcion: datosSala.descripcion || "",
+        // ---------------------------------
         miNombre: datosEntrenador.nombre,
         miId: datosEntrenador._id,
         fechaAcceso: new Date().toISOString()
     };
 
-    // Eliminar si ya existe para ponerlo el primero (evitar duplicados)
+    // Filtramos para evitar duplicados y ponemos el más reciente primero
     historial = historial.filter(s => s.sala !== datosSala.nombre);
     historial.unshift(nuevaSesion);
     
     localStorage.setItem('pokelocke_history', JSON.stringify(historial));
 }
+
 /* ========================================================= */
 /* LOGIC: PÁGINA MIS GRUPOS (groups.html) - VERSIÓN CORREGIDA */
 /* ========================================================= */
@@ -685,13 +700,29 @@ window.reanudarPartida = function(index) {
     const sesion = historial[index];
 
     if (sesion) {
-        const usuarioReconstruido = { _id: sesion.miId, nombre: sesion.miNombre, sala: sesion.sala };
-        const salaInfoReconstruida = { nombre: sesion.sala, host: sesion.host, maxJugadores: sesion.maxJugadores };
+        // 1. Reconstruir Usuario
+        const usuarioReconstruido = {
+            _id: sesion.miId,
+            nombre: sesion.miNombre,
+            sala: sesion.sala
+        };
 
+        // 2. Reconstruir Sala (AHORA CON REGLAS)
+        const salaInfoReconstruida = {
+            nombre: sesion.sala,
+            host: sesion.host,
+            maxJugadores: sesion.maxJugadores,
+            // --- RECUPERAMOS LOS DATOS ---
+            reglas: sesion.reglas,
+            descripcion: sesion.descripcion
+            // -----------------------------
+        };
+
+        // 3. Guardar en Sesión Activa (Esto es lo que lee stats.html al inicio)
         localStorage.setItem('usuario_pokelocke', JSON.stringify(usuarioReconstruido));
         localStorage.setItem('sala_info', JSON.stringify(salaInfoReconstruida));
-        
-        // Actualizar fecha de acceso antes de entrar
+
+        // 4. Actualizar fecha y redirigir
         sesion.fechaAcceso = new Date().toISOString();
         historial[index] = sesion;
         localStorage.setItem('pokelocke_history', JSON.stringify(historial));
