@@ -289,6 +289,33 @@ async function cargarDashboard() {
             const infoSala = data.sala;
             const listaJugadores = data.jugadores;
 
+            // -------------------------------------------------------
+            // LÓGICA DE UI PARA EL HOST (Inyección directa)
+            // -------------------------------------------------------
+            const contenedorAcciones = document.getElementById('host-actions-container');
+            
+            // 1. Limpiamos el contenedor por si acaso (para evitar duplicados al recargar)
+            if (contenedorAcciones) contenedorAcciones.innerHTML = '';
+
+            // 2. Verificación estricta de Host
+            // Comparamos el nombre del host de la sala con el nombre del usuario actual
+            if (contenedorAcciones && infoSala.host === usuario.nombre) {
+                
+                console.log("👑 Detectado usuario HOST. Inyectando botón de borrado...");
+
+                // 3. Crear el botón
+                const btnBorrar = document.createElement('button');
+                btnBorrar.className = 'btn btn-danger btn-sm d-flex align-items-center gap-2';
+                btnBorrar.innerHTML = '<i class="bi bi-trash-fill"></i> Borrar Sala';
+                
+                // 4. Añadir evento
+                btnBorrar.onclick = borrarSala; // La función que creamos antes
+
+                // 5. Insertar en el HTML
+                contenedorAcciones.appendChild(btnBorrar);
+            }
+            // -------------------------------------------------------
+
             // --- INICIO DE LA CORRECCIÓN ---
             // 1. ACTUALIZAR VISUALMENTE LAS REGLAS (Con datos frescos del servidor)
             // Esto sobrescribe lo que cargó localStorage al principio, asegurando que esté al día.
@@ -302,30 +329,6 @@ async function cargarDashboard() {
             // Actualizar contador
             const contador = document.getElementById('view-player-count');
             if (contador) contador.innerText = `Jugadores: ${listaJugadores.length} / ${infoSala.maxJugadores}`;
-
-            // --- NUEVO: BOTÓN DE BORRAR SALA (SOLO PARA EL HOST) ---
-            // Buscamos dónde poner el botón. Lo pondremos en la cabecera, junto al botón de "Volver".
-            // Asumimos que tienes un contenedor en stats.html para acciones, o lo inyectamos en el nav.
-            
-            // Verificamos si YO soy el host comparando mi nombre con el de la sala
-            const soyHost = infoSala.host === usuario.nombre;
-            const botonExistente = document.getElementById('btn-borrar-sala');
-
-            if (soyHost && !botonExistente) {
-                // Creamos el botón dinámicamente
-                const btnDelete = document.createElement('button');
-                btnDelete.id = 'btn-borrar-sala';
-                btnDelete.className = 'btn btn-danger btn-sm ms-2';
-                btnDelete.innerHTML = '<i class="bi bi-trash-fill"></i> Borrar Sala';
-                btnDelete.onclick = borrarSala; // La función que crearemos en el paso 3
-
-                // Lo insertamos en el contenedor del botón "Volver" (container mt-3)
-                const contenedorBotones = document.querySelector('.container.mt-3');
-                if (contenedorBotones) {
-                    contenedorBotones.appendChild(btnDelete);
-                }
-            }
-            // -------------------------------------------------------
 
             // Renderizar Grid de Jugadores
             const grid = document.getElementById('players-grid');
