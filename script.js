@@ -854,25 +854,3 @@ async function borrarSala() {
         alert("Error de conexión al intentar borrar.");
     }
 }
-
-/* ========================================================= */
-/* UI: AUTO-HIGHLIGHT DOCK ICON                              */
-/* ========================================================= */
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Detectar página actual
-    const path = window.location.pathname;
-    const page = path.split("/").pop() || 'index.html'; // Si es raíz, es index
-
-    // 2. Buscar enlaces en el dock
-    const dockLinks = document.querySelectorAll('.dock-item');
-
-    dockLinks.forEach(link => {
-        // Obtenemos el href del enlace (ej: create.html)
-        const href = link.getAttribute('href');
-        
-        // Si el href coincide con la página actual, añadimos clase 'active'
-        if (href && (href === page || (page === '' && href === 'index.html'))) {
-            link.classList.add('active');
-        }
-    });
-});
