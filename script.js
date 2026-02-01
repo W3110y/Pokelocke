@@ -3,20 +3,39 @@
 /* LOGIC: THEME SWITCHER (Light/Dark)                        */
 /* ========================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Recuperar tema guardado o usar 'dark' por defecto
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-bs-theme', savedTheme);
-    
-    // 2. Controlar el botón
+    // NOTA: La carga inicial del tema ya se hizo en el <head> del HTML
+    // para evitar el flash. Aquí solo gestionamos el botón.
+
     const themeBtn = document.getElementById('theme-toggle');
+    const themeIcon = themeBtn ? themeBtn.querySelector('i') : null;
+
+    // Función auxiliar para actualizar el icono visualmente
+    const updateIcon = (theme) => {
+        if (!themeIcon) return;
+        if (theme === 'dark') {
+            themeIcon.className = 'bi bi-moon-stars-fill text-white'; // Luna
+        } else {
+            themeIcon.className = 'bi bi-sun-fill text-warning'; // Sol
+        }
+    };
+
+    // 1. Sincronizar icono al cargar (según lo que puso el script del head)
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    updateIcon(currentTheme);
+
+    // 2. Evento Click
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            // Leer estado actual
+            const current = document.documentElement.getAttribute('data-bs-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
             
             // Aplicar cambio
-            document.documentElement.setAttribute('data-bs-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            document.documentElement.setAttribute('data-bs-theme', next);
+            localStorage.setItem('theme', next);
+            
+            // Actualizar icono
+            updateIcon(next);
         });
     }
 });
