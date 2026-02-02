@@ -18,6 +18,10 @@ const EntrenadorSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
     sala: { type: String, required: true }, // Código "Lobby"
     medallas: { type: Number, default: 0 },
+    // --- NUEVOS CAMPOS ---
+    vidas: { type: Number, default: 3 }, // Por defecto 3 vidas (clásico Nuzlocke)
+    victorias: { type: Number, default: 0 }, // Contador de combates ganados
+    // ---------------------
     pokemons: [PokemonSchema], // Array de pokemons
     ultimaConexion: { type: Date, default: Date.now }
 });

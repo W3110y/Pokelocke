@@ -290,36 +290,76 @@ async function cargarDashboard() {
                     </div>
                 `;
             }
-            // 4. CLASIFICACIÓN (Leaderboard)
+            // 4. CLASIFICACIÓN (Leaderboard con Controles de Host)
             const leaderboardContainer = document.getElementById('leaderboard-container');
+            
             if (leaderboardContainer) {
-                // Ordenamos jugadores por medallas (descendente)
-                const ranking = [...listaJugadores].sort((a, b) => (b.medallas || 0) - (a.medallas || 0));
+                // Ordenar: Primero por Vidas (vivos arriba), luego por Medallas, luego Victorias
+                const ranking = [...listaJugadores].sort((a, b) => {
+                    if (b.vidas !== a.vidas) return b.vidas - a.vidas;
+                    return (b.medallas || 0) - (a.medallas || 0);
+                });
+
+                // Detectar si SOY el Host (para mostrar controles)
+                const soyHost = infoSala.host === usuario.nombre;
 
                 leaderboardContainer.innerHTML = `
-                <table class="table table-borderless table-dark bg-transparent m-0">
+                <table class="table table-borderless table-dark bg-transparent m-0 align-middle">
                     <thead>
-                        <tr class="text-muted small border-bottom border-secondary">
-                            <th>#</th>
-                            <th>Jugador</th>
+                        <tr class="text-muted small border-bottom border-white-10 text-uppercase">
+                            <th>Rk</th>
+                            <th>Entrenador</th>
                             <th class="text-center">Medallas</th>
                             <th class="text-center">Vidas</th>
-                            <th class="text-center">Combates</th>
+                            <th class="text-center">Wins</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${ranking.map((j, i) => `
-                        <tr class="align-middle">
-                            <td class="fw-bold text-muted">${i + 1}</td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="rounded-circle bg-secondary" style="width:25px;height:25px;"></div>
-                                    ${j.nombre}
+                        ${ranking.map((j, i) => {
+                            // Color de vidas: Verde (>1), Rojo (1), Gris (0)
+                            let lifeColor = 'text-success';
+                            if(j.vidas === 1) lifeColor = 'text-danger';
+                            if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
+
+                            // Controles de Host (Solo aparecen si soy Host)
+                            const controlesVidas = soyHost ? `
+                                <div class="btn-group btn-group-sm ms-2" role="group">
+                                    <button class="btn btn-outline-danger p-0 px-1" style="line-height:1" onclick="cambiarVidas('${j._id}', -1)">-</button>
+                                    <button class="btn btn-outline-success p-0 px-1" style="line-height:1" onclick="cambiarVidas('${j._id}', 1)">+</button>
                                 </div>
-                            </td>
-                            <td class="text-center text-warning fw-bold">${j.medallas || 0}</td>
-                            <td class="text-center text-danger">3/3</td> <td class="text-center">0</td> </tr>
-                        `).join('')}
+                            ` : '';
+
+                            const controlesWins = soyHost ? `
+                                <button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1" style="line-height:1" title="+1 Victoria" onclick="sumarVictoria('${j._id}')">
+                                    <i class="bi bi-caret-up-fill"></i>
+                                </button>
+                            ` : '';
+
+                            return `
+                            <tr class="${j.vidas === 0 ? 'opacity-50' : ''}">
+                                <td class="fw-bold text-muted small">#${i + 1}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-gradient bg-primary d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">
+                                            ${j.nombre.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span class="${j.vidas === 0 ? 'text-decoration-line-through' : ''}">${j.nombre}</span>
+                                    </div>
+                                </td>
+                                <td class="text-center text-warning fw-bold">${j.medallas || 0}</td>
+                                
+                                <td class="text-center">
+                                    <span class="${lifeColor} fw-bold">${j.vidas}</span>
+                                    ${controlesVidas}
+                                </td>
+
+                                <td class="text-center text-info">
+                                    ${j.victorias || 0}
+                                    ${controlesWins}
+                                </td>
+                            </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
                 `;
@@ -763,7 +803,37 @@ async function borrarSala() {
     }
 }
 
+
+/* ========================================================= */
 function togglePCView() {
     const pcSection = document.getElementById('pc-section');
     if (pcSection) pcSection.classList.toggle('d-none');
+}
+
+/* ========================================================= */
+/* LOGIC: GESTIÓN DE ÁRBITRO (HOST)                          */
+/* ========================================================= */
+
+// Modificar Vidas
+async function cambiarVidas(idJugador, cambio) {
+    try {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/vidas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entrenadorId: idJugador, cambio: cambio })
+        });
+        if (res.ok) cargarDashboard(); // Recargar para ver el cambio
+    } catch (e) { console.error(e); }
+}
+
+// Sumar Victoria
+async function sumarVictoria(idJugador) {
+    try {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/victoria', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entrenadorId: idJugador })
+        });
+        if (res.ok) cargarDashboard();
+    } catch (e) { console.error(e); }
 }

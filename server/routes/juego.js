@@ -266,4 +266,43 @@ router.delete('/sala', async (req, res) => {
     }
 });
 
+// --- 8. ACTUALIZAR VIDAS (Gestión de Supervivencia) ---
+router.put('/vidas', async (req, res) => {
+    const { entrenadorId, cambio } = req.body; // cambio puede ser +1 o -1
+
+    try {
+        // Buscamos al entrenador
+        const entrenador = await Entrenador.findById(entrenadorId);
+        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
+
+        // Calculamos nueva vida
+        let nuevasVidas = entrenador.vidas + cambio;
+        if (nuevasVidas < 0) nuevasVidas = 0; // No permitir negativos
+
+        entrenador.vidas = nuevasVidas;
+        await entrenador.save();
+
+        res.json({ mensaje: "Vidas actualizadas", vidas: nuevasVidas });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: "Error al actualizar vidas" });
+    }
+});
+
+// --- 9. REGISTRAR VICTORIA (Para el Ranking) ---
+router.put('/victoria', async (req, res) => {
+    const { entrenadorId } = req.body;
+
+    try {
+        const entrenador = await Entrenador.findByIdAndUpdate(
+            entrenadorId, 
+            { $inc: { victorias: 1 } }, // Incrementa en 1 automáticamente
+            { new: true }
+        );
+        res.json({ mensaje: "Victoria registrada", victorias: entrenador.victorias });
+    } catch (error) {
+        res.status(500).json({ mensaje: "Error al registrar victoria" });
+    }
+});
+
 module.exports = router;
