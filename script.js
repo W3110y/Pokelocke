@@ -233,6 +233,10 @@ async function cargarDashboard() {
         const response = await fetch(API_URL);
         
         if (response.ok) {
+            const data = await response.json(); 
+            const infoSala = data.sala;
+            const listaJugadores = data.jugadores;
+            
             // 1. RELLENAR MODALES (Derecha)
             document.getElementById('modal-rules-content').innerHTML = `<h5>📜 Reglas</h5><p>${infoSala.reglas || "Sin reglas"}</p>`;
             document.getElementById('modal-desc-content').innerHTML = `<h5>ℹ️ Descripción</h5><p>${infoSala.descripcion || "Sin descripción"}</p>`;
