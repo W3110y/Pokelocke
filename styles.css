@@ -165,25 +165,35 @@ h1, h2, h3, h4, h5, .card-title {
 
 /* ========================================================= */
 /* DASHBOARD LAYOUT */
+/* CORRECCIÓN: DASHBOARD FLUIDO (Sin scrollbars internos) */
+
 .dashboard-container {
     display: grid;
-    grid-template-columns: 250px 1fr 250px; /* Izq(Fijo) - Centro(Flex) - Der(Fijo) */
+    /* Mantenemos las columnas, pero quitamos la altura fija */
+    grid-template-columns: 250px 1fr 250px; 
     gap: 20px;
-    padding: 80px 20px 20px 20px; /* Padding top para el header */
+    padding: 90px 20px 40px 20px; /* Más espacio abajo */
     max-width: 1600px;
     margin: 0 auto;
-    height: 100vh; /* Ocupa toda la altura */
-    overflow: hidden; /* Evita scroll doble */
+    
+    /* CAMBIOS CLAVE AQUÍ: */
+    min-height: 100vh; /* Ocupa al menos toda la pantalla */
+    height: auto;      /* Crece según el contenido */
+    overflow: visible; /* Deja que el contenido se vea */
 }
 
-/* COLUMNAS */
-.sidebar-left, .sidebar-right {
-    overflow-y: auto; /* Scroll independiente si hay muchos datos */
-    padding-bottom: 20px;
+/* Quitamos el comportamiento de caja cerrada de las columnas */
+.sidebar-left, .sidebar-right, .main-stage {
+    overflow: visible; /* Adiós scrollbars internos */
+    height: auto;
 }
-.main-stage {
-    overflow-y: auto;
-    padding-right: 5px; /* Espacio para scrollbar */
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+    .dashboard-container {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
+        padding: 80px 15px;
+    }
 }
 
 /* ESTILOS DE COMPONENTES */
@@ -209,11 +219,12 @@ h1, h2, h3, h4, h5, .card-title {
     color: var(--text-main);
 }
 
-/* RESPONSIVE (Móvil: Todo en una columna) */
-@media (max-width: 992px) {
-    .dashboard-container {
-        grid-template-columns: 1fr;
-        height: auto;
-        overflow: visible;
-    }
+/* BATTLE STYLES */
+.battle-card {
+    border-left: 4px solid var(--primary-color); /* Borde de color a la izquierda */
+    transition: transform 0.2s;
+}
+.battle-card:hover {
+    transform: translateX(5px); /* Efecto de movimiento al pasar ratón */
+    background: var(--card-hover-bg) !important;
 }
