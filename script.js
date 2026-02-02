@@ -212,7 +212,44 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ========================================================= */
-/* LOGIC: DASHBOARD / STATS LOADER                           */
+/* UTILIDAD: GENERADOR DE GRID DE IMÁGENES                   */
+/* ========================================================= */
+// Esta función debe estar definida fuera o al principio para ser usada
+const generarGrid = (lista, esGris = false) => {
+    if (!lista || lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic opacity-50">Vacío</div>';
+    
+    // Necesitamos saber quién es el usuario actual para la interactividad
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    const usuario = usuarioRaw ? JSON.parse(usuarioRaw) : null;
+    
+    return `<div class="d-flex justify-content-center flex-wrap gap-2">` + 
+    lista.map(poke => {
+        // Solo permitimos click si el pokemon pertenece al usuario actual (aunque en este panel siempre es el mío)
+        const accionClick = `onclick='abrirDetalles(${JSON.stringify(poke)})'`;
+        const estiloCursor = 'cursor: pointer;';
+        const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.7;' : ''; 
+        
+        const imgUrl = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+
+        return `
+        <div class="text-center position-relative p-1" title="${poke.mote}">
+            <img src="${imgUrl}" 
+                 class="poke-sprite"
+                 style="width: 50px; height: 50px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor} ${filtroGris}"
+                 ${accionClick}
+                 onmouseover="this.style.transform='scale(1.2)'"
+                 onmouseout="this.style.transform='scale(1)'"
+                 onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+            
+            <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark bg-opacity-75 rounded-pill border border-secondary" 
+                  style="font-size: 0.55em; padding: 1px 4px;">L.${poke.nivel}</span>
+        </div>`;
+    }).join('') + `</div>`;
+};
+
+
+/* ========================================================= */
+/* LOGIC: DASHBOARD / STATS LOADER (CORREGIDO)               */
 /* ========================================================= */
 async function cargarDashboard() {
     // LÓGICA DE CARGA DE DATOS
@@ -227,7 +264,7 @@ async function cargarDashboard() {
     if (salaInfoRaw) renderizarInfoSala(JSON.parse(salaInfoRaw));
 
     // FETCH AL SERVIDOR
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`; // ¡Asegúrate que esta URL es la tuya!
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
 
     try {
         const response = await fetch(API_URL);
@@ -238,15 +275,17 @@ async function cargarDashboard() {
             const listaJugadores = data.jugadores;
             
             // 1. RELLENAR MODALES (Derecha)
-            document.getElementById('modal-rules-content').innerHTML = `<h5>📜 Reglas</h5><p>${infoSala.reglas || "Sin reglas"}</p>`;
-            document.getElementById('modal-desc-content').innerHTML = `<h5>ℹ️ Descripción</h5><p>${infoSala.descripcion || "Sin descripción"}</p>`;
+            const rulesContent = document.getElementById('modal-rules-content');
+            if (rulesContent) rulesContent.innerHTML = `<h5>📜 Reglas</h5><p>${infoSala.reglas || "Sin reglas"}</p>`;
+            
+            const descContent = document.getElementById('modal-desc-content');
+            if (descContent) descContent.innerHTML = `<h5>ℹ️ Descripción</h5><p>${infoSala.descripcion || "Sin descripción"}</p>`;
 
             // 2. RELLENAR LISTA DE MIEMBROS (Izquierda)
             const membersList = document.getElementById('members-list');
             if (membersList) {
                 membersList.innerHTML = listaJugadores.map(jugador => {
                     const isHost = jugador.nombre === infoSala.host;
-                    // Avatar simple con inicial
                     return `
                     <div class="d-flex align-items-center gap-2 p-2 mb-2 glass-panel">
                         <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width:35px; height:35px;">
@@ -259,8 +298,8 @@ async function cargarDashboard() {
                     </div>`;
                 }).join('');
             }
+
             // 3. RELLENAR PANEL CENTRAL (Tu Equipo + PC)
-            // Filtramos solo TU usuario para el panel principal
             const miUsuario = listaJugadores.find(u => u._id === usuario._id);
             const dashboardPanel = document.getElementById('my-dashboard-panel');
 
@@ -268,9 +307,7 @@ async function cargarDashboard() {
                 const equipo = miUsuario.pokemons.filter(p => p.estado === 'equipo');
                 const caja = miUsuario.pokemons.filter(p => p.estado === 'caja');
 
-                // Generamos el HTML del equipo en horizontal
-                // (Reutiliza tu función generarGrid existente, pero ajústala para que sea 'flex-nowrap' si quieres scroll horizontal)
-                
+                // AQUI ESTABA EL ERROR: Llamábamos a generarGrid sin tenerla definida
                 dashboardPanel.innerHTML = `
                     <div class="glass-panel p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -281,7 +318,8 @@ async function cargarDashboard() {
                         </div>
                         
                         <div class="d-flex gap-3 justify-content-center flex-wrap">
-                            ${generarGrid(equipo, false)} </div>
+                            ${generarGrid(equipo, false)} 
+                        </div>
 
                         <div id="pc-section" class="mt-4 pt-4 border-top border-white-50 d-none">
                             <h5 class="text-muted mb-3">Caja de Almacenamiento</h5>
@@ -290,17 +328,16 @@ async function cargarDashboard() {
                     </div>
                 `;
             }
+
             // 4. CLASIFICACIÓN (Leaderboard con Controles de Host)
             const leaderboardContainer = document.getElementById('leaderboard-container');
             
             if (leaderboardContainer) {
-                // Ordenar: Primero por Vidas (vivos arriba), luego por Medallas, luego Victorias
                 const ranking = [...listaJugadores].sort((a, b) => {
                     if (b.vidas !== a.vidas) return b.vidas - a.vidas;
                     return (b.medallas || 0) - (a.medallas || 0);
                 });
 
-                // Detectar si SOY el Host (para mostrar controles)
                 const soyHost = infoSala.host === usuario.nombre;
 
                 leaderboardContainer.innerHTML = `
@@ -316,12 +353,10 @@ async function cargarDashboard() {
                     </thead>
                     <tbody>
                         ${ranking.map((j, i) => {
-                            // Color de vidas: Verde (>1), Rojo (1), Gris (0)
                             let lifeColor = 'text-success';
                             if(j.vidas === 1) lifeColor = 'text-danger';
                             if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
 
-                            // Controles de Host (Solo aparecen si soy Host)
                             const controlesVidas = soyHost ? `
                                 <div class="btn-group btn-group-sm ms-2" role="group">
                                     <button class="btn btn-outline-danger p-0 px-1" style="line-height:1" onclick="cambiarVidas('${j._id}', -1)">-</button>
@@ -347,12 +382,10 @@ async function cargarDashboard() {
                                     </div>
                                 </td>
                                 <td class="text-center text-warning fw-bold">${j.medallas || 0}</td>
-                                
                                 <td class="text-center">
                                     <span class="${lifeColor} fw-bold">${j.vidas}</span>
                                     ${controlesVidas}
                                 </td>
-
                                 <td class="text-center text-info">
                                     ${j.victorias || 0}
                                     ${controlesWins}
@@ -364,33 +397,33 @@ async function cargarDashboard() {
                 </table>
                 `;
             }
-        }else {
-            // =================================================
-            // CASO ERROR: La sala no existe (IMPLEMENTACIÓN NUEVA)
-            // =================================================
-            if (response.status === 404) {
-                // 1. Aviso al usuario
-                alert("⛔ LA SALA YA NO EXISTE\n\nEl Host ha eliminado este grupo permanentemente.\nSe eliminará de tu historial.");
 
-                // 2. Limpieza del Historial Local (Borrar la sala zombie)
+            // 5. INYECCIÓN BOTÓN DE BORRAR SALA (Si soy Host)
+            const contenedorAcciones = document.getElementById('host-actions-container');
+            if (contenedorAcciones) contenedorAcciones.innerHTML = ''; // Limpiar
+
+            if (contenedorAcciones && infoSala.host === usuario.nombre) {
+                const btnBorrar = document.createElement('button');
+                btnBorrar.className = 'btn btn-danger btn-sm d-flex align-items-center gap-2';
+                btnBorrar.innerHTML = '<i class="bi bi-trash-fill"></i> Borrar Sala';
+                btnBorrar.onclick = borrarSala;
+                contenedorAcciones.appendChild(btnBorrar);
+            }
+
+        } else {
+            // ERROR 404 - Sala Eliminada
+            if (response.status === 404) {
+                alert("⛔ LA SALA YA NO EXISTE\n\nEl Host ha eliminado este grupo permanentemente.\nSe eliminará de tu historial.");
                 let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-                // Filtramos para quitar la sala actual
                 historial = historial.filter(s => s.sala !== salaNombre);
                 localStorage.setItem('pokelocke_history', JSON.stringify(historial));
-
-                // 3. Limpieza de Sesión
                 localStorage.removeItem('usuario_pokelocke');
                 localStorage.removeItem('sala_info');
-
-                // 4. Redirección segura
                 window.location.href = 'groups.html';
-                return; // Cortamos ejecución
             }
         }
     } catch (error) { 
         console.error("Error dashboard:", error); 
-        // Opcional: Manejar error de conexión (servidor apagado)
-        alert("Error de conexión con el servidor.");
     }
 }
 
