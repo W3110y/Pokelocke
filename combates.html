@@ -45,51 +45,17 @@
     </header>
 
     <!-- ============================================= -->
-    <!-- MAIN CONTENT: Party Details                  -->
+    <!-- MAIN CONTENT                                  -->
     <!-- ============================================= -->
-    <div class="dashboard-container">
-    
-    <aside class="sidebar-left fade-in">
-        <h5 class="section-title">Miembros</h5>
-        <div id="members-list" class="members-grid">
-            </div>
-    </aside>
-
-    <main class="main-stage fade-in">
-        
-        <div id="my-dashboard-panel" class="mb-4">
-            </div>
-
-        <div class="glass-panel p-3">
-            <h5 class="section-title text-center mb-3">🏆 Clasificación General</h5>
-            <div id="leaderboard-container">
+    <section class="dashboard-container">
+        <div class="main-stage fade-in">
+            <div id="combates-panel" class="mb-4">
+                <h2 class="section-title">Historial de Combates</h2>
+                <div id="combates-list" class="list-group">
+                    <!-- Combates se cargarán aquí dinámicamente -->
                 </div>
-        </div>
-    </main>
-
-    <aside class="sidebar-right fade-in">
-        <div class="d-grid gap-2 mb-4">
-            <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#rulesModal">
-                <i class="bi bi-book-half text-accent"></i> Ver Reglas
-            </button>
-            <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#descModal">
-                <i class="bi bi-info-circle text-primary"></i> Descripción
-            </button>
-        </div>
-
-        <div class="glass-panel p-3 h-100">
-            <h6 class="section-title border-bottom pb-2">⚔️ Actividad Reciente</h6>
-            <div id="recent-battles-list" class="battles-feed my-3">
-                <small class="text-muted d-block text-center">Sin combates recientes</small>
             </div>
-            <a href="combates.html" class="btn btn-sm btn-outline-primary w-100">Ver Todos</a>
-        </div>
-    </aside>
-
-    </div>
-
-    <div class="modal fade" id="rulesModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-rules-content">Cargando reglas...</div></div></div></div>
-    <div class="modal fade" id="descModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-desc-content">Cargando descripción...</div></div></div></div>
+    </section>
 
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
