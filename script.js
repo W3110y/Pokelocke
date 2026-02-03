@@ -340,6 +340,25 @@ async function cargarDashboard() {
 
                 const soyHost = infoSala.host === usuario.nombre;
 
+                // A. MOSTRAR BOTÓN DE REGISTRAR (Solo Host)
+                const btnRegistrar = document.getElementById('btn-registrar-combate');
+                if (soyHost && btnRegistrar) {
+                    btnRegistrar.classList.remove('d-none');
+                    
+                    // Llenar los selects del modal con los jugadores
+                    const selects = ['select-p1', 'select-p2', 'select-winner'];
+                    selects.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+                        }
+                    });
+                }
+            
+                // B. CARGAR FEED DE COMBATES (Llamada a función nueva)
+                cargarFeedCombates(salaNombre);
+
+
                 leaderboardContainer.innerHTML = `
                 <table class="table table-borderless table-dark bg-transparent m-0 align-middle">
                     <thead>
@@ -869,4 +888,81 @@ async function sumarVictoria(idJugador) {
         });
         if (res.ok) cargarDashboard();
     } catch (e) { console.error(e); }
+}
+
+/* ========================================================= */
+/* LOGIC: SISTEMA DE COMBATES                                */
+/* ========================================================= */
+
+// 1. CARGAR FEED (Para el sidebar de stats.html)
+async function cargarFeedCombates(salaNombre) {
+    const container = document.getElementById('recent-battles-list');
+    if (!container) return;
+
+    try {
+        // Pedimos solo los últimos 5
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=5`);
+        const combates = await res.json();
+
+        if (combates.length === 0) {
+            container.innerHTML = '<small class="text-muted d-block text-center">Sin combates recientes</small>';
+            return;
+        }
+
+        container.innerHTML = combates.map(c => `
+            <div class="mb-2 p-2 rounded border border-secondary bg-dark bg-opacity-25 small">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-info">${c.entrenador1}</span>
+                    <span class="text-muted" style="font-size:0.7em">VS</span>
+                    <span class="text-info">${c.entrenador2}</span>
+                </div>
+                <div class="text-center">
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                        🏆 ${c.ganador}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error(e); }
+}
+
+// 2. ENVIAR COMBATE (Evento del Formulario)
+const formCombate = document.getElementById('form-combate');
+if (formCombate) {
+    formCombate.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const p1 = document.getElementById('select-p1').value;
+        const p2 = document.getElementById('select-p2').value;
+        const ganador = document.getElementById('select-winner').value;
+        
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+        if (p1 === p2) { alert("¡Un jugador no puede luchar contra sí mismo!"); return; }
+
+        try {
+            // A. Guardar Combate
+            await fetch('https://pokelocke-8kjm.onrender.com/api/juego/combate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sala: usuario.sala,
+                    entrenador1: p1,
+                    entrenador2: p2,
+                    ganador: ganador
+                })
+            });
+
+            // B. Actualizar contador de victorias del ganador (Reutilizamos la ruta existente)
+            // Necesitamos el ID del ganador, lo buscamos en el DOM o recargamos
+            // Para simplificar, recargamos la página y el backend ya tiene la victoria si la implementamos antes
+            // (Opcional: llamar a /api/juego/victoria aquí también si queremos autoincrementar)
+            
+            // Cerrar modal y recargar
+            const modal = bootstrap.Modal.getInstance(document.getElementById('combatModal'));
+            modal.hide();
+            cargarDashboard(); 
+
+        } catch (error) { console.error(error); }
+    });
 }
