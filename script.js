@@ -901,7 +901,7 @@ async function cargarFeedCombates(salaNombre) {
 
     try {
         // Pedimos solo los últimos 5
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=5`);
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
         const combates = await res.json();
 
         if (combates.length === 0) {
