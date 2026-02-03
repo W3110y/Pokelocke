@@ -1035,3 +1035,91 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
         alert("No se pudo conectar con el servidor.");
     }
 };
+
+/* ========================================================= */
+/* LOGIC: HISTORIAL COMPLETO (combates.html)                 */
+/* ========================================================= */
+async function cargarHistorialCompleto() {
+    const container = document.getElementById('timeline-content');
+    if (!container) return; // No estamos en la página correcta
+
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    try {
+        // Fetch sin límite (trae todos)
+        // NOTA: Asegúrate de que la URL es correcta
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
+        const combates = await res.json();
+
+        if (combates.length === 0) {
+            container.innerHTML = `
+                <div class="glass-panel p-5 text-center">
+                    <i class="bi bi-wind text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="text-muted mt-3">Todo está tranquilo...</h4>
+                    <p class="small text-secondary">Aún no se han registrado batallas en esta sala.</p>
+                </div>`;
+            return;
+        }
+
+        // Renderizar Timeline
+        container.innerHTML = combates.map(c => {
+            // Formatear fecha
+            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { 
+                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+            });
+
+            // Determinar avatar/color del ganador (simple por inicial)
+            const inicialGanador = c.ganador.charAt(0).toUpperCase();
+
+            return `
+            <div class="battle-item fade-up">
+                <div class="battle-dot"></div>
+                
+                <div class="battle-card-full">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary bg-opacity-25 text-muted border border-secondary border-opacity-25" style="font-size:0.65em">
+                            ${fecha}
+                        </span>
+                        
+                        <div class="text-end">
+                            <span class="text-warning small fw-bold">GANADOR</span>
+                            <div class="d-flex align-items-center justify-content-end gap-2 mt-1">
+                                <span class="fw-bold text-white">${c.ganador}</span>
+                                <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold" style="width:25px; height:25px; font-size:0.8em">
+                                    ${inicialGanador}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 py-2 border-top border-white-10 mt-2">
+                        <div class="flex-grow-1 text-center">
+                            <span class="d-block text-info fw-bold">${c.entrenador1}</span>
+                            ${c.ganador === c.entrenador1 ? '<i class="bi bi-trophy-fill text-warning"></i>' : '<small class="text-muted">Derrota</small>'}
+                        </div>
+                        
+                        <div class="text-muted fw-light">VS</div>
+                        
+                        <div class="flex-grow-1 text-center">
+                            <span class="d-block text-danger fw-bold">${c.entrenador2}</span>
+                            ${c.ganador === c.entrenador2 ? '<i class="bi bi-trophy-fill text-warning"></i>' : '<small class="text-muted">Derrota</small>'}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-danger text-center">Error cargando el historial.</p>';
+    }
+}
+
+// AUTO-INIT
+if (window.location.pathname.includes('combates.html')) {
+    document.addEventListener('DOMContentLoaded', cargarHistorialCompleto);
+}
+
+

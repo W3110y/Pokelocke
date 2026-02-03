@@ -295,3 +295,59 @@ h1, h2, h3, h4, h5, .card-title {
     display: block;
     text-align: center;
 }
+
+/* ========================================================= */
+/* BATTLE TIMELINE (combates.html)                           */
+/* ========================================================= */
+
+.timeline-line {
+    position: absolute;
+    left: 20px; /* Alineado a la izquierda para dejar espacio a tarjetas */
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+}
+
+.battle-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 50px; /* Espacio para el punto de la línea de tiempo */
+    z-index: 1;
+}
+
+/* El punto (Dot) en la línea de tiempo */
+.battle-dot {
+    position: absolute;
+    left: 11px; /* Centrado sobre la línea de 20px (20/2 - width/2) + ajuste */
+    top: 15px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg-deep);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 10px var(--shadow-glow);
+    z-index: 2;
+}
+
+/* Tarjeta del combate */
+.battle-card-full {
+    background: var(--glass-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    transition: transform 0.2s;
+}
+
+.battle-card-full:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary-color);
+}
+
+/* Truco: Ocultar la línea sobrante después del último elemento */
+#timeline-content .battle-item:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
