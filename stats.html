@@ -69,6 +69,10 @@
 
     <aside class="sidebar-right fade-in">
         <div class="d-grid gap-2 mb-4">
+            <button id="btn-registrar-combate" class="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#combatModal">
+                <i class="bi bi-swords"></i> Registrar Combate
+            </button>
+            
             <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#rulesModal">
                 <i class="bi bi-book-half text-accent"></i> Ver Reglas
             </button>
@@ -76,6 +80,7 @@
                 <i class="bi bi-info-circle text-primary"></i> Descripción
             </button>
         </div>
+
 
         <div class="glass-panel p-3 h-100">
             <h6 class="section-title border-bottom pb-2">⚔️ Actividad Reciente</h6>
@@ -91,6 +96,37 @@
     <div class="modal fade" id="rulesModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-rules-content">Cargando reglas...</div></div></div></div>
     <div class="modal fade" id="descModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-desc-content">Cargando descripción...</div></div></div></div>
 
+    <div class="modal fade" id="combatModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold">⚔️ Nuevo Resultado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-combate">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Combatiente 1</label>
+                        <select id="select-p1" class="form-select bg-dark text-white border-secondary"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Combatiente 2</label>
+                        <select id="select-p2" class="form-select bg-dark text-white border-secondary"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning small fw-bold">Ganador</label>
+                        <select id="select-winner" class="form-select bg-dark text-white border-warning"></select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Guardar Resultado</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
     <!-- ============================================= -->
