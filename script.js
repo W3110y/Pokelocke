@@ -314,20 +314,20 @@ async function cargarDashboard() {
 
                 const soyHost = infoSala.host === usuario.nombre;
 
-                // A. MOSTRAR BOTÓN DE REGISTRAR (Solo Host)
-                const btnRegistrar = document.getElementById('btn-registrar-combate');
-                if (soyHost && btnRegistrar) {
-                    btnRegistrar.classList.remove('d-none');
-                    
-                    // Llenar los selects del modal con los jugadores
-                    const selects = ['select-p1', 'select-p2', 'select-winner'];
-                    selects.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-                        }
-                    });
-                }
+                // A. CONFIGURACIÓN DEL FORMULARIO DE COMBATE (PÚBLICO)
+                // Ya no verificamos 'soyHost', lo hacemos para todos.
+                const selects = ['select-p1', 'select-p2', 'select-winner'];
+                selects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        // Rellenamos los selectores con todos los jugadores de la sala
+                        el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+                    }
+                });
+                
+                // Opcional: Pre-seleccionar al usuario actual como "Jugador 1" para facilitar
+                const selectP1 = document.getElementById('select-p1');
+                if (selectP1) selectP1.value = usuario.nombre;
             
                 // B. CARGAR FEED DE COMBATES (Llamada a función nueva)
                 cargarFeedCombates(salaNombre);
