@@ -305,4 +305,37 @@ router.put('/victoria', async (req, res) => {
     }
 });
 
+// --- 10. REGISTRAR COMBATE ---
+router.post('/combate', async (req, res) => {
+    const { sala, entrenador1, entrenador2, ganador } = req.body;
+
+    try {
+        const nuevoCombate = new Combate({ sala, entrenador1, entrenador2, ganador });
+        await nuevoCombate.save();
+        res.json({ mensaje: "Combate registrado", combate: nuevoCombate });
+    } catch (error) {
+        res.status(500).json({ mensaje: "Error al guardar combate" });
+    }
+});
+
+// --- 11. OBTENER HISTORIAL DE COMBATES ---
+router.get('/combates/:sala', async (req, res) => {
+    const { sala } = req.params;
+    const { limite } = req.query; // Permite pedir solo los últimos 5, por ejemplo
+
+    try {
+        let query = Combate.find({ sala }).sort({ fecha: -1 }); // Los más recientes primero
+        
+        if (limite) {
+            query = query.limit(parseInt(limite));
+        }
+
+        const combates = await query.exec();
+        res.json(combates);
+    } catch (error) {
+        res.status(500).json({ mensaje: "Error al obtener combates" });
+    }
+});
+
+
 module.exports = router;
