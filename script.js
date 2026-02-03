@@ -212,43 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ========================================================= */
-/* UTILIDAD: GENERADOR DE GRID DE IMÁGENES                   */
-/* ========================================================= */
-// Esta función debe estar definida fuera o al principio para ser usada
-const generarGrid = (lista, esGris = false) => {
-    if (!lista || lista.length === 0) return '<div class="text-center py-3 text-muted small fst-italic opacity-50">Vacío</div>';
-    
-    // Necesitamos saber quién es el usuario actual para la interactividad
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    const usuario = usuarioRaw ? JSON.parse(usuarioRaw) : null;
-    
-    return `<div class="d-flex justify-content-center flex-wrap gap-2">` + 
-    lista.map(poke => {
-        // Solo permitimos click si el pokemon pertenece al usuario actual (aunque en este panel siempre es el mío)
-        const accionClick = `onclick='abrirDetalles(${JSON.stringify(poke)})'`;
-        const estiloCursor = 'cursor: pointer;';
-        const filtroGris = esGris ? 'filter: grayscale(100%); opacity: 0.7;' : ''; 
-        
-        const imgUrl = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-
-        return `
-        <div class="text-center position-relative p-1" title="${poke.mote}">
-            <img src="${imgUrl}" 
-                 class="poke-sprite"
-                 style="width: 50px; height: 50px; image-rendering: pixelated; transition: transform 0.2s; ${estiloCursor} ${filtroGris}"
-                 ${accionClick}
-                 onmouseover="this.style.transform='scale(1.2)'"
-                 onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-            
-            <span class="position-absolute bottom-0 start-50 translate-middle-x badge bg-dark bg-opacity-75 rounded-pill border border-secondary" 
-                  style="font-size: 0.55em; padding: 1px 4px;">L.${poke.nivel}</span>
-        </div>`;
-    }).join('') + `</div>`;
-};
-
-
-/* ========================================================= */
 /* LOGIC: DASHBOARD / STATS LOADER (CORREGIDO)               */
 /* ========================================================= */
 async function cargarDashboard() {
@@ -299,33 +262,44 @@ async function cargarDashboard() {
                 }).join('');
             }
 
-            // 3. RELLENAR PANEL CENTRAL (Tu Equipo + PC)
+            // 3. RELLENAR PANEL CENTRAL (Barra de Equipo Pixel Art Interactiva)
             const miUsuario = listaJugadores.find(u => u._id === usuario._id);
             const dashboardPanel = document.getElementById('my-dashboard-panel');
 
             if (miUsuario && dashboardPanel) {
                 const equipo = miUsuario.pokemons.filter(p => p.estado === 'equipo');
-                const caja = miUsuario.pokemons.filter(p => p.estado === 'caja');
+                
+                // Generamos los 6 huecos (slots)
+                let slotsHTML = '';
+                for (let i = 0; i < 6; i++) {
+                    const poke = equipo[i];
+                    
+                    if (poke) {
+                        // SI HAY POKEMON: Mostramos el icono pixel art
+                        // Nota: Usamos poke.imagen. Si la URL es de un sprite grande, 
+                        // el CSS '.party-icon' se encargará de pixelarlo y ajustarlo.
+                        slotsHTML += `
+                        <div class="party-slot" title="${poke.mote} (${poke.especie})">
+                            <img src="${poke.imagen}" class="party-icon" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                        </div>`;
+                    } else {
+                        // SI ESTÁ VACÍO: Mostramos la sombra
+                        slotsHTML += `
+                        <div class="party-slot">
+                            <div class="empty-shadow"></div>
+                        </div>`;
+                    }
+                }
 
-                // AQUI ESTABA EL ERROR: Llamábamos a generarGrid sin tenerla definida
+                // Renderizamos EL BOTÓN ÚNICO que lleva a equipo.html
                 dashboardPanel.innerHTML = `
-                    <div class="glass-panel p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3 class="m-0 fw-bold">Mi Equipo</h3>
-                            <button class="btn btn-sm btn-outline-primary" onclick="togglePCView()">
-                                <i class="bi bi-box"></i> Abrir PC (${caja.length})
-                            </button>
-                        </div>
-                        
-                        <div class="d-flex gap-3 justify-content-center flex-wrap">
-                            ${generarGrid(equipo, false)} 
-                        </div>
-
-                        <div id="pc-section" class="mt-4 pt-4 border-top border-white-50 d-none">
-                            <h5 class="text-muted mb-3">Caja de Almacenamiento</h5>
-                            ${generarGrid(caja, false)}
-                        </div>
-                    </div>
+                    <h5 class="section-title text-center mb-3">Mi Equipo Activo</h5>
+                    
+                    <a href="equipo.html" class="party-bar-btn" title="Click para abrir PC y Gestionar">
+                        ${slotsHTML}
+                    </a>
+                    
+                    <span class="manage-hint mt-2">Click en la barra para abrir PC y organizar</span>
                 `;
             }
 
@@ -360,7 +334,7 @@ async function cargarDashboard() {
 
 
                 leaderboardContainer.innerHTML = `
-                <table class="table table-borderless table-dark bg-transparent m-0 align-middle">
+                <table class="table table-borderless bg-transparent m-0 align-middle">
                     <thead>
                         <tr class="text-muted small border-bottom border-white-10 text-uppercase">
                             <th>Rk</th>
@@ -550,25 +524,7 @@ async function guardarCaptura() {
 /* LOGIC: EDICIÓN DE POKÉMON                                 */
 /* ========================================================= */
 
-// 1. Abrir el modal con los datos cargados
-function abrirDetalles(poke) {
-    // Solo permitimos editar si es MI pokemon (seguridad visual)
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-    
-    // Rellenar modal
-    document.getElementById('detail-title').innerText = poke.especie.toUpperCase();
-    document.getElementById('detail-img').src = poke.imagen || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-    document.getElementById('edit-mote').value = poke.mote;
-    document.getElementById('edit-nivel').value = poke.nivel;
-    document.getElementById('edit-estado').value = poke.estado;
-    document.getElementById('edit-poke-id').value = poke._id; // Guardamos el ID de mongo
-
-    // Mostrar Modal
-    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
-    modal.show();
-}
-
-// 2. Enviar cambios al servidor
+// Enviar cambios al servidor
 async function guardarCambiosPokemon() {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     const pokeId = document.getElementById('edit-poke-id').value;
@@ -966,3 +922,116 @@ if (formCombate) {
         } catch (error) { console.error(error); }
     });
 }
+
+/* ========================================================= */
+/* LOGIC: GESTOR DE EQUIPO (equipo.html)                     */
+/* ========================================================= */
+async function cargarGestorEquipo() {
+    const activeGrid = document.getElementById('active-team-grid');
+    if (!activeGrid) return; // Si no existe el grid, no estamos en equipo.html
+
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    // Fetch para tener datos frescos
+    const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+    const data = await res.json();
+    const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+    const pokemons = miPerfil.pokemons;
+
+    // Función Helper para crear tarjetas de gestión
+    const crearTarjetaGestor = (poke, ubicacionActual) => {
+        // Botones según ubicación
+        let botones = '';
+        
+        if (ubicacionActual === 'equipo') {
+            botones = `
+                <button onclick="moverPokemon('${poke._id}', 'caja')" class="btn btn-sm btn-primary w-100 mb-1">Al PC</button>
+                <button onclick="moverPokemon('${poke._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7em">☠️ Ha muerto</button>
+            `;
+        } else if (ubicacionActual === 'caja') {
+            botones = `
+                <button onclick="moverPokemon('${poke._id}', 'equipo')" class="btn btn-sm btn-success w-100 mb-1">Al Equipo</button>
+                <button onclick="moverPokemon('${poke._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7em">☠️ Ha muerto</button>
+            `;
+        } else {
+            // Cementerio
+            botones = `<button onclick="moverPokemon('${poke._id}', 'caja')" class="btn btn-sm btn-outline-secondary w-100">Revivir (PC)</button>`;
+        }
+
+        return `
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-2 text-center h-100 d-flex flex-col justify-content-between">
+                <div>
+                    <img src="${poke.imagen}" class="party-icon mb-2" style="width:50px; height:50px;">
+                    <div class="fw-bold small text-truncate">${poke.mote}</div>
+                    <div class="text-muted x-small">Lv.${poke.nivel}</div>
+                </div>
+                <div class="mt-2">
+                    ${botones}
+                </div>
+            </div>
+        </div>`;
+    };
+
+    // 1. RENDERIZAR EQUIPO
+    const equipo = pokemons.filter(p => p.estado === 'equipo');
+    activeGrid.innerHTML = equipo.map(p => crearTarjetaGestor(p, 'equipo')).join('');
+    // Rellenar huecos vacíos visualmente
+    for(let i=equipo.length; i<6; i++) {
+        activeGrid.innerHTML += `
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-2 text-center h-100 d-flex align-items-center justify-content-center border-dashed opacity-50">
+                <small>Hueco Vacío</small>
+            </div>
+        </div>`;
+    }
+
+    // 2. RENDERIZAR PC
+    const caja = pokemons.filter(p => p.estado === 'caja');
+    document.getElementById('pc-box-grid').innerHTML = caja.length ? caja.map(p => crearTarjetaGestor(p, 'caja').replace('col-6 col-md-4 col-lg-2', 'width-auto')).join('') : '<small class="text-muted">Caja vacía</small>';
+
+    // 3. RENDERIZAR CEMENTERIO
+    const muertos = pokemons.filter(p => p.estado === 'cementerio');
+    document.getElementById('graveyard-grid').innerHTML = muertos.map(p => crearTarjetaGestor(p, 'cementerio').replace('col-6 col-md-4 col-lg-2', 'width-auto')).join('');
+}
+
+/* ========================================================= */
+/* LOGIC: MOVER POKÉMON (Conecta con Backend)                */
+/* ========================================================= */
+window.moverPokemon = async function(pokeId, nuevoEstado) {
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    // Definir URL (Ajusta si usas localhost o Render)
+    // Si estás probando en local: 'http://localhost:3000/api/juego/pokemon/mover'
+    const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon/mover'; 
+
+    try {
+        const res = await fetch(API_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                pokemonId: pokeId,
+                nuevoEstado: nuevoEstado
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Si salió bien, recargamos la pantalla del gestor para ver los cambios
+            cargarGestorEquipo(); 
+        } else {
+            // Si hubo error (ej: Equipo lleno), mostramos alerta
+            alert("⚠️ " + data.mensaje);
+        }
+
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        alert("No se pudo conectar con el servidor.");
+    }
+};

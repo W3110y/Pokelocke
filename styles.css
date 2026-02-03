@@ -228,3 +228,70 @@ h1, h2, h3, h4, h5, .card-title {
     transform: translateX(5px); /* Efecto de movimiento al pasar ratón */
     background: var(--card-hover-bg) !important;
 }
+
+/* ========================================================= */
+/* TEAM BAR & PIXEL ICONS                                    */
+/* ========================================================= */
+
+/* El botón contenedor que parece una barra de equipo */
+.party-bar-btn {
+    display: flex;
+    justify-content: space-between; /* Distribuye los 6 huecos */
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px; /* Forma de píldora alargada */
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none; /* Quitar subrayado del link */
+    width: 100%;
+    max-width: 600px; /* Que no se estire infinito */
+    margin: 0 auto;   /* Centrado */
+}
+
+.party-bar-btn:hover {
+    background: rgba(99, 102, 241, 0.2); /* Brillo al pasar el mouse */
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* El hueco individual (Slot) */
+.party-slot {
+    width: 60px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* La Imagen Pixel Art (Icono) */
+.party-icon {
+    width: 100%; 
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated; /* CRÍTICO: Mantiene los píxeles duros sin difuminar */
+    filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5)); /* Sombra dura para resaltar */
+}
+
+/* La Sombra para huecos vacíos */
+.empty-shadow {
+    width: 40px;
+    height: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* Etiqueta flotante "GESTIONAR" */
+.manage-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
+    display: block;
+    text-align: center;
+}

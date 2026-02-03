@@ -337,5 +337,47 @@ router.get('/combates/:sala', async (req, res) => {
     }
 });
 
+// --- 12. MOVER POKÉMON (Gestión de Cajas) ---
+router.put('/pokemon/mover', async (req, res) => {
+    const { entrenadorId, pokemonId, nuevoEstado } = req.body; 
+    // nuevoEstado puede ser: 'equipo', 'caja' o 'cementerio'
+
+    try {
+        const entrenador = await Entrenador.findById(entrenadorId);
+        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
+
+        // REGLA DE ORO: Validar límite de equipo
+        // Si intentamos mover algo AL equipo, verificamos que no haya ya 6.
+        if (nuevoEstado === 'equipo') {
+            const equipoActual = entrenador.pokemons.filter(p => p.estado === 'equipo');
+            // Nota: Si el pokemon ya estaba en el equipo, no cuenta como entrada nueva, 
+            // pero por simplicidad validamos la longitud.
+            const yaEstaEnEquipo = equipoActual.find(p => p._id.toString() === pokemonId);
+            
+            if (!yaEstaEnEquipo && equipoActual.length >= 6) {
+                return res.status(400).json({ mensaje: "¡Tu equipo está lleno! Deja uno en el PC primero." });
+            }
+        }
+
+        // Encontrar el Pokémon específico dentro del array (Subdocumento Mongoose)
+        const pokemon = entrenador.pokemons.id(pokemonId);
+        
+        if (!pokemon) {
+            return res.status(404).json({ mensaje: "Pokémon no encontrado en tus datos" });
+        }
+
+        // Aplicar el cambio
+        pokemon.estado = nuevoEstado;
+        
+        // Guardar cambios en la base de datos
+        await entrenador.save();
+
+        res.json({ mensaje: "Movimiento realizado con éxito" });
+
+    } catch (error) {
+        console.error("Error al mover pokemon:", error);
+        res.status(500).json({ mensaje: "Error interno del servidor" });
+    }
+});
 
 module.exports = router;
