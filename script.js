@@ -436,147 +436,6 @@ if (window.location.pathname.includes('stats.html')) {
 }
 
 /* ========================================================= */
-/* LOGIC: CAPTURAR POKÉMON                                   */
-/* ========================================================= */
-async function guardarCaptura() {
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) return alert("Error: No hay sesión activa");
-    const usuario = JSON.parse(usuarioRaw);
-
-    const inputNombre = document.getElementById('poke-especie').value.trim().toLowerCase();
-    const mote = document.getElementById('poke-mote').value.trim();
-    const nivel = document.getElementById('poke-nivel').value;
-    const estado = document.getElementById('poke-estado').value;
-
-    if (!inputNombre) return alert("Escribe un nombre de Pokémon");
-
-    const btn = document.querySelector('#captureModal .btn-primary');
-    const txtOriginal = btn.innerText;
-    btn.innerText = "Buscando en PokeAPI...";
-    btn.disabled = true;
-
-    try {
-        // 1. CONSULTAR POKEAPI
-        const responseApi = await fetch(`https://pokeapi.co/api/v2/pokemon/${inputNombre}`);
-        if (!responseApi.ok) throw new Error("Pokémon no encontrado. Revisa el nombre.");
-        
-        const dataApi = await responseApi.json();
-
-        // 2. EXTRAER DATOS VALIOSOS (Aquí está la magia)
-        // Extraemos la imagen pixelart frontal
-        const spriteOficial = dataApi.sprites.front_default; 
-        // Extraemos los tipos (ej: ['fire', 'flying'])
-        const tipos = dataApi.types.map(t => t.type.name);
-
-        // 3. PREPARAR ENVÍO AL BACKEND
-        const payload = {
-            entrenadorId: usuario._id,
-            pokemon: {
-                id: dataApi.id,
-                especie: dataApi.name,
-                mote: mote || dataApi.name, // Capitalizar primera letra quedaría mejor, pero así vale
-                nivel: parseInt(nivel),
-                estado: estado,
-                imagen: spriteOficial, // <--- ENVIAMOS LA URL EXACTA
-                tipos: tipos           // <--- ENVIAMOS LOS TIPOS
-            }
-        };
-
-        // 4. GUARDAR EN TU BASE DE DATOS
-        const responseServer = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/capturar', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (responseServer.ok) {
-            const dataRespuesta = await responseServer.json(); // Leemos la respuesta del backend
-    
-            // Feedback inteligente
-            let mensaje = `✅ ¡${mote || dataApi.name} capturado!`;
-    
-            // Si el servidor lo mandó a la caja forzosamente, avisamos
-            if (dataRespuesta.estadoAsignado === 'caja' && estado === 'equipo') {
-                mensaje += "\n📦 Tu equipo estaba lleno, así que se envió al PC.";
-            }
-
-            alert(mensaje);
-            // Éxito
-            const modalEl = document.getElementById('captureModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-            document.getElementById('form-captura').reset();
-            cargarDashboard();
-            alert(`✅ ¡${mote || dataApi.name} capturado!`);
-        } else {
-            throw new Error("Error al guardar en servidor");
-        }
-
-    } catch (error) {
-        alert("❌ Error: " + error.message);
-    } finally {
-        btn.innerText = txtOriginal;
-        btn.disabled = false;
-    }
-}
-
-/* ========================================================= */
-/* LOGIC: EDICIÓN DE POKÉMON                                 */
-/* ========================================================= */
-
-// Enviar cambios al servidor
-async function guardarCambiosPokemon() {
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-    const pokeId = document.getElementById('edit-poke-id').value;
-    
-    const nuevosDatos = {
-        mote: document.getElementById('edit-mote').value,
-        nivel: parseInt(document.getElementById('edit-nivel').value),
-        estado: document.getElementById('edit-estado').value
-    };
-    let inputNivel = parseInt(document.getElementById('edit-nivel').value);
-    
-    // Validación Frontend Rápida
-    if (inputNivel > 100) {
-        alert("El nivel máximo es 100.");
-        return; // Cortamos aquí
-    }
-    if (inputNivel < 1) {
-        alert("El nivel mínimo es 1.");
-        return;
-    }
-
-    try {
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon/editar', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                entrenadorId: usuario._id,
-                pokemonId: pokeId,
-                nuevosDatos: nuevosDatos
-            })
-        });
-
-        if (res.ok) {
-            // Cerrar modal y recargar
-            const modalEl = document.getElementById('detailsModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-            cargarDashboard(); // Refrescar para ver cambios (ej: si murió, desaparecerá del equipo)
-        } else {
-            alert("Error al actualizar");
-        }
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-// (Opcional) Función borrarPokemon() se puede implementar luego
-function borrarPokemon() {
-    alert("Funcionalidad de liberar pendiente de implementar");
-}
-
-/* ========================================================= */
 /* LOGIC: MEDALLAS                                           */
 /* ========================================================= */
 async function actualizarMedallas(nuevaCantidad) {
@@ -959,7 +818,12 @@ async function cargarGestorEquipo() {
         equipo.forEach(p => {
             htmlEquipo += `
             <div class="col-6 col-md-4 col-lg-2 fade-in">
-                <div class="manage-card border-warning"> <div class="text-center mb-2">
+                <div class="manage-card border-warning"> 
+                    <button onclick="abrirEditor('${p._id}', '${p.especie}', '${p.mote}', ${p.nivel}, '${p.imagen}')" 
+                            class="btn btn-link text-white position-absolute top-0 end-0 p-1 opacity-50 hover-opacity-100">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <div class="text-center mb-2">
                         <img src="${p.imagen}" style="width:60px; height:60px; object-fit:contain;">
                         <div class="fw-bold small mt-1 text-truncate">${p.mote}</div>
                         <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.6em">Nvl ${p.nivel}</span>
@@ -1000,6 +864,10 @@ async function cargarGestorEquipo() {
             pcGrid.innerHTML = caja.map(p => `
             <div class="col-4 col-md-3 col-lg-2 fade-in">
                 <div class="manage-card">
+                    <button onclick="abrirEditor('${p._id}', '${p.especie}', '${p.mote}', ${p.nivel}, '${p.imagen}')" 
+                            class="btn btn-link text-white position-absolute top-0 end-0 p-1 opacity-50 hover-opacity-100">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
                     <div class="text-center mb-2">
                         <img src="${p.imagen}" style="width:50px; height:50px; object-fit:contain; opacity:0.8;">
                         <div class="fw-bold small mt-1 text-truncate text-muted">${p.mote}</div>
@@ -1165,4 +1033,159 @@ if (window.location.pathname.includes('combates.html')) {
     document.addEventListener('DOMContentLoaded', cargarHistorialCompleto);
 }
 
+/* ========================================================= */
+/* LOGIC: SISTEMA DE CAPTURA (NUEVO Y MEJORADO)              */
+/* ========================================================= */
 
+// 1. EVENT LISTENER PARA EL FORMULARIO DE CAPTURA
+const formCaptura = document.getElementById('form-captura');
+
+if (formCaptura) {
+    formCaptura.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Evita que la página se recargue sola
+        
+        // Obtenemos los datos del formulario nuevo (equipo.html)
+        const especieInput = document.getElementById('cap-especie').value.toLowerCase().trim();
+        const mote = document.getElementById('cap-mote').value;
+        const nivel = document.getElementById('cap-nivel').value;
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+        // Feedback visual en el botón
+        const btnSubmit = formCaptura.querySelector('button[type="submit"]');
+        const txtOriginal = btnSubmit.innerText;
+        btnSubmit.innerText = "Buscando...";
+        btnSubmit.disabled = true;
+
+        try {
+            // PASO A: Consultar PokeAPI para imagen y datos
+            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${especieInput}`);
+            
+            if (!pokeRes.ok) {
+                alert("❌ No encontramos ese Pokémon. Revisa el nombre en inglés (ej: Charizard).");
+                throw new Error("Pokemon no encontrado en API");
+            }
+            
+            const pokeData = await pokeRes.json();
+            
+            // TRUCO PRO: Buscamos el sprite 'icon' (pixel art). Si no existe, usamos el normal.
+            const imagenUrl = pokeData.sprites.versions['generation-viii'].icons.front_default || pokeData.sprites.front_default;
+            const tipos = pokeData.types.map(t => t.type.name);
+
+            // PASO B: Enviar a nuestro Backend
+            const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    entrenadorId: usuario._id,
+                    especie: pokeData.name, // Nombre oficial
+                    mote: mote,
+                    nivel: parseInt(nivel),
+                    imagen: imagenUrl,
+                    tipos: tipos
+                })
+            });
+
+            if (res.ok) {
+                // ÉXITO: Limpiar y recargar
+                formCaptura.reset();
+                // Cerrar modal con Bootstrap
+                const modal = bootstrap.Modal.getInstance(document.getElementById('captureModal'));
+                modal.hide();
+                
+                // Recargar la rejilla de equipo para ver al nuevo integrante
+                cargarGestorEquipo(); 
+                alert(`✅ ¡${mote || pokeData.name} atrapado!`);
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.mensaje);
+            }
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            // Restaurar botón
+            btnSubmit.innerText = txtOriginal;
+            btnSubmit.disabled = false;
+        }
+    });
+}
+
+/* ========================================================= */
+/* LOGIC: SISTEMA DE EDICIÓN / EVOLUCIÓN                     */
+/* ========================================================= */
+
+// 2. FUNCIÓN PARA ABRIR EL MODAL (Se llama desde el botón lápiz de la tarjeta)
+window.abrirEditor = function(id, especie, mote, nivel, imagen) {
+    // Rellenamos el modal con los datos actuales
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-especie').value = especie; // Importante para detectar evolución
+    document.getElementById('edit-mote').value = mote;
+    document.getElementById('edit-nivel').value = nivel;
+    document.getElementById('edit-preview').src = imagen;
+    
+    // Abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    modal.show();
+};
+
+// 3. EVENT LISTENER PARA GUARDAR LA EDICIÓN
+const formEditar = document.getElementById('form-editar');
+
+if (formEditar) {
+    formEditar.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('edit-id').value;
+        const especieNueva = document.getElementById('edit-especie').value.toLowerCase().trim();
+        const mote = document.getElementById('edit-mote').value;
+        const nivel = document.getElementById('edit-nivel').value;
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+        try {
+            // PASO A: Detectar si hubo Evolución (Cambio de Especie)
+            // Siempre consultamos la API para asegurar que tenemos la imagen correcta de la especie escrita
+            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${especieNueva}`);
+            
+            let nuevaImagen = null;
+            let nuevosTipos = null;
+            let nombreOficial = especieNueva;
+
+            if (pokeRes.ok) {
+                const pokeData = await pokeRes.json();
+                nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || pokeData.sprites.front_default;
+                nuevosTipos = pokeData.types.map(t => t.type.name);
+                nombreOficial = pokeData.name;
+            } else {
+                 alert("⚠️ Nombre de especie no válido en PokeAPI. Se guardarán los datos pero sin actualizar imagen.");
+            }
+
+            // PASO B: Enviar actualización al Backend
+            const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    entrenadorId: usuario._id,
+                    pokemonId: id,
+                    nuevosDatos: {
+                        especie: nombreOficial,
+                        mote: mote,
+                        nivel: parseInt(nivel),
+                        imagen: nuevaImagen, // El backend actualizará la imagen si esto no es null
+                        tipo: nuevosTipos
+                    }
+                })
+            });
+
+            if (res.ok) {
+                // Cerrar y recargar
+                const modalEl = document.getElementById('editModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                cargarGestorEquipo();
+            } else {
+                alert("Error al guardar cambios.");
+            }
+
+        } catch (error) { console.error(error); }
+    });
+}

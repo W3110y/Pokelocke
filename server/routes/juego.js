@@ -120,96 +120,77 @@ router.get('/sala/:codigoSala', async (req, res) => {
     }
 });
 
-// --- 4. REGISTRAR CAPTURA (Con límite de 6 y Nivel 100) ---
-router.put('/capturar', async (req, res) => {
-    const { entrenadorId, pokemon } = req.body;
-    if (!entrenadorId || !pokemon) return res.status(400).json({ mensaje: "Datos incompletos" });
+// --- 13. CAPTURAR POKÉMON (Definitivo) ---
+router.post('/pokemon', async (req, res) => {
+    // Recibimos los datos planos del Frontend nuevo
+    const { entrenadorId, especie, mote, nivel, imagen, tipos } = req.body;
 
     try {
         const entrenador = await Entrenador.findById(entrenadorId);
         if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
 
-        // A. VALIDACIÓN DE NIVEL (Clamp)
-        let nivelFinal = parseInt(pokemon.nivel) || 5;
+        // 1. VALIDACIÓN DE NIVEL (Mejora traída del código antiguo)
+        let nivelFinal = parseInt(nivel);
         if (nivelFinal > 100) nivelFinal = 100;
         if (nivelFinal < 1) nivelFinal = 1;
 
-        // B. VALIDACIÓN DE EQUIPO LLENO (Regla de los 6)
-        let estadoFinal = pokemon.estado || "equipo";
+        // 2. REGLA DE LOS 6 (Automática)
+        const enEquipo = entrenador.pokemons.filter(p => p.estado === 'equipo').length;
+        const estadoInicial = enEquipo < 6 ? 'equipo' : 'caja';
+        
         let mensajeExtra = "";
+        if (estadoInicial === 'caja') mensajeExtra = "\n📦 Equipo lleno: Enviado al PC.";
 
-        if (estadoFinal === 'equipo') {
-            const enEquipo = entrenador.pokemons.filter(p => p.estado === 'equipo').length;
-            if (enEquipo >= 6) {
-                estadoFinal = 'caja'; // Desvío automático al PC
-                mensajeExtra = " (Equipo lleno: Enviado a la Caja)";
-            }
-        }
-
-        // C. GUARDADO
-        entrenador.pokemons.push({
-            id: pokemon.id,
-            especie: pokemon.especie.toLowerCase(),
-            mote: pokemon.mote || pokemon.especie,
-            nivel: nivelFinal,     // Usamos el nivel validado
-            estado: estadoFinal,   // Usamos el estado validado
-            imagen: pokemon.imagen,
-            tipos: pokemon.tipos,
+        const nuevoPokemon = {
+            especie, 
+            mote: mote || especie, 
+            nivel: nivelFinal, 
+            imagen,
+            tipo: tipos,
+            estado: estadoInicial,
             fechaCaptura: new Date()
-        });
+        };
 
+        entrenador.pokemons.push(nuevoPokemon);
         await entrenador.save();
 
-        res.json({ 
-            mensaje: "Captura registrada" + mensajeExtra, 
-            entrenador,
-            estadoAsignado: estadoFinal // Devolvemos esto para avisar al frontend
-        });
-
+        res.json({ mensaje: "¡Pokémon capturado!" + mensajeExtra, pokemon: nuevoPokemon });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: "Error al guardar" });
+        res.status(500).json({ mensaje: "Error al capturar" });
     }
 });
 
-// --- 5. EDITAR POKÉMON (Con validación de hueco en equipo) ---
-router.put('/pokemon/editar', async (req, res) => {
+// --- 14. EDITAR POKÉMON (Definitivo - Solo datos, no movimiento) ---
+router.put('/pokemon', async (req, res) => {
     const { entrenadorId, pokemonId, nuevosDatos } = req.body;
 
     try {
-        // 1. Buscamos el documento completo para poder validar lógicamente
         const entrenador = await Entrenador.findById(entrenadorId);
-        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
+        const pokemon = entrenador.pokemons.id(pokemonId); // Buscamos subdocumento
+        
+        if (!pokemon) return res.status(404).json({ mensaje: "Pokémon no encontrado" });
 
-        // 2. Encontramos el sub-documento (el pokemon específico)
-        const poke = entrenador.pokemons.id(pokemonId);
-        if (!poke) return res.status(404).json({ mensaje: "Pokémon no encontrado" });
-
-        // 3. VALIDACIÓN DE NIVEL
-        let nuevoNivel = parseInt(nuevosDatos.nivel);
-        if (nuevoNivel > 100) nuevoNivel = 100;
-        if (nuevoNivel < 1) nuevoNivel = 1;
-
-        // 4. VALIDACIÓN DE MOVIMIENTO A EQUIPO
-        // Si intentamos moverlo al equipo (y no estaba ya ahí), verificamos hueco.
-        if (nuevosDatos.estado === 'equipo' && poke.estado !== 'equipo') {
-            const enEquipo = entrenador.pokemons.filter(p => p.estado === 'equipo').length;
-            if (enEquipo >= 6) {
-                return res.status(400).json({ mensaje: "¡Tu equipo está lleno (6/6)! Envía uno a la caja primero." });
-            }
+        // Actualizamos campos si vienen en la petición
+        if (nuevosDatos.nivel) {
+            let nvl = parseInt(nuevosDatos.nivel);
+            // Validación de seguridad
+            if (nvl > 100) nvl = 100; 
+            if (nvl < 1) nvl = 1;
+            pokemon.nivel = nvl;
         }
-
-        // 5. Aplicar cambios
-        poke.mote = nuevosDatos.mote;
-        poke.nivel = nuevoNivel;
-        poke.estado = nuevosDatos.estado;
+        
+        if (nuevosDatos.mote) pokemon.mote = nuevosDatos.mote;
+        
+        // Si hay evolución (cambio de especie e imagen)
+        if (nuevosDatos.especie) pokemon.especie = nuevosDatos.especie;
+        if (nuevosDatos.imagen) pokemon.imagen = nuevosDatos.imagen;
+        if (nuevosDatos.tipo) pokemon.tipo = nuevosDatos.tipo;
 
         await entrenador.save();
-        res.json({ mensaje: "Pokémon actualizado correctamente" });
-
+        res.json({ mensaje: "Datos actualizados correctamente" });
     } catch (error) {
-        console.error("Error al editar:", error);
-        res.status(500).json({ mensaje: "Error interno" });
+        res.status(500).json({ mensaje: "Error al editar Pokémon" });
     }
 });
 
