@@ -128,6 +128,12 @@ h1, h2, h3, h4, h5, .card-title {
     background: transparent; /* Sin fondo, totalmente limpio */
     pointer-events: none; /* Permite clicks a través del área vacía */
 }
+/* --- AÑADE ESTA NUEVA REGLA --- */
+/* Esto reactiva el click para el botón central de capturar */
+.minimal-header .btn {
+    pointer-events: auto; 
+    z-index: 1051; /* Aseguramos que flote por encima de todo */
+}
 
 /* Los botones interactivos */
 .nav-btn {
