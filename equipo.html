@@ -33,31 +33,40 @@
 
 <body>
     <header class="minimal-header">
-        <a href="stats.html" class="nav-btn" title="Guardar y Salir">
+        <a href="stats.html" class="nav-btn" title="Guardar y Volver">
             <i class="bi bi-arrow-left"></i>
         </a>
+        <h5 class="m-0 fw-bold text-uppercase text-muted" style="pointer-events: none;">Gestión de Equipo</h5>
         <button class="nav-btn" id="theme-toggle"><i class="bi bi-sun-fill"></i></button>
     </header>
 
-    <div class="container py-5 mt-4">
-        <h2 class="fw-bold mb-4 text-center"><i class="bi bi-hdd-network"></i> Sistema de Almacenamiento</h2>
-
-        <div class="glass-panel p-4 mb-4">
-            <h5 class="section-title mb-3 text-warning">Equipo Activo (Llévalos contigo)</h5>
-            <div id="active-team-grid" class="row g-2">
-                </div>
+    <div class="container py-5 mt-4 fade-in">
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-3 px-2">
+                <h5 class="fw-bold m-0 text-warning"><i class="bi bi-backpack-fill"></i> Equipo Activo</h5>
+                <span id="team-counter" class="badge bg-warning text-dark">0/6</span>
+            </div>
+            
+            <div class="glass-panel p-4">
+                <div id="active-team-grid" class="row g-3">
+                    </div>
+            </div>
         </div>
 
-        <div class="glass-panel p-4 mb-4">
-            <h5 class="section-title mb-3 text-primary">Caja de PC (Reserva)</h5>
-            <div id="pc-box-grid" class="d-flex flex-wrap gap-2">
-                </div>
+        <div class="mb-5">
+            <h5 class="fw-bold mb-3 px-2 text-primary"><i class="bi bi-pc-display"></i> Caja de PC</h5>
+            <div class="glass-panel p-4">
+                <div id="pc-box-grid" class="row g-2">
+                    </div>
+            </div>
         </div>
 
-        <div class="glass-panel p-4 opacity-75">
-            <h5 class="section-title mb-3 text-secondary">Cementerio (Fallen Heroes)</h5>
-            <div id="graveyard-grid" class="d-flex flex-wrap gap-2">
-                </div>
+        <div class="opacity-75">
+            <h5 class="fw-bold mb-3 px-2 text-secondary"><i class="bi bi-emoji-dizzy-fill"></i> Cementerio</h5>
+            <div class="glass-panel p-4 border-secondary">
+                <div id="graveyard-grid" class="row g-2">
+                    </div>
+            </div>
         </div>
 
     </div>

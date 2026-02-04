@@ -928,73 +928,116 @@ if (formCombate) {
 /* ========================================================= */
 async function cargarGestorEquipo() {
     const activeGrid = document.getElementById('active-team-grid');
-    if (!activeGrid) return; // Si no existe el grid, no estamos en equipo.html
+    if (!activeGrid) return; 
 
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) return;
     const usuario = JSON.parse(usuarioRaw);
 
-    // Fetch para tener datos frescos
-    const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-    const data = await res.json();
-    const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-    const pokemons = miPerfil.pokemons;
+    try {
+        // 1. Obtener datos frescos del servidor
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const data = await res.json();
+        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+        const pokemons = miPerfil.pokemons;
 
-    // Función Helper para crear tarjetas de gestión
-    const crearTarjetaGestor = (poke, ubicacionActual) => {
-        // Botones según ubicación
-        let botones = '';
+        // Filtramos por zonas
+        const equipo = pokemons.filter(p => p.estado === 'equipo');
+        const caja = pokemons.filter(p => p.estado === 'caja');
+        const cementerio = pokemons.filter(p => p.estado === 'cementerio');
+
+        // 2. Actualizar Contador Visual
+        const counterEl = document.getElementById('team-counter');
+        if(counterEl) counterEl.innerText = `${equipo.length}/6`;
+
+        // -------------------------------------------------
+        // RENDERIZADO: EQUIPO ACTIVO (Siempre 6 Huecos)
+        // -------------------------------------------------
+        let htmlEquipo = '';
         
-        if (ubicacionActual === 'equipo') {
-            botones = `
-                <button onclick="moverPokemon('${poke._id}', 'caja')" class="btn btn-sm btn-primary w-100 mb-1">Al PC</button>
-                <button onclick="moverPokemon('${poke._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7em">☠️ Ha muerto</button>
-            `;
-        } else if (ubicacionActual === 'caja') {
-            botones = `
-                <button onclick="moverPokemon('${poke._id}', 'equipo')" class="btn btn-sm btn-success w-100 mb-1">Al Equipo</button>
-                <button onclick="moverPokemon('${poke._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7em">☠️ Ha muerto</button>
-            `;
+        // A. Los Pokémon que existen
+        equipo.forEach(p => {
+            htmlEquipo += `
+            <div class="col-6 col-md-4 col-lg-2 fade-in">
+                <div class="manage-card border-warning"> <div class="text-center mb-2">
+                        <img src="${p.imagen}" style="width:60px; height:60px; object-fit:contain;">
+                        <div class="fw-bold small mt-1 text-truncate">${p.mote}</div>
+                        <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.6em">Nvl ${p.nivel}</span>
+                    </div>
+                    <div class="w-100 d-grid gap-1">
+                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem">
+                            <i class="bi bi-box-arrow-in-down"></i> PC
+                        </button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger py-0" style="font-size:0.75rem">
+                            <i class="bi bi-skull"></i> F
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        // B. Rellenar huecos vacíos hasta 6
+        for(let i = equipo.length; i < 6; i++) {
+            htmlEquipo += `
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="slot-empty">
+                    <div class="text-center opacity-50">
+                        <i class="bi bi-plus-circle display-6"></i>
+                        <div class="mt-2 small">Vacío</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        activeGrid.innerHTML = htmlEquipo;
+
+        // -------------------------------------------------
+        // RENDERIZADO: CAJA PC
+        // -------------------------------------------------
+        const pcGrid = document.getElementById('pc-box-grid');
+        if(caja.length === 0) {
+            pcGrid.innerHTML = '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>';
         } else {
-            // Cementerio
-            botones = `<button onclick="moverPokemon('${poke._id}', 'caja')" class="btn btn-sm btn-outline-secondary w-100">Revivir (PC)</button>`;
+            pcGrid.innerHTML = caja.map(p => `
+            <div class="col-4 col-md-3 col-lg-2 fade-in">
+                <div class="manage-card">
+                    <div class="text-center mb-2">
+                        <img src="${p.imagen}" style="width:50px; height:50px; object-fit:contain; opacity:0.8;">
+                        <div class="fw-bold small mt-1 text-truncate text-muted">${p.mote}</div>
+                    </div>
+                    <div class="w-100 d-grid gap-1">
+                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success py-0" style="font-size:0.75rem">
+                            <i class="bi bi-arrow-up-circle"></i> Equipo
+                        </button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-secondary py-0 border-0" style="font-size:0.75rem">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`).join('');
         }
 
-        return `
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="glass-panel p-2 text-center h-100 d-flex flex-col justify-content-between">
-                <div>
-                    <img src="${poke.imagen}" class="party-icon mb-2" style="width:50px; height:50px;">
-                    <div class="fw-bold small text-truncate">${poke.mote}</div>
-                    <div class="text-muted x-small">Lv.${poke.nivel}</div>
+        // -------------------------------------------------
+        // RENDERIZADO: CEMENTERIO
+        // -------------------------------------------------
+        const graveGrid = document.getElementById('graveyard-grid');
+        if(cementerio.length > 0) {
+            graveGrid.innerHTML = cementerio.map(p => `
+            <div class="col-4 col-md-3 col-lg-2">
+                <div class="manage-card bg-danger bg-opacity-10 border-danger">
+                    <div class="text-center mb-1" style="filter: grayscale(100%);">
+                        <img src="${p.imagen}" style="width:40px; height:40px; object-fit:contain;">
+                        <div class="small mt-1 text-truncate text-danger text-decoration-line-through">${p.mote}</div>
+                    </div>
+                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-link text-muted py-0 w-100" style="font-size:0.6rem; text-decoration:none;">
+                        Revivir
+                    </button>
                 </div>
-                <div class="mt-2">
-                    ${botones}
-                </div>
-            </div>
-        </div>`;
-    };
+            </div>`).join('');
+        } else {
+            graveGrid.innerHTML = '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>';
+        }
 
-    // 1. RENDERIZAR EQUIPO
-    const equipo = pokemons.filter(p => p.estado === 'equipo');
-    activeGrid.innerHTML = equipo.map(p => crearTarjetaGestor(p, 'equipo')).join('');
-    // Rellenar huecos vacíos visualmente
-    for(let i=equipo.length; i<6; i++) {
-        activeGrid.innerHTML += `
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="glass-panel p-2 text-center h-100 d-flex align-items-center justify-content-center border-dashed opacity-50">
-                <small>Hueco Vacío</small>
-            </div>
-        </div>`;
-    }
-
-    // 2. RENDERIZAR PC
-    const caja = pokemons.filter(p => p.estado === 'caja');
-    document.getElementById('pc-box-grid').innerHTML = caja.length ? caja.map(p => crearTarjetaGestor(p, 'caja').replace('col-6 col-md-4 col-lg-2', 'width-auto')).join('') : '<small class="text-muted">Caja vacía</small>';
-
-    // 3. RENDERIZAR CEMENTERIO
-    const muertos = pokemons.filter(p => p.estado === 'cementerio');
-    document.getElementById('graveyard-grid').innerHTML = muertos.map(p => crearTarjetaGestor(p, 'cementerio').replace('col-6 col-md-4 col-lg-2', 'width-auto')).join('');
+    } catch(e) { console.error("Error cargando equipo:", e); }
 }
 
 /* ========================================================= */
