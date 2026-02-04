@@ -399,7 +399,7 @@ h1, h2, h3, h4, h5, .card-title {
 }
 
 /* ========================================================= */
-/* ANIMACIÓN: POKÉMON JUMP (ESTILO JUEGO)                    */
+/* ANIMACIÓN: POKÉMON JUMP (SINCRONIZADO)                    */
 /* ========================================================= */
 
 /* 1. Definimos el movimiento "bote" */
@@ -408,29 +408,21 @@ h1, h2, h3, h4, h5, .card-title {
         transform: translateY(0); /* Suelo */
     }
     50% {
-        transform: translateY(-6px); /* Punto más alto del salto */
+        transform: translateY(-6px); /* Aire */
     }
 }
 
-/* 2. Activamos la animación al pasar el ratón por la barra contenedora */
+/* 2. Activamos la animación al pasar el ratón por la barra */
 .party-bar-btn:hover .party-icon {
-    /* Nombre | Duración | Curva de velocidad | Repetición */
+    /* Infinite: Se repite mientras el ratón esté encima.
+       0.6s: Duración del salto.
+       IMPORTANTE: Al no haber 'animation-delay', todos responden 
+       inmediatamente al hover del contenedor padre.
+    */
     animation: pokemon-bounce 0.6s infinite; 
 }
 
-/* 3. El truco de la "Ola": Añadimos retraso a cada posición */
-/* Esto hace que el 2º pokemon salte un poco después del 1º, etc. */
-
-.party-slot:nth-child(1) .party-icon { animation-delay: 0.0s; }
-.party-slot:nth-child(2) .party-icon { animation-delay: 0.1s; }
-.party-slot:nth-child(3) .party-icon { animation-delay: 0.2s; }
-.party-slot:nth-child(4) .party-icon { animation-delay: 0.3s; }
-.party-slot:nth-child(5) .party-icon { animation-delay: 0.4s; }
-.party-slot:nth-child(6) .party-icon { animation-delay: 0.5s; }
-
-/* 4. Aseguramos que la sombra NO salte */
-/* La sombra (.empty-shadow) debe quedarse en el suelo para realismo */
+/* 3. Aseguramos que la sombra NO salte */
 .empty-shadow {
-    /* Aseguramos que no herede ninguna transformación extraña */
     transform: none !important; 
 }
