@@ -795,10 +795,24 @@ async function cargarGestorEquipo() {
 
     try {
         // 1. Obtener datos frescos del servidor
+        console.log(`🔄 Cargando equipo para sala: ${usuario.sala}...`);
+        
+        // Fetch
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        
+        if (!res.ok) throw new Error("Error al conectar con servidor");
+        
         const data = await res.json();
+        console.log("✅ Datos recibidos:", data); // <--- ESTO ES CLAVE PARA VER SI HAY DATOS
+
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-        const pokemons = miPerfil.pokemons;
+        
+        if (!miPerfil) {
+            console.error("❌ Error: No te encuentro en la lista de jugadores de esta sala.");
+            return;
+        }
+        const pokemons = miPerfil.pokemons || []; // Aseguramos que sea array
+        console.log(`📊 Tienes ${pokemons.length} pokémons en total.`);
 
         // Filtramos por zonas
         const equipo = pokemons.filter(p => p.estado === 'equipo');
@@ -905,7 +919,9 @@ async function cargarGestorEquipo() {
             graveGrid.innerHTML = '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>';
         }
 
-    } catch(e) { console.error("Error cargando equipo:", e); }
+    } catch(e) { console.error("🔥 Error crítico cargando equipo:", e); 
+        activeGrid.innerHTML = `<div class="col-12 text-center text-danger">Error de conexión: ${e.message}</div>`;
+    }
 }
 
 /* ========================================================= */
@@ -1189,3 +1205,43 @@ if (formEditar) {
         } catch (error) { console.error(error); }
     });
 }
+
+/* ========================================================= */
+/* AUTO-INIT: CEREBRO DE NAVEGACIÓN                          */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 Aplicación iniciada. Verificando página...");
+
+    // 1. LÓGICA COMÚN (Tema, Usuario, etc.)
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    
+    // Si no hay usuario y no estamos en index o join, mandar fuera
+    // (Ajusta esta lógica según tus necesidades de seguridad)
+    if (!usuarioRaw && !window.location.pathname.includes('index.html') && !window.location.pathname.includes('join.html')) {
+        // console.warn("No hay sesión. Redirigiendo...");
+        // window.location.href = 'join.html'; 
+    }
+
+    // 2. DETECTOR DE PÁGINAS POR ELEMENTOS ID
+    
+    // A. ¿Estamos en el DASHBOARD (stats.html)?
+    const dashboardPanel = document.getElementById('my-dashboard-panel');
+    if (dashboardPanel) {
+        console.log("📍 Detectado: Stats Dashboard");
+        cargarDashboard();
+    }
+
+    // B. ¿Estamos en el GESTOR DE EQUIPO (equipo.html)?
+    const activeGrid = document.getElementById('active-team-grid');
+    if (activeGrid) {
+        console.log("📍 Detectado: Gestor de Equipo");
+        cargarGestorEquipo();
+    }
+
+    // C. ¿Estamos en el HISTORIAL (combates.html)?
+    const timeline = document.getElementById('timeline-content');
+    if (timeline) {
+        console.log("📍 Detectado: Historial Combates");
+        cargarHistorialCompleto();
+    }
+});
