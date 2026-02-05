@@ -529,3 +529,62 @@ h1, h2, h3, h4, h5, .card-title {
     background: rgba(255,255,255,0.05);
     color: white;
 }
+
+/* ========================================================= */
+/* ESTILOS DE COMBATE (VS MODE)                              */
+/* ========================================================= */
+
+.combat-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+/* Lado del Jugador */
+.combat-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Nombres centrados sobre el equipo */
+}
+
+/* Rejilla de mini-sprites del equipo */
+.combat-team-grid {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 5px;
+    background: rgba(0,0,0,0.2);
+    padding: 4px;
+    border-radius: 20px;
+    min-height: 35px; /* Altura mínima para que no colapse si está vacío */
+}
+
+.combat-poke-icon {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
+}
+
+/* El icono VS central */
+.vs-badge {
+    font-family: 'Impact', sans-serif;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 0 10px;
+}
+
+/* Variación MINIMIZADA (Para el sidebar) */
+.combat-layout.mini .combat-poke-icon {
+    width: 20px; /* Iconos más pequeños */
+    height: 20px;
+}
+.combat-layout.mini .combat-team-grid {
+    padding: 2px;
+    border-radius: 10px;
+}

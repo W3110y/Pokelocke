@@ -725,29 +725,49 @@ async function cargarFeedCombates(salaNombre) {
     if (!container) return;
 
     try {
-        // Pedimos solo los últimos 5
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
         const combates = await res.json();
 
         if (combates.length === 0) {
-            container.innerHTML = '<small class="text-muted d-block text-center">Sin combates recientes</small>';
+            container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad</small>';
             return;
         }
 
-        container.innerHTML = combates.map(c => `
-            <div class="mb-2 p-2 rounded border border-secondary bg-dark bg-opacity-25 small">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-info">${c.entrenador1}</span>
-                    <span class="text-muted" style="font-size:0.7em">VS</span>
-                    <span class="text-info">${c.entrenador2}</span>
+        container.innerHTML = combates.map(c => {
+            const esGanador1 = c.ganador === c.entrenador1;
+            const esGanador2 = c.ganador === c.entrenador2;
+            
+            // Limitamos a 3 iconos por espacio en el sidebar si son muchos
+            const generarIconosMini = (imgs) => {
+                if(!imgs || imgs.length === 0) return '';
+                // Slice(0,6) para mostrar los 6, pero serán muy pequeños (20px)
+                return imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+            };
+
+            return `
+            <div class="glass-panel mb-2 p-2 border border-secondary border-opacity-25">
+                <div class="combat-layout mini p-0 m-0" style="gap:5px;">
+                    
+                    <div class="combat-side align-items-start">
+                        <span class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-muted'}" style="max-width:80px;">${c.entrenador1}</span>
+                        <div class="combat-team-grid px-1">
+                            ${generarIconosMini(c.equipo1Snapshot)}
+                        </div>
+                    </div>
+
+                    <div class="vs-badge" style="font-size:0.8rem">vs</div>
+
+                    <div class="combat-side align-items-end">
+                        <span class="small fw-bold text-truncate ${esGanador2 ? 'text-warning' : 'text-muted'}" style="max-width:80px;">${c.entrenador2}</span>
+                        <div class="combat-team-grid px-1">
+                            ${generarIconosMini(c.equipo2Snapshot)}
+                        </div>
+                    </div>
+
                 </div>
-                <div class="text-center">
-                    <span class="badge bg-success bg-opacity-25 text-success border border-success">
-                        🏆 ${c.ganador}
-                    </span>
-                </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
+
     } catch (e) { console.error(e); }
 }
 
@@ -1072,46 +1092,46 @@ async function cargarHistorialCompleto() {
         // Renderizar Timeline
         container.innerHTML = combates.map(c => {
             // Formatear fecha
-            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { 
-                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
-            });
+            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            
+            // Helpers para saber si es ganador (para poner color dorado o gris)
+            const esGanador1 = c.ganador === c.entrenador1;
+            const esGanador2 = c.ganador === c.entrenador2;
 
-            // Determinar avatar/color del ganador (simple por inicial)
-            const inicialGanador = c.ganador.charAt(0).toUpperCase();
+            // Generador de HTML de iconos
+            const generarIconos = (imgs) => {
+                if(!imgs || imgs.length === 0) return '<span class="small text-muted" style="font-size:0.6rem">Sin datos</span>';
+                return imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+            };
 
             return `
             <div class="battle-item fade-up">
                 <div class="battle-dot"></div>
                 
-                <div class="battle-card-full">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="badge bg-secondary bg-opacity-25 text-muted border border-secondary border-opacity-25" style="font-size:0.65em">
-                            ${fecha}
-                        </span>
-                        
-                        <div class="text-end">
-                            <span class="text-warning small fw-bold">GANADOR</span>
-                            <div class="d-flex align-items-center justify-content-end gap-2 mt-1">
-                                <span class="fw-bold text-white">${c.ganador}</span>
-                                <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold" style="width:25px; height:25px; font-size:0.8em">
-                                    ${inicialGanador}
-                                </div>
-                            </div>
-                        </div>
+                <div class="battle-card-full p-2">
+                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
+                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
+                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
                     </div>
 
-                    <div class="d-flex align-items-center gap-3 py-2 border-top border-white-10 mt-2">
-                        <div class="flex-grow-1 text-center">
-                            <span class="d-block text-info fw-bold">${c.entrenador1}</span>
-                            ${c.ganador === c.entrenador1 ? '<i class="bi bi-trophy-fill text-warning"></i>' : '<small class="text-muted">Derrota</small>'}
-                        </div>
+                    <div class="combat-layout">
                         
-                        <div class="text-muted fw-light">VS</div>
-                        
-                        <div class="flex-grow-1 text-center">
-                            <span class="d-block text-danger fw-bold">${c.entrenador2}</span>
-                            ${c.ganador === c.entrenador2 ? '<i class="bi bi-trophy-fill text-warning"></i>' : '<small class="text-muted">Derrota</small>'}
+                        <div class="combat-side">
+                            <span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span>
+                            <div class="combat-team-grid">
+                                ${generarIconos(c.equipo1Snapshot)}
+                            </div>
                         </div>
+
+                        <div class="vs-badge">VS</div>
+
+                        <div class="combat-side">
+                            <span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span>
+                            <div class="combat-team-grid">
+                                ${generarIconos(c.equipo2Snapshot)}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>`;

@@ -291,15 +291,42 @@ router.put('/victoria', async (req, res) => {
     }
 });
 
-// --- 10. REGISTRAR COMBATE ---
+// --- 10. REGISTRAR COMBATE (Con Snapshot de Equipos) ---
 router.post('/combate', async (req, res) => {
     const { sala, entrenador1, entrenador2, ganador } = req.body;
 
     try {
-        const nuevoCombate = new Combate({ sala, entrenador1, entrenador2, ganador });
+        // 1. Buscamos a los entrenadores para copiar sus equipos actuales
+        // Nota: Asumimos que los nombres son únicos en la sala
+        const p1 = await Entrenador.findOne({ sala, nombre: entrenador1 });
+        const p2 = await Entrenador.findOne({ sala, nombre: entrenador2 });
+
+        // Extraemos solo las imágenes de los que están en 'equipo'
+        const equipo1Img = p1 ? p1.pokemons.filter(p => p.estado === 'equipo').map(p => p.imagen) : [];
+        const equipo2Img = p2 ? p2.pokemons.filter(p => p.estado === 'equipo').map(p => p.imagen) : [];
+
+        // 2. Creamos el combate con la instantánea
+        const nuevoCombate = new Combate({ 
+            sala, 
+            entrenador1, 
+            entrenador2, 
+            ganador,
+            equipo1Snapshot: equipo1Img,
+            equipo2Snapshot: equipo2Img
+        });
+
         await nuevoCombate.save();
-        res.json({ mensaje: "Combate registrado", combate: nuevoCombate });
+        
+        // 3. Actualizamos victorias del ganador (Opcional, si mantenemos el contador simple)
+        const ganadorObj = (ganador === entrenador1) ? p1 : p2;
+        if (ganadorObj) {
+            ganadorObj.victorias += 1;
+            await ganadorObj.save();
+        }
+
+        res.json({ mensaje: "Combate registrado con equipos", combate: nuevoCombate });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ mensaje: "Error al guardar combate" });
     }
 });
