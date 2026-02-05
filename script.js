@@ -1163,7 +1163,7 @@ if (formCaptura) {
             const pokeData = await pokeRes.json();
             
             // TRUCO PRO: Buscamos el sprite 'icon' (pixel art). Si no existe, usamos el normal.
-            const imagenUrl = pokeData.sprites.versions['generation-viii'].icons.front_default || pokeData.sprites.front_default;
+            const imagenUrl = pokeData.sprites.front_default;
             const tipos = pokeData.types.map(t => t.type.name);
 
             // PASO B: Enviar a nuestro Backend
@@ -1247,7 +1247,7 @@ if (formEditar) {
 
             if (pokeRes.ok) {
                 const pokeData = await pokeRes.json();
-                nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || pokeData.sprites.front_default;
+                nuevaImagen = pokeData.sprites.front_default;
                 nuevosTipos = pokeData.types.map(t => t.type.name);
                 nombreOficial = pokeData.name;
             } else {
