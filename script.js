@@ -949,23 +949,22 @@ async function cargarGestorEquipo() {
         activeGrid.innerHTML = htmlEquipo;
 
         // -------------------------------------------------
-        // RENDERIZADO: CAJA PC
+        // RENDERIZADO: CAJA PC (Solo Movimiento, SIN EDICIÓN)
         // -------------------------------------------------
         const pcGrid = document.getElementById('pc-box-grid');
+        
         if(caja.length === 0) {
             pcGrid.innerHTML = '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>';
         } else {
             pcGrid.innerHTML = caja.map(p => `
-            <div class="col-4 col-md-3 col-lg-2 fade-in">
+            <div class="col-6 col-md-3 col-lg-2 fade-in">
                 <div class="manage-card">
-                    <button onclick="abrirEditor('${p._id}', '${p.especie}', '${p.mote}', ${p.nivel}, '${p.imagen}')" 
-                            class="btn btn-link text-white position-absolute top-0 end-0 p-1 opacity-50 hover-opacity-100">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
                     <div class="text-center mb-2">
                         <img src="${p.imagen}" style="width:50px; height:50px; object-fit:contain; opacity:0.8;">
                         <div class="fw-bold small mt-1 text-truncate text-muted">${p.mote}</div>
+                        <small class="d-block text-secondary" style="font-size:0.6rem">Lvl. ${p.nivel}</small>
                     </div>
+                    
                     <div class="w-100 d-grid gap-1">
                         <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success py-0" style="font-size:0.75rem">
                             <i class="bi bi-arrow-up-circle"></i> Equipo
@@ -1403,3 +1402,86 @@ window.guardarEdicionInline = async function(event, id, especieOriginal) {
         btn.disabled = false;
     }
 };
+
+/* ========================================================= */
+/* LOGIC: EXPORTAR A POKÉMON SHOWDOWN                        */
+/* ========================================================= */
+async function exportarShowdown() {
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    // 1. Obtener datos frescos del equipo
+    // (Podríamos pasarlos como argumento, pero un fetch rápido asegura que exportamos lo último guardado)
+    try {
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const data = await res.json();
+        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
+
+        if (equipo.length === 0) {
+            alert("Tu equipo está vacío. No hay nada que exportar.");
+            return;
+        }
+
+        // 2. Diccionario Español -> Inglés (Naturalezas)
+        // Showdown solo entiende inglés.
+        const natMap = {
+            "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid",
+            "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy",
+            "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", 
+            "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty",
+            "Floja": "Lax", "Osada": "Bold"
+        };
+
+        // 3. Construir el String
+        let textoShowdown = "";
+
+        equipo.forEach(p => {
+            // Formato: Nickname (Species) @ Item
+            // Si no hay mote, solo Species @ Item
+            let linea1 = "";
+            if (p.mote && p.mote !== p.especie) {
+                linea1 = `${p.mote} (${p.especie})`;
+            } else {
+                linea1 = p.especie;
+            }
+
+            if (p.objeto) {
+                linea1 += ` @ ${p.objeto}`;
+            }
+
+            textoShowdown += `${linea1}\n`;
+            
+            // Nivel
+            textoShowdown += `Level: ${p.nivel}\n`;
+
+            // Naturaleza (Traducida)
+            if (p.naturaleza && natMap[p.naturaleza]) {
+                textoShowdown += `${natMap[p.naturaleza]} Nature\n`;
+            }
+
+            // Ataques
+            if (p.ataques && p.ataques.length > 0) {
+                p.ataques.forEach(move => {
+                    if (move && move.trim() !== "") {
+                        textoShowdown += `- ${move}\n`;
+                    }
+                });
+            }
+
+            // Separador entre pokemons
+            textoShowdown += "\n";
+        });
+
+        // 4. Copiar al Portapapeles
+        await navigator.clipboard.writeText(textoShowdown);
+        
+        // Feedback visual
+        alert("✅ ¡Equipo copiado al portapapeles!\n\nAhora ve al Teambuilder de Showdown y elige 'Import from Text'.");
+
+    } catch (e) {
+        console.error("Error exportando:", e);
+        alert("Hubo un error al generar el texto.");
+    }
+}
