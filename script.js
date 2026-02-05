@@ -226,6 +226,14 @@ async function cargarDashboard() {
     const salaInfoRaw = localStorage.getItem('sala_info');
     if (salaInfoRaw) renderizarInfoSala(JSON.parse(salaInfoRaw));
 
+    // ============================================================
+    // 1. ACTIVAR ESTADOS DE CARGA (Feedback Inmediato)
+    // ============================================================
+    ponerCargador('members-list', 'Buscando entrenadores...');
+    ponerCargador('my-dashboard-panel', 'Abriendo Pokéball...');
+    ponerCargador('leaderboard-container', 'Calculando ranking...');
+    ponerCargador('recent-battles-list', 'Sincronizando arena...');
+
     // FETCH AL SERVIDOR
     const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
 
@@ -417,6 +425,8 @@ async function cargarDashboard() {
         }
     } catch (error) { 
         console.error("Error dashboard:", error); 
+        const panel = document.getElementById('my-dashboard-panel');
+        if(panel) panel.innerHTML = `<div class="text-center text-danger p-4"><i class="bi bi-wifi-off display-4"></i><p class="mt-2">Error de conexión</p></div>`;
     }
 }
 
@@ -793,6 +803,15 @@ async function cargarGestorEquipo() {
     if (!usuarioRaw) return;
     const usuario = JSON.parse(usuarioRaw);
 
+    // 1. ACTIVAR CARGA VISUAL
+    // Nota: Como 'activeGrid' es un contenedor 'row', poner un div directo podría romper el flex.
+    // Lo ideal es limpiar y poner el cargador ocupando todo el ancho.
+    document.getElementById('active-team-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando Equipo...</p></div></div>';
+    
+    document.getElementById('pc-box-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-primary"></div><p>Accediendo al PC...</p></div></div>';
+    
+    document.getElementById('graveyard-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-secondary"></div><p>Visitando cementerio...</p></div></div>';
+    
     try {
         // 1. Obtener datos frescos del servidor
         console.log(`🔄 Cargando equipo para sala: ${usuario.sala}...`);
@@ -1245,3 +1264,18 @@ document.addEventListener('DOMContentLoaded', () => {
         cargarHistorialCompleto();
     }
 });
+
+/* ========================================================= */
+/* UTILIDAD: MOSTRAR CARGADORES (LOADING SPINNERS)           */
+/* ========================================================= */
+const ponerCargador = (elementId, mensaje = "Cargando datos...") => {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerHTML = `
+            <div class="loading-state">
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                <p>${mensaje}</p>
+            </div>
+        `;
+    }
+};
