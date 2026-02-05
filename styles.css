@@ -588,3 +588,65 @@ h1, h2, h3, h4, h5, .card-title {
     padding: 2px;
     border-radius: 10px;
 }
+
+/* ========================================================= */
+/* COMBAT LAYOUT: VARIACIÓN VERTICAL (Para Sidebar)          */
+/* ========================================================= */
+
+.combat-layout.vertical {
+    display: flex;
+    flex-direction: column; /* Apilar elementos verticalmente */
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+}
+
+/* Ajustes para los lados en modo vertical */
+.combat-layout.vertical .combat-side {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrar nombre y equipo */
+}
+
+/* El divisor VS central */
+.combat-layout.vertical .vs-badge-vertical {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 2px 0;
+    position: relative;
+    width: 100%;
+    text-align: center;
+}
+
+/* Líneas decorativas al lado del VS (Opcional, estética pura) */
+.combat-layout.vertical .vs-badge-vertical::before,
+.combat-layout.vertical .vs-badge-vertical::after {
+    content: "";
+    display: inline-block;
+    width: 30px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    vertical-align: middle;
+    margin: 0 5px;
+}
+
+/* Ajuste de la rejilla de iconos para que quepan todos */
+.combat-layout.vertical .combat-team-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Si son muchos, que bajen de línea */
+    gap: 3px;
+    background: rgba(0,0,0,0.3); /* Fondo un poco más oscuro para resaltar */
+    padding: 4px 8px;
+    border-radius: 12px;
+    margin-top: 2px;
+}
+
+/* Tamaño de iconos en el sidebar */
+.combat-layout.vertical .combat-poke-icon {
+    width: 24px;
+    height: 24px;
+}

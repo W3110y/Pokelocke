@@ -626,25 +626,61 @@ async function cargarFeedCombates(salaNombre) {
     try {
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
         const combates = await res.json();
-        if (combates.length === 0) { container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad</small>'; return; }
+
+        if (combates.length === 0) {
+            container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad reciente</small>';
+            return;
+        }
 
         container.innerHTML = combates.map(c => {
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
-            const equipos1 = c.equipo1Snapshot || [];
-            const equipos2 = c.equipo2Snapshot || [];
-            const generarIconosMini = (imgs) => (!imgs || imgs.length === 0) ? '' : imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+            
+            // Datos seguros
+            const equipo1 = c.equipo1Snapshot || [];
+            const equipo2 = c.equipo2Snapshot || [];
+
+            // Generador de iconos (Mostramos hasta 6)
+            const generarIconosMini = (imgs) => {
+                if (!imgs || imgs.length === 0) return '<span class="text-muted" style="font-size:0.6rem">- Sin equipo -</span>';
+                return imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+            };
 
             return `
-            <div class="glass-panel mb-2 p-2 border border-secondary border-opacity-25">
-                <div class="combat-layout mini p-0 m-0" style="gap:5px;">
-                    <div class="combat-side align-items-start"><span class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-muted'}" style="max-width:80px;">${c.entrenador1}</span><div class="combat-team-grid px-1">${generarIconosMini(equipos1)}</div></div>
-                    <div class="vs-badge" style="font-size:0.8rem">vs</div>
-                    <div class="combat-side align-items-end"><span class="small fw-bold text-truncate ${esGanador2 ? 'text-warning' : 'text-muted'}" style="max-width:80px;">${c.entrenador2}</span><div class="combat-team-grid px-1">${generarIconosMini(equipos2)}</div></div>
+            <div class="glass-panel mb-3 p-2 border border-secondary border-opacity-25 fade-in">
+                
+                <div class="combat-layout vertical">
+                    
+                    <div class="combat-side">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold ${esGanador1 ? 'text-warning' : 'text-muted'}">${c.entrenador1}</span>
+                            ${esGanador1 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
+                        </div>
+                        <div class="combat-team-grid">
+                            ${generarIconosMini(equipo1)}
+                        </div>
+                    </div>
+
+                    <div class="vs-badge-vertical">VS</div>
+
+                    <div class="combat-side">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold ${esGanador2 ? 'text-warning' : 'text-muted'}">${c.entrenador2}</span>
+                            ${esGanador2 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
+                        </div>
+                        <div class="combat-team-grid">
+                            ${generarIconosMini(equipo2)}
+                        </div>
+                    </div>
+
                 </div>
             </div>`;
         }).join('');
-    } catch (e) { console.error(e); }
+
+    } catch (e) { 
+        console.error("Error cargando feed:", e);
+        container.innerHTML = '<small class="text-danger">Error de conexión</small>';
+    }
 }
 
 const formCombate = document.getElementById('form-combate');
