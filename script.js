@@ -401,15 +401,23 @@ async function cargarGestorEquipo() {
                                     <div class="col-4"><label class="mini-form-label">Nivel</label><input type="number" name="nivel" class="mini-input" value="${p.nivel}" min="1" max="100"></div>
                                 </div>
                                 <div class="row g-1 mb-2">
-                                    <div class="col-6"><label class="mini-form-label">Objeto</label><input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" placeholder="Nada"></div>
-                                    <div class="col-6"><label class="mini-form-label">Naturaleza</label><select name="naturaleza" class="mini-input bg-dark">${optionsNaturaleza}</select></div>
+                                    <div class="col-6">
+                                        <label class="mini-form-label">Objeto</label>
+                                        <input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" placeholder="Nada" list="datalist-items" autocomplete="off">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="mini-form-label">Naturaleza</label>
+                                        <select name="naturaleza" class="mini-input bg-dark">
+                                            ${optionsNaturaleza}
+                                        </select>
+                                    </div>
                                 </div>
                                 <label class="mini-form-label text-warning">Movimientos</label>
                                 <div class="d-grid gap-1 mb-3">
-                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-">
-                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-">
-                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-">
-                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-">
+                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-" list="datalist-moves" autocomplete="off">
+                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-" list="datalist-moves" autocomplete="off">
+                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-" list="datalist-moves" autocomplete="off">
+                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-" list="datalist-moves" autocomplete="off">
                                 </div>
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-sm btn-success py-1" style="font-size:0.8rem">💾 Guardar</button>
@@ -772,22 +780,71 @@ window.reanudarPartida = function(index) {
     }
 };
 
+/* ========================================================= */
+/* LOGIC: EXPORTAR A SHOWDOWN (Con Traductor)                */
+/* ========================================================= */
 async function exportarShowdown() {
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
     try {
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
         const data = await res.json();
-        const equipo = data.jugadores.find(j => j._id === usuario._id).pokemons.filter(p => p.estado === 'equipo');
+        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
+
         if (equipo.length === 0) return alert("Equipo vacío");
 
+        // Diccionario Naturalezas (Ya lo tenías)
         const natMap = { "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid", "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy", "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty", "Floja": "Lax", "Osada": "Bold" };
+
         let txt = "";
+
         equipo.forEach(p => {
-            txt += `${(p.mote && p.mote !== p.especie) ? `${p.mote} (${p.especie})` : p.especie}${p.objeto ? ` @ ${p.objeto}` : ''}\nLevel: ${p.nivel}\n${(p.naturaleza && natMap[p.naturaleza]) ? `${natMap[p.naturaleza]} Nature\n` : ''}${p.ataques ? p.ataques.map(m => m ? `- ${m}\n` : '').join('') : ''}\n`;
+            // 1. TRADUCCIÓN DE OBJETO
+            // Buscamos en DB_OBJETOS. Si no está, usamos el texto original.
+            // .trim() quita espacios accidentales.
+            const objEspanol = (p.objeto || "").trim();
+            const objIngles = DB_OBJETOS[objEspanol] || objEspanol; 
+
+            // Construir línea 1: Mote (Especie) @ Objeto
+            let linea1 = "";
+            if (p.mote && p.mote !== p.especie) {
+                linea1 = `${p.mote} (${p.especie})`; // Showdown asume que la especie está en inglés por defecto si viene de API, si no, habría que traducir especie también, pero la API suele dar nombres universales o ingleses en 'species.name'.
+            } else {
+                linea1 = p.especie;
+            }
+            if (objIngles) linea1 += ` @ ${objIngles}`;
+            
+            txt += `${linea1}\n`;
+            txt += `Level: ${p.nivel}\n`;
+            
+            if (p.naturaleza && natMap[p.naturaleza]) {
+                txt += `${natMap[p.naturaleza]} Nature\n`;
+            }
+
+            // 2. TRADUCCIÓN DE ATAQUES
+            if (p.ataques) {
+                p.ataques.forEach(move => {
+                    if (move && move.trim() !== "") {
+                        const moveEsp = move.trim();
+                        // Buscamos traducción, si no existe, dejamos el original
+                        const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
+                        txt += `- ${moveEng}\n`;
+                    }
+                });
+            }
+            txt += "\n";
         });
+
         await navigator.clipboard.writeText(txt);
-        alert("✅ Copiado para Showdown");
-    } catch (e) { alert("Error exportando"); }
+        alert("✅ Copiado al portapapeles (Traducido al Inglés)");
+
+    } catch (e) { 
+        console.error(e);
+        alert("Error exportando: " + e.message); 
+    }
 }
 
 const ponerCargador = (id, msg) => { const el = document.getElementById(id); if (el) el.innerHTML = `<div class="loading-state"><div class="spinner-border text-primary"></div><p>${msg}</p></div>`; };
@@ -799,3 +856,67 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('timeline-content')) cargarHistorialCompleto();
     if (document.getElementById('groups-grid')) cargarMisGrupos();
 });
+
+/* ========================================================= */
+/* BASE DE DATOS: DICCIONARIOS ESPAÑOL -> INGLÉS             */
+/* Fuente: Recopilación basada en datos de PokeAPI/Showdown  */
+/* ========================================================= */
+
+const DB_MOVIMIENTOS = {
+    // Fuego
+    "Lanzallamas": "Flamethrower", "Llamarada": "Fire Blast", "Ascuas": "Ember", "Envite Igneo": "Flare Blitz", "Sofoco": "Overheat", "Fuego Fatuo": "Will-O-Wisp", "Puño Fuego": "Fire Punch", "Calcinación": "Incinerate", "Giro Fuego": "Fire Spin", "Nitrocarga": "Flame Charge",
+    // Agua
+    "Surf": "Surf", "Hidrobomba": "Hydro Pump", "Escaldar": "Scald", "Pistola Agua": "Water Gun", "Cascada": "Waterfall", "Acua Jet": "Aqua Jet", "Rayo Burbuja": "Bubble Beam", "Salpicar": "Water Spout", "Hidropulso": "Water Pulse",
+    // Planta
+    "Rayo Solar": "Solar Beam", "Gigadrenado": "Giga Drain", "Latigo Cepa": "Vine Whip", "Hoja Afilada": "Razor Leaf", "Lluevehojas": "Leaf Storm", "Drenadoras": "Leech Seed", "Espora": "Spore", "Bomba Germen": "Seed Bomb", "Mazazo": "Wood Hammer",
+    // Electrico
+    "Rayo": "Thunderbolt", "Trueno": "Thunder", "Voltiocambio": "Volt Switch", "Onda Trueno": "Thunder Wave", "Chispa": "Spark", "Puño Trueno": "Thunder Punch", "Colmillo Rayo": "Thunder Fang",
+    // Hielo
+    "Rayo Hielo": "Ice Beam", "Ventisca": "Blizzard", "Canto Helado": "Ice Shard", "Puño Hielo": "Ice Punch", "Viento Hielo": "Icy Wind", "Carambano": "Icicle Spear",
+    // Lucha
+    "A Bocajarro": "Close Combat", "Onda Certera": "Focus Blast", "Demolicion": "Brick Break", "Ultrapuño": "Mach Punch", "Patada Salto Alta": "High Jump Kick", "Fuerza Bruta": "Superpower", "Corpulencia": "Bulk Up",
+    // Tierra / Roca
+    "Terremoto": "Earthquake", "Tierra Viva": "Earth Power", "Trampa Rocas": "Stealth Rock", "Avalancha": "Rock Slide", "Roca Afilada": "Stone Edge", "Excavar": "Dig", "Bofeton Lodo": "Mud-Slap", "Disparo Lodo": "Mud Shot",
+    // Volador
+    "Pájaro Osado": "Brave Bird", "Acróbata": "Acrobatics", "Vuelo": "Fly", "Tajo Aéreo": "Air Slash", "Respiro": "Roost", "Despejar": "Defog",
+    // Psiquico / Fantasma / Siniestro
+    "Psiquico": "Psychic", "Psicocarga": "Psyshock", "Bola Sombra": "Shadow Ball", "Garra Umbria": "Shadow Claw", "Triturar": "Crunch", "Pulso Umbrio": "Dark Pulse", "Juego Sucio": "Foul Play", "Maquinacion": "Nasty Plot", "Paz Mental": "Calm Mind",
+    // Normal / Otros
+    "Placaje": "Tackle", "Arañazo": "Scratch", "Golpe Cuerpo": "Body Slam", "Doble Filo": "Double-Edge", "Velocidad Extrema": "Extreme Speed", "Protección": "Protect", "Recuperación": "Recover", "Danza Espada": "Swords Dance", "Sustituto": "Substitute", "Ida y Vuelta": "U-turn", "Desarme": "Knock Off"
+};
+
+const DB_OBJETOS = {
+    "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash"
+};
+
+// Función auxiliar para inyectar las sugerencias en el HTML
+function inicializarDatalists() {
+    // Si ya existen, no hacemos nada
+    if(document.getElementById('datalist-moves')) return;
+
+    const body = document.body;
+
+    // 1. Lista de Movimientos
+    const listMoves = document.createElement('datalist');
+    listMoves.id = 'datalist-moves';
+    Object.keys(DB_MOVIMIENTOS).sort().forEach(mov => {
+        const opt = document.createElement('option');
+        opt.value = mov;
+        listMoves.appendChild(opt);
+    });
+    body.appendChild(listMoves);
+
+    // 2. Lista de Objetos
+    const listItems = document.createElement('datalist');
+    listItems.id = 'datalist-items';
+    Object.keys(DB_OBJETOS).sort().forEach(obj => {
+        const opt = document.createElement('option');
+        opt.value = obj;
+        listItems.appendChild(opt);
+    });
+    body.appendChild(listItems);
+}
+
+// Ejecutar al inicio
+document.addEventListener('DOMContentLoaded', inicializarDatalists);
+
