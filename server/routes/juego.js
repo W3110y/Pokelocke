@@ -295,11 +295,20 @@ router.put('/victoria', async (req, res) => {
 router.post('/combate', async (req, res) => {
     const { sala, entrenador1, entrenador2, ganador } = req.body;
 
+    // Validación básica
+    if (!sala || !entrenador1 || !entrenador2 || !ganador) {
+        return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
+    }
+
     try {
         // 1. Buscamos a los entrenadores para copiar sus equipos actuales
         // Nota: Asumimos que los nombres son únicos en la sala
         const p1 = await Entrenador.findOne({ sala, nombre: entrenador1 });
         const p2 = await Entrenador.findOne({ sala, nombre: entrenador2 });
+
+        if (!p1 || !p2) {
+            return res.status(404).json({ mensaje: "Uno de los entrenadores no se encontró en la base de datos." });
+        }
 
         // Extraemos solo las imágenes de los que están en 'equipo'
         const equipo1Img = p1 ? p1.pokemons.filter(p => p.estado === 'equipo').map(p => p.imagen) : [];
