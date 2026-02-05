@@ -187,6 +187,11 @@ router.put('/pokemon', async (req, res) => {
         if (nuevosDatos.imagen) pokemon.imagen = nuevosDatos.imagen;
         if (nuevosDatos.tipo) pokemon.tipo = nuevosDatos.tipo;
 
+        // --- NUEVOS CAMPOS ---
+        if (nuevosDatos.naturaleza) pokemon.naturaleza = nuevosDatos.naturaleza;
+        if (nuevosDatos.objeto !== undefined) pokemon.objeto = nuevosDatos.objeto;
+        if (nuevosDatos.ataques) pokemon.ataques = nuevosDatos.ataques; // Esperamos un array
+
         await entrenador.save();
         res.json({ mensaje: "Datos actualizados correctamente" });
     } catch (error) {

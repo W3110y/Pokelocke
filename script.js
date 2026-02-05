@@ -843,40 +843,101 @@ async function cargarGestorEquipo() {
         if(counterEl) counterEl.innerText = `${equipo.length}/6`;
 
         // -------------------------------------------------
-        // RENDERIZADO: EQUIPO ACTIVO (Siempre 6 Huecos)
+        // RENDERIZADO: EQUIPO ACTIVO (Con Edición Desplegable)
         // -------------------------------------------------
         let htmlEquipo = '';
         
-        // A. Los Pokémon que existen
-        equipo.forEach(p => {
+        // Lista de Naturalezas para el Select
+        const naturalezas = ["Firme", "Alegre", "Modesta", "Miedosa", "Audaz", "Placida", "Serena", "Grosera", "Cauta", "Agitada", "Rara", "Fuerte", "Docil"];
+
+        equipo.forEach((p, index) => {
+            // Aseguramos que ataques sea un array de 4
+            const atq = p.ataques && p.ataques.length === 4 ? p.ataques : ["", "", "", ""];
+            
+            // Generamos opciones de naturaleza
+            const optionsNaturaleza = naturalezas.map(n => 
+                `<option value="${n}" ${p.naturaleza === n ? 'selected' : ''}>${n}</option>`
+            ).join('');
+
+            // ID único para el collapse de ESTA tarjeta
+            const collapseId = `collapseEdit-${p._id}`;
+
             htmlEquipo += `
-            <div class="col-6 col-md-4 col-lg-2 fade-in">
-                <div class="manage-card border-warning"> 
-                    <button onclick="abrirEditor('${p._id}', '${p.especie}', '${p.mote}', ${p.nivel}, '${p.imagen}')" 
-                            class="btn btn-link text-white position-absolute top-0 end-0 p-1 opacity-50 hover-opacity-100">
-                        <i class="bi bi-pencil-square"></i>
+            <div class="col-12 col-md-6 col-lg-4 fade-in"> <div class="manage-card border-warning p-0 overflow-hidden">
+                    
+                    <div class="p-3 text-center position-relative">
+                        <img src="${p.imagen}" style="width:70px; height:70px; object-fit:contain;" class="mb-2">
+                        
+                        <h6 class="fw-bold text-white mb-0">${p.mote}</h6>
+                        <small class="text-muted">${p.especie} - Lvl.${p.nivel}</small>
+                        
+                        <div class="mt-2 d-flex gap-2 justify-content-center">
+                            <span class="badge bg-dark border border-secondary text-secondary">${p.naturaleza || 'Neutro'}</span>
+                            ${p.objeto ? `<span class="badge bg-dark border border-secondary text-info">📦 ${p.objeto}</span>` : ''}
+                        </div>
+                    </div>
+
+                    <button class="btn-toggle-edit" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                        <i class="bi bi-chevron-down"></i> Editar Datos
                     </button>
-                    <div class="text-center mb-2">
-                        <img src="${p.imagen}" style="width:60px; height:60px; object-fit:contain;">
-                        <div class="fw-bold small mt-1 text-truncate">${p.mote}</div>
-                        <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.6em">Nvl ${p.nivel}</span>
+
+                    <div class="collapse" id="${collapseId}">
+                        <div class="edit-collapse-panel text-start">
+                            <form onsubmit="guardarEdicionInline(event, '${p._id}', '${p.especie}')">
+                                
+                                <div class="row g-1 mb-2">
+                                    <div class="col-8">
+                                        <label class="mini-form-label">Mote</label>
+                                        <input type="text" name="mote" class="mini-input" value="${p.mote}">
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="mini-form-label">Nivel</label>
+                                        <input type="number" name="nivel" class="mini-input" value="${p.nivel}" min="1" max="100">
+                                    </div>
+                                </div>
+
+                                <div class="row g-1 mb-2">
+                                    <div class="col-6">
+                                        <label class="mini-form-label">Objeto</label>
+                                        <input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" placeholder="Nada">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="mini-form-label">Naturaleza</label>
+                                        <select name="naturaleza" class="mini-input bg-dark">
+                                            ${optionsNaturaleza}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <label class="mini-form-label text-warning">Movimientos</label>
+                                <div class="d-grid gap-1 mb-3">
+                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-">
+                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-">
+                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-">
+                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-">
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-sm btn-success py-1" style="font-size:0.8rem">💾 Guardar Cambios</button>
+                                    
+                                    <div class="d-flex gap-1 mt-2 pt-2 border-top border-white-10">
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill py-0" style="font-size:0.7rem">Al PC</button>
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-0" style="font-size:0.7rem">Falleció</button>
+                                    </div>
+                                </div>
+
+                            </form>
+                        </div>
                     </div>
-                    <div class="w-100 d-grid gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem">
-                            <i class="bi bi-box-arrow-in-down"></i> PC
-                        </button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger py-0" style="font-size:0.75rem">
-                            <i class="bi bi-skull"></i> F
-                        </button>
-                    </div>
+
                 </div>
             </div>`;
         });
 
-        // B. Rellenar huecos vacíos hasta 6
+        // RELLENAR HUECOS (Mismo código de antes, ajustado a col-lg-4)
         for(let i = equipo.length; i < 6; i++) {
             htmlEquipo += `
-            <div class="col-6 col-md-4 col-lg-2">
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="slot-empty">
                     <div class="text-center opacity-50">
                         <i class="bi bi-plus-circle display-6"></i>
@@ -1277,5 +1338,68 @@ const ponerCargador = (elementId, mensaje = "Cargando datos...") => {
                 <p>${mensaje}</p>
             </div>
         `;
+    }
+};
+
+/* ========================================================= */
+/* LOGIC: GUARDAR EDICIÓN INLINE (Desde la tarjeta)          */
+/* ========================================================= */
+window.guardarEdicionInline = async function(event, id, especieOriginal) {
+    event.preventDefault(); // Evitar recarga
+    
+    // Obtenemos el formulario que disparó el evento
+    const form = event.target;
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    
+    // Recolectamos datos
+    const mote = form.mote.value;
+    const nivel = form.nivel.value;
+    const objeto = form.objeto.value;
+    const naturaleza = form.naturaleza.value;
+    const ataques = [
+        form.atq0.value,
+        form.atq1.value,
+        form.atq2.value,
+        form.atq3.value
+    ];
+
+    // Feedback visual (Cambiamos texto botón)
+    const btn = form.querySelector('button[type="submit"]');
+    const txt = btn.innerText;
+    btn.innerText = "Guardando...";
+    btn.disabled = true;
+
+    try {
+        // Nota: No gestionamos evolución aquí para simplificar (usa el botón Capturar para nuevas formas o añade lógica extra)
+        // Pero sí enviamos los datos nuevos
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                pokemonId: id,
+                nuevosDatos: {
+                    mote: mote,
+                    nivel: nivel,
+                    objeto: objeto,
+                    naturaleza: naturaleza,
+                    ataques: ataques
+                    // No enviamos especie ni imagen porque este form es solo para datos técnicos
+                }
+            })
+        });
+
+        if(res.ok) {
+            // Cerramos el acordeón suavemente o recargamos todo
+            // Para asegurar consistencia visual, recargamos el gestor
+            cargarGestorEquipo();
+        } else {
+            alert("Error al guardar cambios");
+        }
+
+    } catch(e) { console.error(e); }
+    finally {
+        btn.innerText = txt;
+        btn.disabled = false;
     }
 };

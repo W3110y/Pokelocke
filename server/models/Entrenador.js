@@ -10,7 +10,13 @@ const PokemonSchema = new mongoose.Schema({
         enum: ['equipo', 'caja', 'cementerio'], 
         default: 'equipo' 
     },
-    imagen: String // Opcional: URL de la imagen si decides guardarla
+    imagen: String, // Opcional: URL de la imagen si decides guardarla
+    fechaCaptura: Date,
+
+    // --- NUEVOS CAMPOS ---
+    naturaleza: { type: String, default: 'Rara' }, // Ej: Firme, Modesta
+    objeto: { type: String, default: '' },          // Ej: Baya Aranja
+    ataques: { type: [String], default: ['', '', '', ''] } // Array de 4 strings
 });
 
 // Esquema del Entrenador (Jugador)
