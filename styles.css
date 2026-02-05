@@ -277,12 +277,16 @@ h1, h2, h3, h4, h5, .card-title {
 .party-icon {
     width: 100%; 
     height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated; /* CRÍTICO: Mantiene los píxeles duros sin difuminar */
-    filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5)); /* Sombra dura para resaltar */
+    
+    /* CRÍTICO: 'contain' hace que la imagen quepa entera sin deformarse */
+    object-fit: contain; 
+    
+    /* CRÍTICO: 'center' asegura que si la imagen es rectangular, quede en medio */
+    object-position: center; 
 
-    /* AÑADE ESTO: */
-    will-change: transform; /* Optimización para animaciones */
+    image-rendering: pixelated; 
+    filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
+    will-change: transform; 
 }
 
 /* La Sombra para huecos vacíos */
@@ -381,7 +385,16 @@ h1, h2, h3, h4, h5, .card-title {
 }
 
 .manage-card img {
+    /* Forzamos un contenedor un poco más grande para dar aire */
+    width: 80px !important; 
+    height: 60px !important;
+    
+    object-fit: contain;
+    object-position: center bottom; /* Alineamos abajo para que parezca que están de pie */
+    
+    image-rendering: pixelated;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    margin-bottom: 5px;
 }
 
 /* HUECO VACÍO EN EQUIPO */

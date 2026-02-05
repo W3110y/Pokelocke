@@ -1162,8 +1162,17 @@ if (formCaptura) {
             
             const pokeData = await pokeRes.json();
             
-            // TRUCO PRO: Buscamos el sprite 'icon' (pixel art). Si no existe, usamos el normal.
-            const imagenUrl = pokeData.sprites.front_default;
+            // --- NUEVA LÓGICA DE SELECCIÓN (Prioridad: Espada/Escudo) ---
+            // 1. Intentamos buscar el icono específico de Gen 8 (Espada/Escudo)
+            // 2. Si no existe (raro, pero posible), bajamos a Gen 7 (Sol/Luna)
+            // 3. Si falla, usamos el sprite estándar.
+            
+            const imagenUrl = 
+                pokeData.sprites.versions['generation-viii'].icons.front_default || 
+                pokeData.sprites.versions['generation-vii'].icons.front_default || 
+                pokeData.sprites.front_default;
+
+            // -------------------------------------------------------------
             const tipos = pokeData.types.map(t => t.type.name);
 
             // PASO B: Enviar a nuestro Backend
@@ -1247,7 +1256,14 @@ if (formEditar) {
 
             if (pokeRes.ok) {
                 const pokeData = await pokeRes.json();
-                nuevaImagen = pokeData.sprites.front_default;
+                // --- NUEVA LÓGICA DE SELECCIÓN (Igual que arriba) ---
+                
+                nuevaImagen = 
+                    pokeData.sprites.versions['generation-viii'].icons.front_default || 
+                    pokeData.sprites.versions['generation-vii'].icons.front_default || 
+                    pokeData.sprites.front_default;
+                
+                // ----------------------------------------------------
                 nuevosTipos = pokeData.types.map(t => t.type.name);
                 nombreOficial = pokeData.name;
             } else {
