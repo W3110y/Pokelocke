@@ -40,6 +40,8 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Dia Soleado", nombreIng: "Sunny Day" },
             { nombreEsp: "Fuego Sagrado", nombreIng: "Sacred Fire" },
             { nombreEsp: "V de Fuego", nombreIng: "V-create" },
+            { nombreEsp: "Llama Final", nombreIng: "Burn Up" },
+            { nombreEsp: "Calor Estelar", nombreIng: "Mind Blown" },
 
             // --- AGUA ---
             { nombreEsp: "Surf", nombreIng: "Surf" },
@@ -56,6 +58,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Salmuera", nombreIng: "Brine" },
             { nombreEsp: "Agua Lodosa", nombreIng: "Muddy Water" },
             { nombreEsp: "Hidroariete", nombreIng: "Liquidation" },
+            { nombreEsp: "Viraje", nombreIng: "Flip Turn" },
 
             // --- PLANTA ---
             { nombreEsp: "Rayo Solar", nombreIng: "Solar Beam" },
@@ -75,6 +78,8 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Aromaterapia", nombreIng: "Aromatherapy" },
             { nombreEsp: "Fitoimpulso", nombreIng: "Solar Blade" },
             { nombreEsp: "Bala Semilla", nombreIng: "Bullet Seed" },
+            { nombreEsp: "Fuerza G", nombreIng: "Grav Apple" },
+            { nombreEsp: "Batería de Asalto", nombreIng: "Drum Beating" },
 
             // --- ELÉCTRICO ---
             { nombreEsp: "Rayo", nombreIng: "Thunderbolt" },
@@ -87,6 +92,8 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Voltio Cruel", nombreIng: "Wild Charge" },
             { nombreEsp: "Chispazo", nombreIng: "Discharge" },
             { nombreEsp: "Electrocañon", nombreIng: "Zap Cannon" },
+            { nombreEsp: "Moflete Estatico", nombreIng: "Nuzzle" },
+            { nombreEsp: "Electrotela", nombreIng: "Electroweb" },
 
             // --- HIELO ---
             { nombreEsp: "Rayo Hielo", nombreIng: "Ice Beam" },
@@ -100,6 +107,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Liofilizacion", nombreIng: "Freeze-Dry" },
             { nombreEsp: "Granizo", nombreIng: "Hail" },
             { nombreEsp: "Paisaje Nevado", nombreIng: "Snowscape" },
+            { nombreEsp: "Triple Axel", nombreIng: "Triple Axel" },
 
             // --- TIERRA ---
             { nombreEsp: "Terremoto", nombreIng: "Earthquake" },
@@ -111,6 +119,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Bomba Fango", nombreIng: "Mud Bomb" },
             { nombreEsp: "Huesomerang", nombreIng: "Bonemerang" },
             { nombreEsp: "Puas", nombreIng: "Spikes" },
+            { nombreEsp: "Fuerza Equina", nombreIng: "High Horsepower" },
 
             // --- ROCA ---
             { nombreEsp: "Avalancha", nombreIng: "Rock Slide" },
@@ -121,6 +130,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Joya de Luz", nombreIng: "Power Gem" },
             { nombreEsp: "Poder Pasado", nombreIng: "Ancient Power" },
             { nombreEsp: "Desenrollar", nombreIng: "Rollout" },
+            { nombreEsp: "Testarazo", nombreIng: "Head Smash" },
 
             // --- VOLADOR ---
             { nombreEsp: "Pájaro Osado", nombreIng: "Brave Bird" },
@@ -134,6 +144,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Ataque Ala", nombreIng: "Wing Attack" },
             { nombreEsp: "Danza Pluma", nombreIng: "Feather Dance" },
             { nombreEsp: "Viento Afin", nombreIng: "Tailwind" },
+            { nombreEsp: "Ascenso Draco", nombreIng: "Dragon Ascent" },
 
             // --- LUCHA ---
             { nombreEsp: "A Bocajarro", nombreIng: "Close Combat" },
@@ -162,6 +173,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Mofa", nombreIng: "Taunt" },
             { nombreEsp: "Descanso", nombreIng: "Rest" },
             { nombreEsp: "Agilidad", nombreIng: "Agility" },
+            { nombreEsp: "Vasta Fuerza", nombreIng: "Expanding Force" },
 
             // --- FANTASMA ---
             { nombreEsp: "Bola Sombra", nombreIng: "Shadow Ball" },
@@ -171,6 +183,8 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Mismo Destino", nombreIng: "Destiny Bond" },
             { nombreEsp: "Rayo Confuso", nombreIng: "Confuse Ray" },
             { nombreEsp: "Tinieblas", nombreIng: "Night Shade" },
+            { nombreEsp: "Poltergeist", nombreIng: "Poltergeist" },
+            { nombreEsp: "Espectro", nombreIng: "Astral Barrage" },
 
             // --- SINIESTRO ---
             { nombreEsp: "Triturar", nombreIng: "Crunch" },
@@ -181,6 +195,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Persecución", nombreIng: "Pursuit" },
             { nombreEsp: "Mordisco", nombreIng: "Bite" },
             { nombreEsp: "Alarido", nombreIng: "Snarl" },
+            { nombreEsp: "Lariat Oscuro", nombreIng: "Darkest Lariat" },
 
             // --- ACERO ---
             { nombreEsp: "Cabeza de Hierro", nombreIng: "Iron Head" },
@@ -191,6 +206,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Defensa Ferrea", nombreIng: "Iron Defense" },
             { nombreEsp: "Cola Ferrea", nombreIng: "Iron Tail" },
             { nombreEsp: "Garra Metal", nombreIng: "Metal Claw" },
+            { nombreEsp: "Ferrochillido", nombreIng: "Metal Sound" },
 
             // --- VENENO ---
             { nombreEsp: "Bomba Lodo", nombreIng: "Sludge Bomb" },
@@ -201,6 +217,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Puas Toxicas", nombreIng: "Toxic Spikes" },
             { nombreEsp: "Carga Toxica", nombreIng: "Venoshock" },
             { nombreEsp: "Acido", nombreIng: "Acid" },
+            { nombreEsp: "Niebla Clara", nombreIng: "Clear Smog" },
 
             // --- BICHO ---
             { nombreEsp: "Ida y Vuelta", nombreIng: "U-turn" },
@@ -211,6 +228,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Red Viscosa", nombreIng: "Sticky Web" },
             { nombreEsp: "Chupavidas", nombreIng: "Leech Life" },
             { nombreEsp: "Megacuerno", nombreIng: "Megahorn" },
+            { nombreEsp: "Plancha", nombreIng: "First Impression" },
 
             // --- DRAGON ---
             { nombreEsp: "Garra Dragon", nombreIng: "Dragon Claw" },
@@ -220,6 +238,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Pulso Dragon", nombreIng: "Dragon Pulse" },
             { nombreEsp: "Dragoaliento", nombreIng: "Dragon Breath" },
             { nombreEsp: "Cola Dragon", nombreIng: "Dragon Tail" },
+            { nombreEsp: "Vasto Impacto", nombreIng: "Breaking Swipe" },
 
             // --- HADA ---
             { nombreEsp: "Fuerza Lunar", nombreIng: "Moonblast" },
@@ -228,6 +247,7 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Beso Drenaje", nombreIng: "Draining Kiss" },
             { nombreEsp: "Viento Feerico", nombreIng: "Fairy Wind" },
             { nombreEsp: "Encanto", nombreIng: "Charm" },
+            { nombreEsp: "Choque Anímico", nombreIng: "Spirit Break" },
 
             // --- NORMAL ---
             { nombreEsp: "Retribución", nombreIng: "Return" },
@@ -252,7 +272,9 @@ router.post('/semilla-movimientos', async (req, res) => {
             { nombreEsp: "Hiperrayo", nombreIng: "Hyper Beam" },
             { nombreEsp: "Triataque", nombreIng: "Tri Attack" },
             { nombreEsp: "Corte", nombreIng: "Cut" },
-            { nombreEsp: "Fuerza", nombreIng: "Strength" }
+            { nombreEsp: "Fuerza", nombreIng: "Strength" },
+            { nombreEsp: "Campana Cura", nombreIng: "Heal Bell" },
+            { nombreEsp: "Amortiguador", nombreIng: "Soft-Boiled" }
         ];
 
         // 3. INSERCIÓN MASIVA
