@@ -20,93 +20,134 @@
 </head>
 
 <body>
-    <!-- ============================================= -->
-    <!-- Header                                       -->
-    <!-- ============================================= -->
     <header class="minimal-header">
         <a href="groups.html" class="nav-btn" title="Volver a Mis Partidas">
             <i class="bi bi-arrow-left"></i>
         </a>
+        
+        <div class="position-absolute start-50 translate-middle-x mt-2 text-center" style="pointer-events: none;">
+            <h5 class="text-white-50 m-0 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 2px;">Centro de Mando</h5>
+            <h2 id="view-party-name" class="text-white fw-bold m-0" style="text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);">Cargando...</h2>
+        </div>
     </header>
 
-    <!-- ============================================= -->
-    <!-- MAIN CONTENT: Party Details                  -->
-    <!-- ============================================= -->
-    <div class="dashboard-container">
+    <div class="flex-grow-1 dashboard-container">
     
-    <aside class="sidebar-left fade-in">
-        <h5 class="section-title">Miembros</h5>
-        <div id="members-list" class="members-grid">
+        <aside class="sidebar-left fade-in-up delay-1">
+            <div class="glass-panel h-100 p-3 d-flex flex-column">
+                <h5 class="section-title border-bottom border-white-10 pb-2 mb-3">
+                    <i class="bi bi-people-fill me-2"></i>Entrenadores
+                </h5>
+                <div id="members-list" class="members-grid flex-grow-1 overflow-auto pe-1" style="max-height: 600px;">
+                    </div>
             </div>
-    </aside>
+        </aside>
 
-    <main class="main-stage fade-in">
-        
-        <div id="my-dashboard-panel" class="mb-4">
-            </div>
-
-        <div class="glass-panel p-3">
-            <h5 class="section-title text-center mb-3">🏆 Clasificación General</h5>
-            <div id="leaderboard-container">
-                </div>
-        </div>
-    </main>
-
-    <aside class="sidebar-right fade-in">
-        <div class="d-grid gap-2 mb-4">
-            <button id="btn-registrar-combate" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#combatModal">
-                <i class="bi bi-swords"></i> Registrar Combate
-            </button>
+        <main class="main-stage fade-in-up delay-2">
             
-            <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#rulesModal">
-                <i class="bi bi-book-half text-accent"></i> Ver Reglas
-            </button>
-            <button class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#descModal">
-                <i class="bi bi-info-circle text-primary"></i> Descripción
-            </button>
-        </div>
-
-
-        <div class="glass-panel p-3 mb-3"> <h6 class="section-title border-bottom pb-2 mb-2">⚔️ Recientes</h6>
-            <div id="recent-battles-list" class="battles-feed mb-2">
+            <div id="my-dashboard-panel" class="mb-4">
                 </div>
-            <a href="combates.html" class="btn btn-sm btn-outline-primary w-100 py-1" style="font-size: 0.8rem;">
-                Ver todos
-            </a>
-        </div>
-        <div id="host-actions-container" class="mt-2"></div>
-    </aside>
+
+            <div class="glass-panel p-4">
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
+                    <i class="bi bi-trophy-fill text-warning fs-4"></i>
+                    <h5 class="section-title m-0 fs-5 text-white">Clasificación General</h5>
+                </div>
+                
+                <div id="leaderboard-container" class="table-responsive">
+                    </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right fade-in-up delay-3">
+            
+            <div class="d-grid gap-2 mb-4">
+                
+                <button id="btn-registrar-combate" class="btn btn-start shadow-sm" data-bs-toggle="modal" data-bs-target="#combatModal">
+                    <i class="bi bi-swords"></i> Registrar VS
+                </button>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-sm btn-glass w-100 py-2" data-bs-toggle="modal" data-bs-target="#rulesModal">
+                            <i class="bi bi-book text-info d-block fs-5 mb-1"></i> <span class="small">Reglas</span>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-sm btn-glass w-100 py-2" data-bs-toggle="modal" data-bs-target="#descModal">
+                            <i class="bi bi-info-circle text-primary d-block fs-5 mb-1"></i> <span class="small">Info</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-3 mb-3"> 
+                <div class="d-flex justify-content-between align-items-center border-bottom border-white-10 pb-2 mb-3">
+                    <h6 class="section-title m-0">⚔️ Recientes</h6>
+                    <a href="combates.html" class="text-decoration-none small text-primary hover-glow">Historial ></a>
+                </div>
+                
+                <div id="recent-battles-list" class="battles-feed mb-2" style="min-height: 100px;">
+                    </div>
+            </div>
+            
+            <div id="host-actions-container" class="mt-3"></div>
+        </aside>
 
     </div>
 
-    <div class="modal fade" id="rulesModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-rules-content">Cargando reglas...</div></div></div></div>
-    <div class="modal fade" id="descModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-modal"><div class="modal-body" id="modal-desc-content">Cargando descripción...</div></div></div></div>
+    <div class="modal fade" id="rulesModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold text-info"><i class="bi bi-book me-2"></i>Reglamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-white-50" id="modal-rules-content">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="descModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>Información</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-white-50" id="modal-desc-content">Cargando...</div>
+                <div class="modal-footer border-top border-white-10 justify-content-start">
+                    <small class="text-muted">Host de la sala: <span id="view-host-name" class="text-white">...</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="combatModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content glass-modal">
-            <div class="modal-header border-bottom border-secondary">
-                <h5 class="modal-title fw-bold">⚔️ Nuevo Resultado</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="form-combate">
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Combatiente 1</label>
-                        <select id="select-p1" class="form-select bg-dark text-white border-secondary"></select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Combatiente 2</label>
-                        <select id="select-p2" class="form-select bg-dark text-white border-secondary"></select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-warning small fw-bold">Ganador</label>
-                        <select id="select-winner" class="form-select bg-dark text-white border-warning"></select>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Guardar Resultado</button>
-                    </div>
-                </form>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold text-warning"><i class="bi bi-trophy me-2"></i>Registrar Resultado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-combate">
+                        <div class="mb-3">
+                            <label class="mini-form-label">Entrenador 1</label>
+                            <select id="select-p1" class="mini-input bg-dark" style="padding: 10px; font-size: 1rem;"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="mini-form-label">Entrenador 2</label>
+                            <select id="select-p2" class="mini-input bg-dark" style="padding: 10px; font-size: 1rem;"></select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="mini-form-label text-warning">Ganador del Combate</label>
+                            <select id="select-winner" class="mini-input bg-dark border-warning text-warning fw-bold" style="padding: 10px; font-size: 1rem;"></select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-start shadow-sm">Confirmar Victoria</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
