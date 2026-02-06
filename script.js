@@ -1,32 +1,4 @@
-/* ========================================================= */
-/* 1. THEME SWITCHER (Modo Oscuro/Claro)                     */
-/* ========================================================= */
-document.addEventListener('DOMContentLoaded', () => {
-    const themeBtn = document.getElementById('theme-toggle');
-    const themeIcon = themeBtn ? themeBtn.querySelector('i') : null;
 
-    const updateIcon = (theme) => {
-        if (!themeIcon) return;
-        if (theme === 'dark') {
-            themeIcon.className = 'bi bi-moon-stars-fill';
-        } else {
-            themeIcon.className = 'bi bi-sun-fill text-warning';
-        }
-    };
-
-    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-    updateIcon(currentTheme);
-
-    if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-bs-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-bs-theme', next);
-            localStorage.setItem('theme', next);
-            updateIcon(next);
-        });
-    }
-});
 
 /* ========================================================= */
 /* 2. EFECTOS VISUALES (Typing Animation)                    */

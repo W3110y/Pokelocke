@@ -4,37 +4,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
+    /* Colores Principales */
     --primary-color: #6366f1; /* Indigo */
     --accent-color: #ec4899;  /* Rosa */
-    --glass-blur: blur(16px);
     --shadow-glow: rgba(99, 102, 241, 0.5);
-}
 
-/* --- TEMA OSCURO (Default) --- */
-[data-bs-theme="dark"] {
+    /* Definición del Tema Único (Dark/Glass) */
     --bg-deep: #0f172a;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
+    
+    /* Variables de Cristal */
     --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-blur: blur(16px);
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
     --card-hover-bg: rgba(30, 41, 59, 0.8);
-}
-
-/* --- TEMA CLARO --- */
-[data-bs-theme="light"] {
-    --bg-deep: #f0f4f8;
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --glass-bg: rgba(255, 255, 255, 0.6);
-    --glass-border: 1px solid rgba(0, 0, 0, 0.05);
-    --card-hover-bg: rgba(255, 255, 255, 0.9);
 }
 
 body {
     font-family: 'Outfit', sans-serif;
     color: var(--text-main);
     min-height: 100vh;
-    /* FONDO ANIMADO (Nuevo Diseño) */
+    
+    /* FONDO ANIMADO (Único y Definitivo) */
     background: linear-gradient(-45deg, #1a1c2c, #4a1c40, #1c2c4a, #1a1c2c);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
@@ -47,8 +39,8 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Parches de Bootstrap para colores */
-h1, h2, h3, h4, h5, .card-title, [data-bs-theme="dark"] .text-dark {
+/* Parches para forzar textos claros en componentes de Bootstrap */
+h1, h2, h3, h4, h5, .card-title, .text-dark, .text-body {
     color: var(--text-main) !important;
 }
 .text-muted { color: var(--text-muted) !important; }
