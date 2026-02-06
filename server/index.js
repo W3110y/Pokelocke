@@ -20,7 +20,7 @@ if (!process.env.MONGO_URI) {
 
 // Conexión a Base de Datos
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ Base de Datos Conectada: Modo Nuzlocke'))
+    .then(() => console.log('✅ Base de Datos Conectada: pokelocke'))
     .catch((err) => console.error('❌ Error de Mongo:', err));
 
 // Rutas
