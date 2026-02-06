@@ -8,6 +8,6 @@ const MovimientoSchema = new mongoose.Schema({
 });
 
 // Índice para búsquedas rápidas
-MovimientoSchema.index({ nombreEsp: 1 });
+// MovimientoSchema.index({ nombreEsp: 1 });
 
 module.exports = mongoose.model('Movimiento', MovimientoSchema);
