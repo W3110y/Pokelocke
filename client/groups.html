@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PokeLocke - Mis Grupos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="client/styles.css">
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    
+    <header class="minimal-header">
+        <a href="client/index.html" class="nav-btn" title="Volver al Menú">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+    </header>
+
+    <section class="flex-grow-1 py-5">
+        <div class="container" style="max-width: 1000px; padding-top: 60px;">
+        
+            <div class="d-flex justify-content-between align-items-end mb-5 fade-in-up">
+                <div>
+                    <h1 class="display-5 fw-bold text-white mb-0" style="text-shadow: 0 0 20px rgba(255,255,255,0.2);">
+                        Historial de <span class="text-warning">Viajes</span>
+                    </h1>
+                    <p class="text-white-50 m-0 small">Tus partidas guardadas localmente</p>
+                </div>
+                
+                <button onclick="borrarHistorial()" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2 px-3 rounded-pill" style="backdrop-filter: blur(5px);">
+                    <i class="bi bi-trash3-fill"></i> Olvidar Todo
+                </button>
+            </div>
+
+            <div id="groups-grid" class="row g-4">
+                <div class="col-12 text-center py-5">
+                    <div class="loading-state">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p>Recuperando archivos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="empty-state" class="d-none fade-in-up delay-1">
+                <div class="poke-card text-center py-5 mx-auto" style="max-width: 500px;">
+                    <div class="mb-4">
+                        <i class="bi bi-journal-x text-white-50" style="font-size: 4rem; opacity: 0.5;"></i>
+                    </div>
+                    <h3 class="fw-bold text-white">Sin registros</h3>
+                    <p class="text-white-50 mb-4">No has guardado ninguna partida recientemente.</p>
+                    
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="client/create.html" class="btn btn-outline-info rounded-pill px-4">Crear Nueva</a>
+                        <a href="client/join.html" class="btn btn-start px-4" style="width: auto;">Unirse</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="py-4 text-center text-body-secondary border-top mt-auto">
+        <div class="container">
+            <p class="mb-0 small opacity-50">© 2025 – PokéLocke System</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="client/script.js"></script>
+
+</body>
+</html>

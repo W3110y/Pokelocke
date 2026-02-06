@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PokeLocke</title>
+    <title>PokeLocke - Equipo</title>
 
     <!-- ============================================= -->
     <!-- IMPORTS (Do not touch these)                  -->
@@ -16,24 +16,12 @@
     <!-- 3. AOS: For the scrolling animations -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- 4. OUR CUSTOM CSS: The file where we write our own rules -->
-    <link rel="stylesheet" href="styles.css">
-    <script>
-    (function() {
-        // 1. Leer preferencia guardada
-        const savedTheme = localStorage.getItem('theme');
-        
-        // 2. Determinar tema (Si no hay nada guardado, forzamos 'dark' por defecto)
-        const themeToApply = savedTheme ? savedTheme : 'dark';
-        
-        // 3. Aplicar INMEDIATAMENTE al documento antes de que se renderice nada
-        document.documentElement.setAttribute('data-bs-theme', themeToApply);
-    })();
-    </script>
+    <link rel="stylesheet" href="client/styles.css">
 </head>
 
 <body>
     <header class="minimal-header">
-        <a href="stats.html" class="nav-btn" title="Guardar y Volver">
+        <a href="client/stats.html" class="nav-btn" title="Guardar y Volver">
             <i class="bi bi-arrow-left"></i>
         </a>
         <h5 class="m-0 fw-bold text-uppercase text-muted" style="pointer-events: none;">Gestión de Equipo</h5>
@@ -152,9 +140,9 @@
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
     <!-- ============================================= -->
-    <footer class="py-4 text-center text-body-secondary border-top">
+    <footer class="py-4 text-center text-body-secondary border-top mt-auto">
         <div class="container">
-            <p class="mb-0">© 2025 – Built with Bootstrap</p>
+            <p class="mb-0 small opacity-50">© 2025 – PokéLocke System</p>
         </div>
     </footer>
 
@@ -171,7 +159,7 @@
     </script>
 
     <!-- Load our custom logic -->
-    <script src="script.js"></script>
+    <script src="client/script.js"></script>
 
   </body>
 </html>

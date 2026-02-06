@@ -1,47 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-
+<html lang="es" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PokeLocke</title>
-
-    <!-- ============================================= -->
-    <!-- IMPORTS (Do not touch these)                  -->
-    <!-- ============================================= -->
-    <!-- 1. BOOTSTRAP: Makes styling easy -->
+    <title>PokeLocke - Crear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. ICONS: For the cool symbols -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- 3. AOS: For the scrolling animations -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <!-- 4. OUR CUSTOM CSS: The file where we write our own rules -->
-    <link rel="stylesheet" href="styles.css">
-    <script>
-    (function() {
-        // 1. Leer preferencia guardada
-        const savedTheme = localStorage.getItem('theme');
-        
-        // 2. Determinar tema (Si no hay nada guardado, forzamos 'dark' por defecto)
-        const themeToApply = savedTheme ? savedTheme : 'dark';
-        
-        // 3. Aplicar INMEDIATAMENTE al documento antes de que se renderice nada
-        document.documentElement.setAttribute('data-bs-theme', themeToApply);
-    })();
-    </script>
+    <link rel="stylesheet" href="client/styles.css">
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
+
     <header class="minimal-header">
-        <a href="index.html" class="nav-btn" title="Volver al Menú">
+        <a href="client/index.html" class="nav-btn" title="Volver al Menú">
             <i class="bi bi-arrow-left"></i>
         </a>
     </header>
 
-
-    <section class = "d-flex align-items-center justify-content-center">
-        <div class="container" style="max-width: 600px;">
-            <div class="poke-card fade-in-up delay-1">
+    <section class="flex-grow-1 d-flex align-items-center justify-content-center py-5">
+        <div class="container" style="max-width: 600px; margin-top: 40px;"> <div class="poke-card fade-in-up delay-1">
                 <div class="text-center mb-4">
                     <i class="bi bi-globe-americas text-info display-4"></i>
                     <h2 class="fw-bold text-white mt-2">Nueva Aventura</h2>
@@ -49,7 +26,6 @@
                 </div>
 
                 <form id="form-create-party">
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="poke-input-group">
@@ -85,35 +61,18 @@
                             <i class="bi bi-stars"></i> Crear Mundo
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
     </section>
 
-    <!-- ============================================= -->
-    <!-- FOOTER                                        -->
-    <!-- ============================================= -->
-    <footer class="py-4 text-center text-body-secondary border-top">
+    <footer class="py-4 text-center text-body-secondary border-top mt-auto">
         <div class="container">
-            <p class="mb-0">© 2025 – Built with Bootstrap</p>
+            <p class="mb-0 small opacity-50">© 2025 – PokéLocke System</p>
         </div>
     </footer>
 
-
-    <!-- ============================================= -->
-    <!-- SCRIPTS (Logic & Animation)                   -->
-    <!-- ============================================= -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    
-    <!-- Initialize the Animation Library -->
-    <script>
-        AOS.init({ once: true, offset: 120 });
-    </script>
-
-    <!-- Load our custom logic -->
-    <script src="script.js"></script>
-
-  </body>
+    <script src="client/script.js"></script>
+</body>
 </html>

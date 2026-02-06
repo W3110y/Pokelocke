@@ -17,19 +17,7 @@
     <!-- 3. AOS: For the scrolling animations -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- 4. OUR CUSTOM CSS: The file where we write our own rules -->
-    <link rel="stylesheet" href="styles.css">
-    <script>
-    (function() {
-        // 1. Leer preferencia guardada
-        const savedTheme = localStorage.getItem('theme');
-        
-        // 2. Determinar tema (Si no hay nada guardado, forzamos 'dark' por defecto)
-        const themeToApply = savedTheme ? savedTheme : 'dark';
-        
-        // 3. Aplicar INMEDIATAMENTE al documento antes de que se renderice nada
-        document.documentElement.setAttribute('data-bs-theme', themeToApply);
-    })();
-    </script>
+    <link rel="stylesheet" href="client/styles.css">
 </head>
 
 <body>
@@ -49,7 +37,7 @@
 
         <div class="row g-4">
             <div class="col-md-6 fade-in-up delay-1">
-                <a href="create.html" class="text-decoration-none">
+                <a href="client/create.html" class="text-decoration-none">
                     <div class="poke-card h-100 position-relative overflow-hidden">
                         <div class="position-absolute top-0 start-0 w-100 h-100 bg-info opacity-10" style="filter: blur(50px);"></div>
                         
@@ -66,7 +54,7 @@
             </div>
 
             <div class="col-md-6 fade-in-up delay-2">
-                <a href="join.html" class="text-decoration-none">
+                <a href="client/join.html" class="text-decoration-none">
                     <div class="poke-card h-100 position-relative overflow-hidden">
                         <div class="position-absolute top-0 start-0 w-100 h-100 bg-success opacity-10" style="filter: blur(50px);"></div>
                         
@@ -83,7 +71,7 @@
             </div>
 
             <div class="col-md-6 fade-in-up delay-3">
-                <a href="groups.html" class="text-decoration-none">
+                <a href="client/groups.html" class="text-decoration-none">
                     <div class="poke-card h-100 position-relative overflow-hidden">
                         <div class="position-absolute top-0 start-0 w-100 h-100 bg-warning opacity-10" style="filter: blur(50px);"></div>
                         
@@ -153,9 +141,9 @@
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
     <!-- ============================================= -->
-    <footer class="py-4 text-center text-body-secondary border-top">
+    <footer class="py-4 text-center text-body-secondary border-top mt-auto">
         <div class="container">
-            <p class="mb-0">© 2025 – Built with Bootstrap</p>
+            <p class="mb-0 small opacity-50">© 2025 – PokéLocke System</p>
         </div>
     </footer>
 

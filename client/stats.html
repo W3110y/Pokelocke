@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PokeLocke</title>
+    <title>PokeLocke - Sala</title>
 
     <!-- ============================================= -->
     <!-- IMPORTS (Do not touch these)                  -->
@@ -16,19 +16,7 @@
     <!-- 3. AOS: For the scrolling animations -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!-- 4. OUR CUSTOM CSS: The file where we write our own rules -->
-    <link rel="stylesheet" href="styles.css">
-    <script>
-    (function() {
-        // 1. Leer preferencia guardada
-        const savedTheme = localStorage.getItem('theme');
-        
-        // 2. Determinar tema (Si no hay nada guardado, forzamos 'dark' por defecto)
-        const themeToApply = savedTheme ? savedTheme : 'dark';
-        
-        // 3. Aplicar INMEDIATAMENTE al documento antes de que se renderice nada
-        document.documentElement.setAttribute('data-bs-theme', themeToApply);
-    })();
-    </script>
+    <link rel="stylesheet" href="client/styles.css">
 </head>
 
 <body>
@@ -36,7 +24,7 @@
     <!-- Header                                       -->
     <!-- ============================================= -->
     <header class="minimal-header">
-        <a href="groups.html" class="nav-btn" title="Volver a Mis Partidas">
+        <a href="client/groups.html" class="nav-btn" title="Volver a Mis Partidas">
             <i class="bi bi-arrow-left"></i>
         </a>
     </header>
@@ -82,7 +70,7 @@
         <div class="glass-panel p-3 mb-3"> <h6 class="section-title border-bottom pb-2 mb-2">⚔️ Recientes</h6>
             <div id="recent-battles-list" class="battles-feed mb-2">
                 </div>
-            <a href="combates.html" class="btn btn-sm btn-outline-primary w-100 py-1" style="font-size: 0.8rem;">
+            <a href="client/combates.html" class="btn btn-sm btn-outline-primary w-100 py-1" style="font-size: 0.8rem;">
                 Ver todos
             </a>
         </div>
@@ -128,9 +116,9 @@
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
     <!-- ============================================= -->
-    <footer class="py-4 text-center text-body-secondary border-top">
+    <footer class="py-4 text-center text-body-secondary border-top mt-auto">
         <div class="container">
-            <p class="mb-0">© 2025 – Built with Bootstrap</p>
+            <p class="mb-0 small opacity-50">© 2025 – PokéLocke System</p>
         </div>
     </footer>
 
@@ -147,7 +135,7 @@
     </script>
 
     <!-- Load our custom logic -->
-    <script src="script.js"></script>
+    <script src="client/script.js"></script>
 
   </body>
 </html>
