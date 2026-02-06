@@ -32,47 +32,68 @@
 </head>
 
 <body>
-    <!-- ============================================= -->
-    <!-- Header                                       -->
-    <!-- ============================================= -->
-    <header class="minimal-header">
-        <a href="index.html" class="nav-btn" title="Volver al Menú">
-            <i class="bi bi-arrow-left"></i>
-        </a>
+    <header class="minimal-header justify-content-end"> 
         <button class="nav-btn" id="theme-toggle" title="Cambiar Tema">
-            <i class="bi bi-sun-fill"></i> 
+            <i class="bi bi-sun-fill"></i>
         </button>
     </header>
 
-    <!-- ============================================= -->
-    <!-- Create Party SECTION                                   -->  
-    <!-- ============================================= -->
-    <form id="form-create-party" class="py-5 fade-up">
-        <div class="container" data-aos="fade-up">
-            <h2 class="mb-4">Create a New Party</h2>
-            <div class="mb-3">
-                <label for="host-name" class="form-label">Host Name</label>
-                <input type="text" class="form-control" id="host-name" placeholder="Enter your name" required>
+    <section class = "d-flex align-items-center justify-content-center"></section>
+        <div class="container" style="max-width: 600px;">
+            
+            <a href="index.html" class="btn btn-link text-white-50 mb-3 fade-in-up">
+                <i class="bi bi-arrow-left"></i> Volver al Hub
+            </a>
+
+            <div class="poke-card fade-in-up delay-1">
+                <div class="text-center mb-4">
+                    <i class="bi bi-globe-americas text-info display-4"></i>
+                    <h2 class="fw-bold text-white mt-2">Nueva Aventura</h2>
+                    <p class="text-white-50 small">Configura los parámetros del mundo</p>
+                </div>
+
+                <form id="form-create-party">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="poke-input-group">
+                                <input type="text" id="host-name" class="poke-input" placeholder=" " required>
+                                <label class="poke-label">Tu Nombre (Host)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="poke-input-group">
+                                <input type="text" id="party-name" class="poke-input" placeholder=" " required>
+                                <label class="poke-label">Nombre de Sala</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poke-input-group mt-2">
+                        <input type="number" id="party-size" class="poke-input" placeholder=" " min="2" max="20" value="2" required>
+                        <label class="poke-label">Jugadores Máximos</label>
+                    </div>
+
+                    <div class="poke-input-group mt-4">
+                        <textarea id="party-rules" class="poke-input" placeholder=" " rows="2"></textarea>
+                        <label class="poke-label">Reglas (Nuzlocke, Vidas, etc.)</label>
+                    </div>
+
+                    <div class="poke-input-group mt-2">
+                        <textarea id="party-description" class="poke-input" placeholder=" " rows="1"></textarea>
+                        <label class="poke-label">Descripción Breve</label>
+                    </div>
+
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn-start text-info" style="background: white;">
+                            <i class="bi bi-stars"></i> Crear Mundo
+                        </button>
+                    </div>
+
+                </form>
             </div>
-            <div class="mb-3">
-                <label for="party-name" class="form-label">Party Name</label>
-                <input type="text" class="form-control" id="party-name" placeholder="Enter party name" required>
-            </div>
-            <div class="mb-3">
-                <label for="party-size" class="form-label">Party Size</label>
-                <input type="number" class="form-control" id="party-size" placeholder="Enter party size" required>
-            </div>
-            <div class="mb-3">
-                <label for="party-rules" class="form-label">Rules</label>
-                <textarea class="form-control" id="party-rules" rows="3" placeholder="Enter party rules" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="party-description" class="form-label">Description</label>
-                <textarea class="form-control" id="party-description" rows="3" placeholder="Enter party description"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Create Party</button>
         </div>
-    </form>
+    </section>
 
     <!-- ============================================= -->
     <!-- FOOTER                                        -->

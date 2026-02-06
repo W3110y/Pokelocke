@@ -48,65 +48,117 @@
     <!-- MAIN CONTENT                                  -->
     <!-- ============================================= -->
     <section class="d-flex align-items-center min-vh-100 py-5">
-        <div class="container">
-            
-            <div class="text-center mb-5" data-aos="fade-down">
-                <h1 class="display-3 fw-bold mb-3">Tu Nuzlocke, <span class="text-primary">Evolucionado</span></h1>
-                <p class="lead text-muted">Gestiona tu equipo, comparte tu partida y compite con amigos.</p>
+
+    <div class="container" style="max-width: 900px;">
+        
+        <div class="text-center mb-5 fade-in-up">
+            <h1 class="display-3 fw-bold text-white" style="text-shadow: 0 0 20px rgba(255,255,255,0.3);">
+                PokéLocke <span class="text-warning">Hub</span>
+            </h1>
+            <p class="lead text-white-50">Gestiona tus aventuras Nuzlocke multijugador</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 fade-in-up delay-1">
+                <a href="create.html" class="text-decoration-none">
+                    <div class="poke-card h-100 position-relative overflow-hidden">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-info opacity-10" style="filter: blur(50px);"></div>
+                        
+                        <div class="d-flex align-items-center gap-3 position-relative" style="z-index:1;">
+                            <div class="display-4 text-info"><i class="bi bi-broadcast-pin"></i></div>
+                            <div class="text-start text-white">
+                                <h3 class="fw-bold m-0">Crear Sala</h3>
+                                <small class="text-white-50">Inicia una nueva partida como Host</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto text-white-50"></i>
+                        </div>
+                    </div>
+                </a>
             </div>
 
-            <div class="row g-4 justify-content-center">
-                
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-                    <a href="create.html" class="text-decoration-none">
-                        <div class="card h-100 text-center p-4">
-                            <div class="card-body">
-                                <i class="bi bi-plus-circle-fill text-primary" style="font-size: 3rem;"></i>
-                                <h4 class="card-title mt-3">Crear Sala</h4>
-                                <p class="small text-muted">Inicia una nueva aventura como Host.</p>
+            <div class="col-md-6 fade-in-up delay-2">
+                <a href="join.html" class="text-decoration-none">
+                    <div class="poke-card h-100 position-relative overflow-hidden">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-success opacity-10" style="filter: blur(50px);"></div>
+                        
+                        <div class="d-flex align-items-center gap-3 position-relative" style="z-index:1;">
+                            <div class="display-4 text-success"><i class="bi bi-controller"></i></div>
+                            <div class="text-start text-white">
+                                <h3 class="fw-bold m-0">Unirse</h3>
+                                <small class="text-white-50">Conéctate a una sala existente</small>
                             </div>
+                            <i class="bi bi-chevron-right ms-auto text-white-50"></i>
                         </div>
-                    </a>
-                </div>
+                    </div>
+                </a>
+            </div>
 
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-                    <a href="join.html" class="text-decoration-none">
-                        <div class="card h-100 text-center p-4">
-                            <div class="card-body">
-                                <i class="bi bi-box-arrow-in-right text-success" style="font-size: 3rem;"></i>
-                                <h4 class="card-title mt-3">Unirse</h4>
-                                <p class="small text-muted">Entra a una partida existente con código.</p>
+            <div class="col-md-6 fade-in-up delay-3">
+                <a href="groups.html" class="text-decoration-none">
+                    <div class="poke-card h-100 position-relative overflow-hidden">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-warning opacity-10" style="filter: blur(50px);"></div>
+                        
+                        <div class="d-flex align-items-center gap-3 position-relative" style="z-index:1;">
+                            <div class="display-4 text-warning"><i class="bi bi-folder2-open"></i></div>
+                            <div class="text-start text-white">
+                                <h3 class="fw-bold m-0">Mis Grupos</h3>
+                                <small class="text-white-50">Historial de partidas guardadas</small>
                             </div>
+                            <i class="bi bi-chevron-right ms-auto text-white-50"></i>
                         </div>
-                    </a>
-                </div>
+                    </div>
+                </a>
+            </div>
 
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
-                    <a href="groups.html" class="text-decoration-none">
-                        <div class="card h-100 text-center p-4">
-                            <div class="card-body">
-                                <i class="bi bi-grid-fill text-warning" style="font-size: 3rem;"></i>
-                                <h4 class="card-title mt-3">Mis Grupos</h4>
-                                <p class="small text-muted">Historial de tus partidas guardadas.</p>
-                            </div>
+            <div class="col-md-6 fade-in-up delay-4">
+                <div class="poke-card h-100 position-relative overflow-hidden" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#infoModal">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 bg-light opacity-10" style="filter: blur(50px);"></div>
+                    
+                    <div class="d-flex align-items-center gap-3 position-relative" style="z-index:1;">
+                        <div class="display-4 text-light"><i class="bi bi-info-circle"></i></div>
+                        <div class="text-start text-white">
+                            <h3 class="fw-bold m-0">Información</h3>
+                            <small class="text-white-50">Cómo jugar y créditos</small>
                         </div>
-                    </a>
+                        <i class="bi bi-chevron-right ms-auto text-white-50"></i>
+                    </div>
                 </div>
+            </div>
 
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
-                    <a href="info.html" class="text-decoration-none">
-                        <div class="card h-100 text-center p-4">
-                            <div class="card-body">
-                                <i class="bi bi-info-circle-fill text-info" style="font-size: 3rem;"></i>
-                                <h4 class="card-title mt-3">Info</h4>
-                                <p class="small text-muted">Reglas y guía de la aplicación.</p>
-                            </div>
-                        </div>
-                    </a>
+        </div>
+        
+        <div class="text-center mt-5 fade-in-up delay-3">
+             <div id="typing" class="text-white-50 fst-italic font-monospace"></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white" style="background: rgba(30, 30, 40, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-book-half text-warning"></i> Sobre PokéLocke</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <div class="modal-body p-4">
+                    <h6 class="text-warning fw-bold">¿Qué es esto?</h6>
+                    <p class="small text-white-50">Una herramienta web para gestionar partidas "SoulLink" o "Nuzlocke" cooperativas o competitivas con amigos. No es un juego oficial, sino un gestor de datos.</p>
+                    
+                    <h6 class="text-warning fw-bold mt-3">Características</h6>
+                    <ul class="small text-white-50 ps-3">
+                        <li>Sincronización en tiempo real.</li>
+                        <li>Gestión de equipos, caja y cementerio.</li>
+                        <li>Registro de combates con historial visual.</li>
+                        <li>Exportación a Pokémon Showdown.</li>
+                        <li>Traductor automático de ataques.</li>
+                    </ul>
 
+                    <div class="mt-4 pt-3 border-top border-white-10 text-center small text-muted">
+                        Desarrollado con ❤️ para fans de Pokémon.
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
     </section>
 
     <!-- ============================================= -->

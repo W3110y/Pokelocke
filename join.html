@@ -32,35 +32,47 @@
 </head>
 
 <body>
-    <!-- ============================================= -->
-    <!-- Header                                       -->
-    <!-- ============================================= -->
-    <header class="minimal-header">
-        <a href="index.html" class="nav-btn" title="Volver al Menú">
-            <i class="bi bi-arrow-left"></i>
-        </a>
+    <header class="minimal-header justify-content-end"> 
         <button class="nav-btn" id="theme-toggle" title="Cambiar Tema">
-            <i class="bi bi-sun-fill"></i> 
+            <i class="bi bi-sun-fill"></i>
         </button>
     </header>
 
-    <!-- ============================================= -->
-    <!-- JOIN PARTY SECTION                            -->
-    <!-- ============================================= -->
-    <form id="form-join-party" class="py-5 fade-up">
-        <div class="container" data-aos="fade-up">
-            <h2 class="display-5 fw-bold mb-4 text-center">Join a Party</h2>
-                <div class="mb-3">
-                    <label for="playerName" class="form-label">Your Name</label>
-                    <input type="text" class="form-control" id="playerName" placeholder="Enter Your Name" required>
+    <section class = "d-flex align-items-center justify-content-center">
+        <div class="container" style="max-width: 500px;">
+            <a href="index.html" class="btn btn-link text-white-50 mb-3 fade-in-up">
+                <i class="bi bi-arrow-left"></i> Volver al Hub
+            </a>
+
+            <div class="poke-card fade-in-up delay-1">
+                <div class="text-center mb-4">
+                    <i class="bi bi-link-45deg text-success display-4"></i>
+                    <h2 class="fw-bold text-white mt-2">Conexión Link</h2>
+                    <p class="text-white-50 small">Ingresa las credenciales para sincronizar</p>
                 </div>
-                <div class="mb-3">
-                    <label for="partyName" class="form-label">Party Code (Room Name)</label>
-                    <input type="text" class="form-control" id="partyName" placeholder="Enter Party Name" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Join Party</button>
+
+                <form id="form-join-party">
+                    
+                    <div class="poke-input-group">
+                        <input type="text" id="playerName" class="poke-input" placeholder=" " required autocomplete="off">
+                        <label class="poke-label">Tu Nombre de Entrenador</label>
+                    </div>
+
+                    <div class="poke-input-group">
+                        <input type="text" id="partyName" class="poke-input" placeholder=" " required autocomplete="off">
+                        <label class="poke-label">Nombre de la Sala</label>
+                    </div>
+
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn-start shadow">
+                            <i class="bi bi-lightning-fill"></i> Conectar
+                        </button>
+                    </div>
+
+                </form>
+            </div>
         </div>
-    </form>
+    </section>
 
     <!-- ============================================= -->
     <!-- FOOTER                                        -->
