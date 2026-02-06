@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     localStorage.setItem('sala_info', JSON.stringify(data.sala)); 
                     guardarPartidaEnHistorial(data.entrenador, data.sala);
-                    window.location.href = 'stats.html';
+                    window.location.href = 'sala.html';
                 } else {
                     alert("❌ Error: " + (data.mensaje || "Error desconocido"));
                     btn.disabled = false;
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
                         guardarPartidaEnHistorial(data.entrenador, data.salaInfo);
                     }
-                    window.location.href = 'stats.html';
+                    window.location.href = 'sala.html';
                 } else {
                     alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
                     btn.disabled = false;
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ========================================================= */
-/* 4. DASHBOARD PRINCIPAL (stats.html)                       */
+/* 4. DASHBOARD PRINCIPAL (sala.html)                       */
 /* ========================================================= */
 async function cargarDashboard() {
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
@@ -306,8 +306,8 @@ function renderizarInfoSala(sala) {
     }
 }
 
-// Ejecutar carga si estamos en stats.html
-if (window.location.pathname.includes('stats.html')) {
+// Ejecutar carga si estamos en sala.html
+if (window.location.pathname.includes('sala.html')) {
     document.addEventListener('DOMContentLoaded', cargarDashboard);
 }
 
@@ -559,7 +559,7 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
 };
 
 /* ========================================================= */
-/* 6. COMBATES Y FEED (combates.html / stats.html)           */
+/* 6. COMBATES Y FEED (combates.html / sala.html)           */
 /* ========================================================= */
 async function cargarHistorialCompleto() {
     const container = document.getElementById('timeline-content');
@@ -748,7 +748,7 @@ window.reanudarPartida = function(index) {
     if (s) {
         localStorage.setItem('usuario_pokelocke', JSON.stringify({ _id: s.miId, nombre: s.miNombre, sala: s.sala }));
         localStorage.setItem('sala_info', JSON.stringify({ nombre: s.sala, host: s.host, maxJugadores: s.maxJugadores, reglas: s.reglas, descripcion: s.descripcion }));
-        window.location.href = 'stats.html';
+        window.location.href = 'sala.html';
     }
 };
 
