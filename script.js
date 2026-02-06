@@ -165,37 +165,47 @@ async function cargarDashboard() {
             const infoSala = data.sala;
             const listaJugadores = data.jugadores;
             
-            // A. Modales Info
-            const rulesContent = document.getElementById('modal-rules-content');
-            if (rulesContent) rulesContent.innerHTML = `<h5>📜 Reglas</h5><p>${infoSala.reglas || "Sin reglas"}</p>`;
-            const descContent = document.getElementById('modal-desc-content');
-            if (descContent) descContent.innerHTML = `<h5>ℹ️ Descripción</h5><p>${infoSala.descripcion || "Sin descripción"}</p>`;
+            // Actualizar cabecera principal
+            renderizarInfoSala(infoSala);
 
-            // B. Lista Miembros
+            // A. Modales Info y Reglas
+            const rulesContent = document.getElementById('modal-rules-content');
+            if (rulesContent) rulesContent.innerHTML = `<p class="lh-lg">${infoSala.reglas || "No hay reglas definidas para esta sala."}</p>`;
+            
+            const descContent = document.getElementById('modal-desc-content');
+            if (descContent) descContent.innerHTML = `<p class="lh-lg">${infoSala.descripcion || "Sin descripción."}</p>`;
+
+            // B. Lista Miembros (Sidebar Izquierdo)
             const membersList = document.getElementById('members-list');
             if (membersList) {
                 membersList.innerHTML = listaJugadores.map(jugador => {
                     const isHost = jugador.nombre === infoSala.host;
+                    const isMe = jugador.nombre === usuario.nombre;
+                    // Estilo: Usamos un fondo muy sutil en lugar de glass completo para no saturar
                     return `
-                    <div class="d-flex align-items-center gap-2 p-2 mb-2 glass-panel">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width:35px; height:35px;">
+                    <div class="d-flex align-items-center gap-2 p-2 mb-2 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width:32px; height:32px; font-size: 0.8rem;">
                             ${jugador.nombre.charAt(0).toUpperCase()}
                         </div>
                         <div class="flex-grow-1 text-truncate">
-                            <span class="d-block lh-1 small fw-bold">${jugador.nombre}</span>
-                            ${isHost ? '<span class="badge bg-warning text-dark" style="font-size:0.5em">HOST</span>' : '<span class="badge bg-secondary" style="font-size:0.5em">PLAYER</span>'}
+                            <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''}">${jugador.nombre} ${isMe ? '(Tú)' : ''}</span>
+                            <div class="mt-1">
+                                ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : '<span class="badge bg-secondary opacity-50" style="font-size:0.6em; padding: 2px 6px;">ENTRENADOR</span>'}
+                            </div>
                         </div>
                     </div>`;
                 }).join('');
             }
 
-            // C. Panel Central (Barra Pixel Art)
+            // C. Panel Central (Barra Pixel Art - ESTO ES EL BOTÓN)
             const miUsuario = listaJugadores.find(u => u._id === usuario._id);
             const dashboardPanel = document.getElementById('my-dashboard-panel');
 
             if (miUsuario && dashboardPanel) {
                 const equipo = miUsuario.pokemons.filter(p => p.estado === 'equipo');
                 let slotsHTML = '';
+                
+                // Generar los 6 slots
                 for (let i = 0; i < 6; i++) {
                     const poke = equipo[i];
                     if (poke) {
@@ -208,41 +218,61 @@ async function cargarDashboard() {
                     }
                 }
 
+                // Inyectamos el HTML. Nota que usamos la clase 'party-bar-btn' en el <a>
                 dashboardPanel.innerHTML = `
-                    <h5 class="section-title text-center mb-3">Mi Equipo Activo</h5>
-                    <a href="equipo.html" class="party-bar-btn" title="Click para abrir PC y Gestionar">
+                    <div class="d-flex justify-content-between align-items-end mb-2 px-1">
+                        <h5 class="section-title m-0 text-white">Mi Equipo Activo</h5>
+                        <small class="text-warning" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Editar</small>
+                    </div>
+                    
+                    <a href="equipo.html" class="party-bar-btn" title="Click para gestionar equipo">
                         ${slotsHTML}
                     </a>
-                    <span class="manage-hint mt-2">Click en la barra para abrir PC y organizar</span>
+                    
+                    <div class="text-center mt-2">
+                        <span class="manage-hint text-white-50" style="font-size: 0.7rem;">Haz clic en la barra para abrir el PC</span>
+                    </div>
                 `;
             }
 
-            // D. Leaderboard y Controles
+            // D. Leaderboard (Tabla de Clasificación)
             const leaderboardContainer = document.getElementById('leaderboard-container');
             if (leaderboardContainer) {
+                // Ordenar: Primero por Vidas (Desc), luego por Medallas (Desc)
                 const ranking = [...listaJugadores].sort((a, b) => {
                     if (b.vidas !== a.vidas) return b.vidas - a.vidas;
                     return (b.medallas || 0) - (a.medallas || 0);
                 });
+                
                 const soyHost = infoSala.host === usuario.nombre;
 
-                // Configurar formulario de combate universal
+                // Llenar selects del modal de combate
                 const selects = ['select-p1', 'select-p2', 'select-winner'];
                 selects.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
                 });
+                
+                // Pre-seleccionar mi nombre en Jugador 1
                 const selectP1 = document.getElementById('select-p1');
                 if (selectP1) selectP1.value = usuario.nombre;
                 
-                // Cargar Feed
-                cargarFeedCombates(salaNombre);
+                // Cargar Feed (Asumimos que esta función existe o la implementamos luego)
+                if(typeof cargarFeedCombates === 'function') {
+                    cargarFeedCombates(salaNombre); 
+                } else {
+                    document.getElementById('recent-battles-list').innerHTML = '<small class="text-muted">Feed no disponible</small>';
+                }
 
                 leaderboardContainer.innerHTML = `
-                <table class="table table-borderless bg-transparent m-0 align-middle">
+                <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
                     <thead>
-                        <tr class="text-muted small border-bottom border-white-10 text-uppercase">
-                            <th>Rk</th><th>Entrenador</th><th class="text-center">Medallas</th><th class="text-center">Vidas</th><th class="text-center">Wins</th>
+                        <tr class="text-white-50 small border-bottom border-white-10 text-uppercase" style="font-size: 0.7rem;">
+                            <th class="ps-3">#</th>
+                            <th>Entrenador</th>
+                            <th class="text-center">Medallas</th>
+                            <th class="text-center">Vidas</th>
+                            <th class="text-center">Wins</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,64 +280,69 @@ async function cargarDashboard() {
                             let lifeColor = j.vidas === 1 ? 'text-danger' : 'text-success';
                             if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
                             
-                            const controlesVidas = soyHost ? `<div class="btn-group btn-group-sm ms-2"><button class="btn btn-outline-danger p-0 px-1" onclick="cambiarVidas('${j._id}', -1)">-</button><button class="btn btn-outline-success p-0 px-1" onclick="cambiarVidas('${j._id}', 1)">+</button></div>` : '';
-                            const controlesWins = soyHost ? `<button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1" onclick="sumarVictoria('${j._id}')"><i class="bi bi-caret-up-fill"></i></button>` : '';
+                            // Botones de Host (Solo visibles si eres Host)
+                            const controlesVidas = soyHost ? `
+                                <div class="d-inline-flex ms-1" style="transform: scale(0.8);">
+                                    <button class="btn btn-outline-danger p-0 px-1 lh-1" onclick="cambiarVidas('${j._id}', -1)">-</button>
+                                    <button class="btn btn-outline-success p-0 px-1 lh-1" onclick="cambiarVidas('${j._id}', 1)">+</button>
+                                </div>` : '';
+                            
+                            const controlesWins = soyHost ? `
+                                <button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1 border-0" onclick="sumarVictoria('${j._id}')">
+                                    <i class="bi bi-caret-up-fill"></i>
+                                </button>` : '';
 
                             return `
-                            <tr class="${j.vidas === 0 ? 'opacity-50' : ''}">
-                                <td class="fw-bold text-muted small">#${i + 1}</td>
+                            <tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;">
+                                <td class="fw-bold text-white-50 small ps-3">${i + 1}</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-gradient bg-primary d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div>
-                                        <span class="${j.vidas === 0 ? 'text-decoration-line-through' : ''}">${j.nombre}</span>
+                                        <div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div>
+                                        <span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">${j.nombre}</span>
                                     </div>
                                 </td>
-                                <td class="text-center text-warning fw-bold">${j.medallas || 0}</td>
-                                <td class="text-center"><span class="${lifeColor} fw-bold">${j.vidas}</span>${controlesVidas}</td>
-                                <td class="text-center text-info">${j.victorias || 0}${controlesWins}</td>
+                                <td class="text-center text-warning fw-bold small">${j.medallas || 0}</td>
+                                <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span>${controlesVidas}</td>
+                                <td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td>
                             </tr>`;
                         }).join('')}
                     </tbody>
                 </table>`;
             }
 
-            // E. Botón Borrar Sala (Host Only)
+            // E. Acciones Host (Botón Borrar)
             const contenedorAcciones = document.getElementById('host-actions-container');
-            if (contenedorAcciones) contenedorAcciones.innerHTML = ''; 
-            if (contenedorAcciones && infoSala.host === usuario.nombre) {
-                const btnBorrar = document.createElement('button');
-                btnBorrar.className = 'btn btn-danger btn-sm d-flex align-items-center gap-2 w-100 justify-content-center mt-2';
-                btnBorrar.innerHTML = '<i class="bi bi-trash-fill"></i> Borrar Sala';
-                btnBorrar.onclick = borrarSala;
-                contenedorAcciones.appendChild(btnBorrar);
+            if (contenedorAcciones) {
+                contenedorAcciones.innerHTML = ''; 
+                if (infoSala.host === usuario.nombre) {
+                    const btnBorrar = document.createElement('button');
+                    btnBorrar.className = 'btn btn-outline-danger btn-sm w-100 mt-2 opacity-75 hover-opacity-100';
+                    btnBorrar.innerHTML = '<i class="bi bi-trash-fill me-2"></i> Eliminar Sala Permanentemente';
+                    btnBorrar.onclick = borrarSala;
+                    contenedorAcciones.appendChild(btnBorrar);
+                }
             }
 
         } else if (response.status === 404) {
             alert("⛔ LA SALA YA NO EXISTE");
-            let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-            historial = historial.filter(s => s.sala !== salaNombre);
-            localStorage.setItem('pokelocke_history', JSON.stringify(historial));
-            localStorage.removeItem('usuario_pokelocke');
             window.location.href = 'groups.html';
         }
     } catch (error) { 
         console.error("Error dashboard:", error); 
-        const panel = document.getElementById('my-dashboard-panel');
-        if(panel) panel.innerHTML = `<div class="text-center text-danger p-4"><p>Error de conexión</p></div>`;
     }
 }
 
+// Función auxiliar para actualizar solo textos estáticos
 function renderizarInfoSala(sala) {
-    if(document.getElementById('view-party-name')) {
-        document.getElementById('view-party-name').innerText = sala.nombre;
-        document.getElementById('view-host-name').innerText = sala.host;
-        document.getElementById('view-rules').innerText = sala.reglas || "Sin reglas.";
-        document.getElementById('view-desc').innerText = sala.descripcion || "";
-    }
+    const titleEl = document.getElementById('view-party-name');
+    if(titleEl) titleEl.innerText = sala.nombre;
+    
+    const hostEl = document.getElementById('view-host-name');
+    if(hostEl) hostEl.innerText = sala.host;
 }
 
-// Ejecutar carga si estamos en sala_grupo.html
-if (window.location.pathname.includes('sala_grupo.html')) {
+// DETECTOR DE PÁGINA: Ejecutar solo si estamos en sala.html
+if (window.location.pathname.includes('sala.html')) {
     document.addEventListener('DOMContentLoaded', cargarDashboard);
 }
 
