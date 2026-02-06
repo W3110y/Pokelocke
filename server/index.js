@@ -3,6 +3,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
+const rutasJuego = require('./routes/juego');
+const rutasDatos = require('./routes/datos'); // <--- NUEVA LÍNEA
+
 const app = express();
 
 // Middlewares
@@ -21,7 +24,8 @@ mongoose.connect(process.env.MONGO_URI)
     .catch((err) => console.error('❌ Error de Mongo:', err));
 
 // Rutas
-app.use('/api/juego', require('./routes/juego'));
+app.use('/api/juego', rutasJuego);
+app.use('/api/datos', rutasDatos); // <--- NUEVA LÍNEA
 
 // Arranque
 const PORT = process.env.PORT || 3000;

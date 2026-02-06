@@ -830,7 +830,9 @@ async function exportarShowdown() {
                     if (move && move.trim() !== "") {
                         const moveEsp = move.trim();
                         // Buscamos traducción, si no existe, dejamos el original
-                        const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
+                        // Antes: const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
+                        // Ahora:
+                        const moveEng = DB_MOVIMIENTOS_CACHE[moveEsp] || moveEsp;
                         txt += `- ${moveEng}\n`;
                     }
                 });
@@ -858,32 +860,51 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ========================================================= */
-/* BASE DE DATOS: DICCIONARIOS ESPAÑOL -> INGLÉS             */
-/* Fuente: Recopilación basada en datos de PokeAPI/Showdown  */
+/* CACHE LOCAL DE MOVIMIENTOS (Desde Base de Datos)          */
 /* ========================================================= */
+let DB_MOVIMIENTOS_CACHE = {}; // Se llenará al cargar la página
 
-const DB_MOVIMIENTOS = {
-    // Fuego
-    "Lanzallamas": "Flamethrower", "Llamarada": "Fire Blast", "Ascuas": "Ember", "Envite Igneo": "Flare Blitz", "Sofoco": "Overheat", "Fuego Fatuo": "Will-O-Wisp", "Puño Fuego": "Fire Punch", "Calcinación": "Incinerate", "Giro Fuego": "Fire Spin", "Nitrocarga": "Flame Charge",
-    // Agua
-    "Surf": "Surf", "Hidrobomba": "Hydro Pump", "Escaldar": "Scald", "Pistola Agua": "Water Gun", "Cascada": "Waterfall", "Acua Jet": "Aqua Jet", "Rayo Burbuja": "Bubble Beam", "Salpicar": "Water Spout", "Hidropulso": "Water Pulse",
-    // Planta
-    "Rayo Solar": "Solar Beam", "Gigadrenado": "Giga Drain", "Latigo Cepa": "Vine Whip", "Hoja Afilada": "Razor Leaf", "Lluevehojas": "Leaf Storm", "Drenadoras": "Leech Seed", "Espora": "Spore", "Bomba Germen": "Seed Bomb", "Mazazo": "Wood Hammer",
-    // Electrico
-    "Rayo": "Thunderbolt", "Trueno": "Thunder", "Voltiocambio": "Volt Switch", "Onda Trueno": "Thunder Wave", "Chispa": "Spark", "Puño Trueno": "Thunder Punch", "Colmillo Rayo": "Thunder Fang",
-    // Hielo
-    "Rayo Hielo": "Ice Beam", "Ventisca": "Blizzard", "Canto Helado": "Ice Shard", "Puño Hielo": "Ice Punch", "Viento Hielo": "Icy Wind", "Carambano": "Icicle Spear",
-    // Lucha
-    "A Bocajarro": "Close Combat", "Onda Certera": "Focus Blast", "Demolicion": "Brick Break", "Ultrapuño": "Mach Punch", "Patada Salto Alta": "High Jump Kick", "Fuerza Bruta": "Superpower", "Corpulencia": "Bulk Up",
-    // Tierra / Roca
-    "Terremoto": "Earthquake", "Tierra Viva": "Earth Power", "Trampa Rocas": "Stealth Rock", "Avalancha": "Rock Slide", "Roca Afilada": "Stone Edge", "Excavar": "Dig", "Bofeton Lodo": "Mud-Slap", "Disparo Lodo": "Mud Shot",
-    // Volador
-    "Pájaro Osado": "Brave Bird", "Acróbata": "Acrobatics", "Vuelo": "Fly", "Tajo Aéreo": "Air Slash", "Respiro": "Roost", "Despejar": "Defog",
-    // Psiquico / Fantasma / Siniestro
-    "Psiquico": "Psychic", "Psicocarga": "Psyshock", "Bola Sombra": "Shadow Ball", "Garra Umbria": "Shadow Claw", "Triturar": "Crunch", "Pulso Umbrio": "Dark Pulse", "Juego Sucio": "Foul Play", "Maquinacion": "Nasty Plot", "Paz Mental": "Calm Mind",
-    // Normal / Otros
-    "Placaje": "Tackle", "Arañazo": "Scratch", "Golpe Cuerpo": "Body Slam", "Doble Filo": "Double-Edge", "Velocidad Extrema": "Extreme Speed", "Protección": "Protect", "Recuperación": "Recover", "Danza Espada": "Swords Dance", "Sustituto": "Substitute", "Ida y Vuelta": "U-turn", "Desarme": "Knock Off"
-};
+async function inicializarDiccionarioMovimientos() {
+    // Si ya tenemos el datalist, no recargamos
+    if(document.getElementById('datalist-moves')) return;
+
+    try {
+        console.log("📥 Descargando diccionario de movimientos...");
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/datos/movimientos');
+        
+        if (!res.ok) throw new Error("Error fetching moves");
+        
+        const movimientos = await res.json();
+        
+        // 1. Llenar el Caché (Objeto rápido para traducción)
+        // Convertimos el array [{nombreEsp, nombreIng}] en objeto {"Lanzallamas": "Flamethrower"}
+        movimientos.forEach(m => {
+            DB_MOVIMIENTOS_CACHE[m.nombreEsp] = m.nombreIng;
+        });
+
+        // 2. Crear el <datalist> para Autocompletado
+        const listMoves = document.createElement('datalist');
+        listMoves.id = 'datalist-moves';
+        
+        // Ordenamos alfabéticamente para que salga bonito
+        const nombresOrdenados = Object.keys(DB_MOVIMIENTOS_CACHE).sort();
+        
+        nombresOrdenados.forEach(nombreEsp => {
+            const opt = document.createElement('option');
+            opt.value = nombreEsp;
+            listMoves.appendChild(opt);
+        });
+        
+        document.body.appendChild(listMoves);
+        console.log(`✅ Diccionario cargado: ${nombresOrdenados.length} movimientos.`);
+
+    } catch (error) {
+        console.error("Error cargando movimientos:", error);
+    }
+}
+
+// Ejecutar lo antes posible
+document.addEventListener('DOMContentLoaded', inicializarDiccionarioMovimientos);
 
 const DB_OBJETOS = {
     "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash"
