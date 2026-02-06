@@ -1,667 +1,44 @@
 /* ========================================================= */
-/* 1. FUENTES Y VARIABLES DINÁMICAS                          */
+/* 1. CORE: VARIABLES & BASE (Tipografía y Fondo)            */
 /* ========================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-    /* Variables comunes */
     --primary-color: #6366f1; /* Indigo */
     --accent-color: #ec4899;  /* Rosa */
-    --glass-blur: blur(12px);
+    --glass-blur: blur(16px);
+    --shadow-glow: rgba(99, 102, 241, 0.5);
 }
 
-/* --- MODO OSCURO (Por defecto o activado) --- */
+/* --- TEMA OSCURO (Default) --- */
 [data-bs-theme="dark"] {
-    --bg-deep: #0f172a;       /* Azul noche */
-    --text-main: #f8fafc;     /* Blanco */
-    --text-muted: #94a3b8;    /* Gris claro */
-    --glass-bg: rgba(15, 23, 42, 0.7); 
+    --bg-deep: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
     --card-hover-bg: rgba(30, 41, 59, 0.8);
 }
 
-/* --- MODO CLARO (Activado por botón) --- */
+/* --- TEMA CLARO --- */
 [data-bs-theme="light"] {
-    --bg-deep: #f0f4f8;       /* Gris azulado muy claro */
-    --text-main: #1e293b;     /* Azul oscuro casi negro */
-    --text-muted: #64748b;    /* Gris medio */
-    --glass-bg: rgba(255, 255, 255, 0.6); 
+    --bg-deep: #f0f4f8;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --glass-bg: rgba(255, 255, 255, 0.6);
     --glass-border: 1px solid rgba(0, 0, 0, 0.05);
     --card-hover-bg: rgba(255, 255, 255, 0.9);
 }
 
 body {
     font-family: 'Outfit', sans-serif;
-    background-color: var(--bg-deep);
     color: var(--text-main);
-    transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100vh;
-    /* Patrón de fondo sutil */
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
-    background-attachment: fixed;
-}
-
-/* ========================================================= */
-/* 2. NAVBAR & TARJETAS (Glassmorphism)                      */
-/* ========================================================= */
-.navbar {
-    background: var(--glass-bg) !important;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: var(--glass-border);
-}
-
-.card, .group-card {
-    background: var(--glass-bg) !important;
-    border: var(--glass-border) !important;
-    color: var(--text-main);
-    border-radius: 16px !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.card:hover, .group-card:hover {
-    transform: translateY(-5px);
-    background: var(--card-hover-bg) !important;
-    border-color: var(--primary-color) !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-}
-
-/* ========================================================= */
-/* 3. PARCHE DE LEGIBILIDAD (Soluciona textos oscuros)       */
-/* ========================================================= */
-/* Esto fuerza a que los títulos usen nuestro color, ignorando bootstrap */
-h1, h2, h3, h4, h5, .card-title {
-    color: var(--text-main) !important;
-}
-
-/* En modo oscuro, si algo tiene la clase 'text-dark', lo forzamos a blanco */
-[data-bs-theme="dark"] .text-dark {
-    color: var(--text-main) !important;
-}
-
-.text-muted {
-    color: var(--text-muted) !important;
-}
-
-/* ========================================================= */
-/* 4. BOTONES                                                */
-/* ========================================================= */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
-    border: none;
-    color: white;
-}
-
-/* Switch Theme */
-.theme-switch {
-    width: 50px; height: 26px;
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 50px; position: relative; border: none;
-}
-.switch-handle {
-    width: 20px; height: 20px;
-    background: white; border-radius: 50%;
-    position: absolute; top: 3px; left: 3px;
-    display: flex; align-items: center; justify-content: center;
-    transition: 0.3s;
-}
-[data-bs-theme="dark"] .theme-switch { background: rgba(99, 102, 241, 0.4); }
-[data-bs-theme="dark"] .switch-handle { transform: translateX(24px); }
-
-/* ========================================================= */
-/* MINIMALIST HEADER (Back & Theme)                          */
-/* ========================================================= */
-
-.minimal-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 20px 30px;
-    display: flex;
-    justify-content: space-between; /* Uno a la izq, otro a la der */
-    align-items: center;
-    z-index: 1050;
-    background: transparent; /* Sin fondo, totalmente limpio */
-    pointer-events: none; /* Permite clicks a través del área vacía */
-}
-/* --- AÑADE ESTA NUEVA REGLA --- */
-/* Esto reactiva el click para el botón central de capturar */
-.minimal-header .btn {
-    pointer-events: auto; 
-    z-index: 1051; /* Aseguramos que flote por encima de todo */
-}
-
-/* Los botones interactivos */
-.nav-btn {
-    pointer-events: auto; /* Reactivamos el click */
-    width: 45px;
-    height: 45px;
-    border-radius: 50%; /* Círculos perfectos */
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    cursor: pointer;
-    padding: 0; /* Reset para botones */
-}
-
-.nav-btn:hover {
-    transform: scale(1.15);
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 0 15px var(--shadow-glow);
-    border-color: transparent;
-}
-
-/* Ajuste específico para el icono del tema dentro del botón */
-.nav-btn i {
-    line-height: 0;
-}
-
-/* ========================================================= */
-/* DASHBOARD LAYOUT */
-/* CORRECCIÓN: DASHBOARD FLUIDO (Sin scrollbars internos) */
-
-.dashboard-container {
-    display: grid;
-    /* Mantenemos las columnas, pero quitamos la altura fija */
-    grid-template-columns: 250px 1fr 250px; 
-    gap: 20px;
-    padding: 90px 20px 40px 20px; /* Más espacio abajo */
-    max-width: 1600px;
-    margin: 0 auto;
-    
-    /* CAMBIOS CLAVE AQUÍ: */
-    min-height: 100vh; /* Ocupa al menos toda la pantalla */
-    height: auto;      /* Crece según el contenido */
-    overflow: visible; /* Deja que el contenido se vea */
-}
-
-/* Quitamos el comportamiento de caja cerrada de las columnas */
-.sidebar-left, .sidebar-right, .main-stage {
-    overflow: visible; /* Adiós scrollbars internos */
-    height: auto;
-}
-
-/* RESPONSIVE */
-@media (max-width: 992px) {
-    .dashboard-container {
-        grid-template-columns: 1fr; /* Una sola columna en móvil */
-        padding: 80px 15px;
-    }
-}
-
-/* ESTILOS DE COMPONENTES */
-.glass-panel, .btn-glass {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    border-radius: 12px;
-}
-
-.section-title {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    font-weight: 700;
-}
-
-/* MODALES EN MODO CRISTAL */
-.glass-modal {
-    background: rgba(15, 23, 42, 0.95) !important;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text-main);
-}
-
-/* BATTLE STYLES */
-.battle-card {
-    border-left: 4px solid var(--primary-color); /* Borde de color a la izquierda */
-    transition: transform 0.2s;
-}
-.battle-card:hover {
-    transform: translateX(5px); /* Efecto de movimiento al pasar ratón */
-    background: var(--card-hover-bg) !important;
-}
-
-/* ========================================================= */
-/* TEAM BAR & PIXEL ICONS                                    */
-/* ========================================================= */
-
-/* El botón contenedor que parece una barra de equipo */
-.party-bar-btn {
-    display: flex;
-    justify-content: space-between; /* Distribuye los 6 huecos */
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50px; /* Forma de píldora alargada */
-    padding: 10px 20px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    text-decoration: none; /* Quitar subrayado del link */
-    width: 100%;
-    max-width: 600px; /* Que no se estire infinito */
-    margin: 0 auto;   /* Centrado */
-}
-
-.party-bar-btn:hover {
-    background: rgba(99, 102, 241, 0.2); /* Brillo al pasar el mouse */
-    border-color: var(--primary-color);
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* El hueco individual (Slot) */
-.party-slot {
-    width: 60px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-/* La Imagen Pixel Art (Icono) */
-.party-icon {
-    width: 100%; 
-    height: 100%;
-    
-    /* CRÍTICO: 'contain' hace que la imagen quepa entera sin deformarse */
-    object-fit: contain; 
-    
-    /* CRÍTICO: 'center' asegura que si la imagen es rectangular, quede en medio */
-    object-position: center; 
-
-    image-rendering: pixelated; 
-    filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
-    will-change: transform; 
-}
-
-/* La Sombra para huecos vacíos */
-.empty-shadow {
-    width: 40px;
-    height: 15px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 50%;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* Etiqueta flotante "GESTIONAR" */
-.manage-hint {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 5px;
-    display: block;
-    text-align: center;
-}
-
-/* ========================================================= */
-/* BATTLE TIMELINE (combates.html)                           */
-/* ========================================================= */
-
-.timeline-line {
-    position: absolute;
-    left: 20px; /* Alineado a la izquierda para dejar espacio a tarjetas */
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    z-index: 0;
-}
-
-.battle-item {
-    position: relative;
-    margin-bottom: 2rem;
-    padding-left: 50px; /* Espacio para el punto de la línea de tiempo */
-    z-index: 1;
-}
-
-/* El punto (Dot) en la línea de tiempo */
-.battle-dot {
-    position: absolute;
-    left: 11px; /* Centrado sobre la línea de 20px (20/2 - width/2) + ajuste */
-    top: 15px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--bg-deep);
-    border: 2px solid var(--primary-color);
-    box-shadow: 0 0 10px var(--shadow-glow);
-    z-index: 2;
-}
-
-/* Tarjeta del combate */
-.battle-card-full {
-    background: var(--glass-bg);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 15px;
-    transition: transform 0.2s;
-}
-
-.battle-card-full:hover {
-    transform: translateX(5px);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--primary-color);
-}
-
-/* Truco: Ocultar la línea sobrante después del último elemento */
-#timeline-content .battle-item:last-child {
-    padding-bottom: 0;
-    margin-bottom: 0;
-}
-
-/* GESTIÓN DE EQUIPO CARDS */
-.manage-card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 15px;
-    height: 100%;
-    transition: transform 0.2s;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.manage-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--primary-color);
-}
-
-.manage-card img {
-    /* Forzamos un contenedor un poco más grande para dar aire */
-    width: 80px !important; 
-    height: 60px !important;
-    
-    object-fit: contain;
-    object-position: center bottom; /* Alineamos abajo para que parezca que están de pie */
-    
-    image-rendering: pixelated;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-    margin-bottom: 5px;
-}
-
-/* HUECO VACÍO EN EQUIPO */
-.slot-empty {
-    border: 2px dashed rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    height: 100%;
-    min-height: 160px; /* Altura mínima para que no colapse */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    background: rgba(0,0,0,0.1);
-}
-
-/* ========================================================= */
-/* ANIMACIÓN: POKÉMON JUMP (SINCRONIZADO)                    */
-/* ========================================================= */
-
-/* 1. Definimos el movimiento "bote" */
-@keyframes pokemon-bounce {
-    0%, 100% {
-        transform: translateY(0); /* Suelo */
-    }
-    50% {
-        transform: translateY(-6px); /* Aire */
-    }
-}
-
-/* 2. Activamos la animación al pasar el ratón por la barra */
-.party-bar-btn:hover .party-icon {
-    /* Infinite: Se repite mientras el ratón esté encima.
-       0.6s: Duración del salto.
-       IMPORTANTE: Al no haber 'animation-delay', todos responden 
-       inmediatamente al hover del contenedor padre.
-    */
-    animation: pokemon-bounce 0.6s infinite; 
-}
-
-/* 3. Aseguramos que la sombra NO salte */
-.empty-shadow {
-    transform: none !important; 
-}
-
-/* ========================================================= */
-/* LOADING STATES (Estados de Carga)                         */
-/* ========================================================= */
-
-.loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1rem;
-    color: var(--text-muted);
-    width: 100%;
-    height: 100%;
-    min-height: 150px; /* Altura mínima para reservar espacio */
-    animation: fade-in 0.3s ease;
-}
-
-.loading-state p {
-    margin-top: 10px;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    opacity: 0.7;
-    animation: pulse 1.5s infinite;
-}
-
-/* Animación suave de aparición */
-@keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Animación de pulso para el texto */
-@keyframes pulse {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.5; }
-}
-
-/* FORMULARIO DE EDICIÓN EN ACORDEÓN */
-.edit-collapse-panel {
-    background: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 0 0 12px 12px;
-    font-size: 0.8rem;
-}
-
-.mini-form-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 2px;
-    display: block;
-}
-
-.mini-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    width: 100%;
-    border-radius: 4px;
-}
-
-.mini-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Botón de toggle (flecha) */
-.btn-toggle-edit {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    padding: 5px 0;
-    transition: all 0.2s;
-}
-
-.btn-toggle-edit:hover {
-    background: rgba(255,255,255,0.05);
-    color: white;
-}
-
-/* ========================================================= */
-/* ESTILOS DE COMBATE (VS MODE)                              */
-/* ========================================================= */
-
-.combat-layout {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px 0;
-}
-
-/* Lado del Jugador */
-.combat-side {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Nombres centrados sobre el equipo */
-}
-
-/* Rejilla de mini-sprites del equipo */
-.combat-team-grid {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-    margin-top: 5px;
-    background: rgba(0,0,0,0.2);
-    padding: 4px;
-    border-radius: 20px;
-    min-height: 35px; /* Altura mínima para que no colapse si está vacío */
-}
-
-.combat-poke-icon {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-    image-rendering: pixelated;
-    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
-}
-
-/* El icono VS central */
-.vs-badge {
-    font-family: 'Impact', sans-serif;
-    font-size: 1.2rem;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 0 10px;
-}
-
-/* Variación MINIMIZADA (Para el sidebar) */
-.combat-layout.mini .combat-poke-icon {
-    width: 20px; /* Iconos más pequeños */
-    height: 20px;
-}
-.combat-layout.mini .combat-team-grid {
-    padding: 2px;
-    border-radius: 10px;
-}
-
-/* ========================================================= */
-/* COMBAT LAYOUT: VARIACIÓN VERTICAL (Para Sidebar)          */
-/* ========================================================= */
-
-.combat-layout.vertical {
-    display: flex;
-    flex-direction: column; /* Apilar elementos verticalmente */
-    align-items: center;
-    gap: 5px;
-    padding: 5px 0;
-}
-
-/* Ajustes para los lados en modo vertical */
-.combat-layout.vertical .combat-side {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centrar nombre y equipo */
-}
-
-/* El divisor VS central */
-.combat-layout.vertical .vs-badge-vertical {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin: 2px 0;
-    position: relative;
-    width: 100%;
-    text-align: center;
-}
-
-/* Líneas decorativas al lado del VS (Opcional, estética pura) */
-.combat-layout.vertical .vs-badge-vertical::before,
-.combat-layout.vertical .vs-badge-vertical::after {
-    content: "";
-    display: inline-block;
-    width: 30px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    vertical-align: middle;
-    margin: 0 5px;
-}
-
-/* Ajuste de la rejilla de iconos para que quepan todos */
-.combat-layout.vertical .combat-team-grid {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap; /* Si son muchos, que bajen de línea */
-    gap: 3px;
-    background: rgba(0,0,0,0.3); /* Fondo un poco más oscuro para resaltar */
-    padding: 4px 8px;
-    border-radius: 12px;
-    margin-top: 2px;
-}
-
-/* Tamaño de iconos en el sidebar */
-.combat-layout.vertical .combat-poke-icon {
-    width: 24px;
-    height: 24px;
-}
-
-/* ========================================================= */
-/* NUEVO DISEÑO: POKÉ-MODERN UI                              */
-/* ========================================================= */
-
-/* 1. Fondo Dinámico (Breathing Gradient) */
-body {
+    /* FONDO ANIMADO (Nuevo Diseño) */
     background: linear-gradient(-45deg, #1a1c2c, #4a1c40, #1c2c4a, #1a1c2c);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    min-height: 100vh;
+    background-attachment: fixed;
 }
 
 @keyframes gradientBG {
@@ -670,7 +47,42 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* 2. Tarjeta de Cristal (Glassmorphism) */
+/* Parches de Bootstrap para colores */
+h1, h2, h3, h4, h5, .card-title, [data-bs-theme="dark"] .text-dark {
+    color: var(--text-main) !important;
+}
+.text-muted { color: var(--text-muted) !important; }
+
+/* ========================================================= */
+/* 2. COMPONENTES UI: TARJETAS Y PANELES                     */
+/* ========================================================= */
+
+/* Paneles de Cristal Genéricos */
+.glass-panel, .btn-glass, .navbar {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border) !important;
+}
+
+.glass-panel { border-radius: 12px; }
+
+/* Tarjetas Bootstrap Estándar (Dashboard) */
+.card, .group-card {
+    background: var(--glass-bg) !important;
+    border: var(--glass-border) !important;
+    color: var(--text-main);
+    border-radius: 16px !important;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover, .group-card:hover {
+    transform: translateY(-5px);
+    background: var(--card-hover-bg) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* NUEVA Tarjeta "Poke-Card" (Hub Principal) */
 .poke-card {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(16px);
@@ -681,105 +93,225 @@ body {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
 .poke-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* 3. Inputs Minimalistas (Estilo Material/Pokédex) */
-.poke-input-group {
-    position: relative;
-    margin-bottom: 2rem;
+/* Modales */
+.glass-modal {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-main);
 }
 
+/* ========================================================= */
+/* 3. NAVEGACIÓN Y DASHBOARD                                 */
+/* ========================================================= */
+
+/* Header Minimalista Flotante */
+.minimal-header {
+    position: fixed; top: 0; left: 0; width: 100%;
+    padding: 20px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 1050; background: transparent;
+    pointer-events: none; /* Click-through */
+}
+.minimal-header .btn, .nav-btn { pointer-events: auto; z-index: 1051; }
+
+.nav-btn {
+    width: 45px; height: 45px; border-radius: 50%;
+    background: var(--glass-bg); backdrop-filter: var(--glass-blur);
+    border: var(--glass-border); color: var(--text-main);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; text-decoration: none;
+    transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.nav-btn:hover {
+    transform: scale(1.15); background: var(--primary-color);
+    color: white; box-shadow: 0 0 15px var(--shadow-glow);
+}
+
+/* Grid del Dashboard */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 250px 1fr 250px;
+    gap: 20px;
+    padding: 90px 20px 40px 20px;
+    max-width: 1600px; margin: 0 auto;
+    min-height: 100vh;
+}
+@media (max-width: 992px) {
+    .dashboard-container { grid-template-columns: 1fr; padding: 80px 15px; }
+}
+
+/* ========================================================= */
+/* 4. FORMULARIOS E INPUTS (Estilo Pokédex)                  */
+/* ========================================================= */
+
+/* Inputs Grandes (Login/Register) */
+.poke-input-group { position: relative; margin-bottom: 2rem; }
 .poke-input {
-    width: 100%;
-    padding: 10px 0;
-    font-size: 1.1rem;
-    color: #fff;
-    border: none;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-    outline: none;
-    background: transparent;
-    transition: border-color 0.3s;
+    width: 100%; padding: 10px 0; font-size: 1.1rem; color: #fff;
+    border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    outline: none; background: transparent; transition: border-color 0.3s;
 }
-
-.poke-input::placeholder { color: transparent; } /* Ocultamos placeholder nativo */
-
+.poke-input::placeholder { color: transparent; }
 .poke-label {
-    position: absolute;
-    top: 10px;
-    left: 0;
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.5);
-    pointer-events: none;
-    transition: 0.3s ease all;
+    position: absolute; top: 10px; left: 0; font-size: 1rem;
+    color: rgba(255, 255, 255, 0.5); pointer-events: none; transition: 0.3s ease all;
 }
-
-/* Efecto al escribir o tener texto */
-.poke-input:focus ~ .poke-label,
-.poke-input:not(:placeholder-shown) ~ .poke-label {
-    top: -20px;
-    font-size: 0.8rem;
-    color: var(--primary-color);
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.poke-input:focus ~ .poke-label, .poke-input:not(:placeholder-shown) ~ .poke-label {
+    top: -20px; font-size: 0.8rem; color: var(--primary-color);
+    font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
 }
+.poke-input:focus { border-bottom: 2px solid var(--primary-color); }
 
-.poke-input:focus {
-    border-bottom: 2px solid var(--primary-color);
+/* Inputs Pequeños (Editor de Equipo) */
+.mini-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white; font-size: 0.75rem; padding: 2px 6px;
+    width: 100%; border-radius: 4px;
 }
+.mini-input:focus { outline: none; border-color: var(--primary-color); background: rgba(255, 255, 255, 0.1); }
+.mini-form-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
 
-/* 4. Botones Temáticos */
+/* Botón Start (Amarillo) */
 .btn-start {
-    background: linear-gradient(45deg, #ffcb05, #c7a008); /* Amarillo Pokémon */
-    border: none;
-    color: #212529;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 15px 30px;
-    border-radius: 50px;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s;
-    width: 100%;
+    background: linear-gradient(45deg, #ffcb05, #c7a008);
+    border: none; color: #212529; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 2px;
+    padding: 15px 30px; border-radius: 50px;
+    transition: all 0.3s; width: 100%;
     box-shadow: 0 0 15px rgba(255, 203, 5, 0.4);
 }
+.btn-start:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(255, 203, 5, 0.6); color: #000; }
 
-.btn-start:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 25px rgba(255, 203, 5, 0.6);
-    color: #000;
+/* ========================================================= */
+/* 5. GESTIÓN DE EQUIPO Y BATALLAS                           */
+/* ========================================================= */
+
+/* Barra de Equipo (Header Dashboard) */
+.party-bar-btn {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px; padding: 10px 20px; transition: all 0.3s ease;
+    cursor: pointer; text-decoration: none; width: 100%; max-width: 600px; margin: 0 auto;
+}
+.party-bar-btn:hover {
+    background: rgba(99, 102, 241, 0.2); border-color: var(--primary-color);
+    transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.party-slot { width: 60px; height: 50px; display: flex; align-items: center; justify-content: center; }
+.party-icon {
+    width: 100%; height: 100%; object-fit: contain; object-position: center;
+    image-rendering: pixelated; filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
+    will-change: transform;
+}
+.empty-shadow { width: 40px; height: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; }
+
+/* Tarjetas de Gestión (PC/Equipo) */
+.manage-card {
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; padding: 15px; height: 100%;
+    transition: transform 0.2s; display: flex; flex-direction: column;
+    justify-content: space-between; align-items: center;
+}
+.manage-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--primary-color); }
+.manage-card img {
+    width: 80px !important; height: 60px !important;
+    object-fit: contain; object-position: center bottom;
+    image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); margin-bottom: 5px;
+}
+.slot-empty {
+    border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;
+    height: 100%; min-height: 160px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); background: rgba(0,0,0,0.1);
 }
 
-/* Animación de entrada escalonada */
-.fade-in-up {
-    animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    opacity: 0;
-    transform: translateY(20px);
+/* Acordeón de Edición */
+.edit-collapse-panel {
+    background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px; padding: 10px; border-radius: 0 0 12px 12px;
+}
+.btn-toggle-edit {
+    width: 100%; background: transparent; border: none;
+    border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-muted);
+    font-size: 0.8rem; padding: 5px 0; transition: all 0.2s;
+}
+.btn-toggle-edit:hover { background: rgba(255,255,255,0.05); color: white; }
+
+/* Estilos de Combate (Timeline) */
+.timeline-line {
+    position: absolute; left: 20px; top: 0; bottom: 0; width: 2px;
+    background: rgba(255, 255, 255, 0.1); z-index: 0;
+}
+.battle-item { position: relative; margin-bottom: 2rem; padding-left: 50px; z-index: 1; }
+.battle-dot {
+    position: absolute; left: 11px; top: 15px; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--bg-deep);
+    border: 2px solid var(--primary-color); box-shadow: 0 0 10px var(--shadow-glow); z-index: 2;
+}
+.battle-card-full {
+    background: var(--glass-bg); border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px; padding: 15px; transition: transform 0.2s;
 }
 
-@keyframes fadeInUp {
-    to { opacity: 1; transform: translateY(0); }
+/* Layout Combate: Horizontal (Historial) */
+.combat-layout { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; }
+.combat-side { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.combat-team-grid {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 2px;
+    margin-top: 5px; background: rgba(0,0,0,0.2); padding: 4px;
+    border-radius: 20px; min-height: 35px;
 }
+.combat-poke-icon { width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5)); }
+.vs-badge { font-family: 'Impact', sans-serif; font-size: 1.2rem; color: var(--text-muted); font-style: italic; padding: 0 10px; }
 
+/* Layout Combate: Vertical (Sidebar) */
+.combat-layout.vertical { flex-direction: column; gap: 5px; padding: 5px 0; }
+.combat-layout.vertical .combat-side { width: 100%; }
+.combat-layout.vertical .vs-badge-vertical {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 2px; margin: 2px 0; width: 100%; text-align: center; position: relative;
+}
+.combat-layout.vertical .vs-badge-vertical::before, .combat-layout.vertical .vs-badge-vertical::after {
+    content: ""; display: inline-block; width: 30px; height: 1px;
+    background: rgba(255, 255, 255, 0.1); vertical-align: middle; margin: 0 5px;
+}
+/* Iconos más pequeños en sidebar */
+.combat-layout.vertical .combat-poke-icon, .combat-layout.mini .combat-poke-icon { width: 24px; height: 24px; }
+
+/* ========================================================= */
+/* 6. ANIMACIONES Y UTILIDADES                               */
+/* ========================================================= */
+
+/* Entrada Suave (Fade Up) */
+.fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 .delay-1 { animation-delay: 0.1s; }
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
 
-/* Icono flotante decorativo */
-.floating-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    animation: float 3s ease-in-out infinite;
-    display: inline-block;
-}
-
-@keyframes float {
+/* Salto de Pokémon (Team Bar) */
+@keyframes pokemon-bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-6px); }
 }
+.party-bar-btn:hover .party-icon { animation: pokemon-bounce 0.6s infinite; }
+
+/* Cargador */
+.loading-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 1rem; color: var(--text-muted); width: 100%; min-height: 150px; animation: fade-in 0.3s ease;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+.loading-state p { margin-top: 10px; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; animation: pulse 1.5s infinite; }
+
+/* Icono Flotante */
+.floating-icon { font-size: 3rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; display: inline-block; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
