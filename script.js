@@ -239,10 +239,10 @@ async function cargarDashboard() {
             // D. Leaderboard (Tabla de Clasificación)
             const leaderboardContainer = document.getElementById('leaderboard-container');
             if (leaderboardContainer) {
-                // Ordenar: Primero por Vidas (Desc), luego por Medallas (Desc)
                 const ranking = [...listaJugadores].sort((a, b) => {
-                    if (b.vidas !== a.vidas) return b.vidas - a.vidas;
-                    return (b.medallas || 0) - (a.medallas || 0);
+                    // Orden: Quien tenga más medallas va primero. Si empate, quien tenga más vidas.
+                    if ((b.medallas || 0) !== (a.medallas || 0)) return (b.medallas || 0) - (a.medallas || 0);
+                    return b.vidas - a.vidas;
                 });
                 
                 const soyHost = infoSala.host === usuario.nombre;
@@ -281,8 +281,30 @@ async function cargarDashboard() {
                             let lifeColor = j.vidas <= 1 ? 'text-danger' : 'text-success';
                             if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
                             
-                            // Botones de Host (Solo visibles si eres Host)
+                            // IDENTIFICACIÓN: ¿Soy yo?
+                            const soyYo = j.nombre === usuario.nombre;
+
+                            // LÓGICA VISUAL DE MEDALLAS
+                            // Si soy yo, muestro botones. Si no, solo el número.
+                            let columnaMedallas = '';
                             
+                            if (soyYo) {
+                                columnaMedallas = `
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <button class="btn btn-sm btn-link text-white-50 p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', -1)">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                    <span class="text-warning fw-bold fs-6">${j.medallas || 0}</span>
+                                    <button class="btn btn-sm btn-link text-warning p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', 1)">
+                                        <i class="bi bi-plus-circle-fill"></i>
+                                    </button>
+                                </div>`;
+                            } else {
+                                // Vista para otros jugadores (solo número)
+                                columnaMedallas = `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
+                            }
+
+                            // Botones de Host (Solo visibles si eres Host)
                             const controlesWins = soyHost ? `
                                 <button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1 border-0" onclick="sumarVictoria('${j._id}')">
                                     <i class="bi bi-caret-up-fill"></i>
@@ -294,10 +316,14 @@ async function cargarDashboard() {
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div>
-                                        <span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">${j.nombre}</span>
+                                        <span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">
+                                            ${j.nombre} ${soyYo ? '(Tú)' : ''}
+                                        </span>
                                     </div>
                                 </td>
-                                <td class="text-center text-warning fw-bold small">${j.medallas || 0}</td>
+                                
+                                <td class="text-center">${columnaMedallas}</td>
+                                
                                 <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td>
                                 <td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td>
                             </tr>`;
@@ -944,3 +970,27 @@ function inicializarDatalists() {
 // Ejecutar al inicio
 document.addEventListener('DOMContentLoaded', inicializarDatalists);
 
+/* FUNCIÓN PARA CAMBIAR MEDALLAS */
+async function cambiarMedallas(idJugador, accion) {
+    try {
+        // Bloqueo visual temporal (opcional)
+        document.body.style.cursor = 'wait';
+
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/jugador/medallas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: idJugador, accion: accion })
+        });
+
+        if (res.ok) {
+            // Si sale bien, recargamos el dashboard para ver el cambio
+            await cargarDashboard();
+        } else {
+            console.error("Error al actualizar medallas");
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+}

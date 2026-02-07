@@ -150,13 +150,29 @@ router.put('/vidas', async (req, res) => {
     } catch (error) { res.status(500).json({ mensaje: "Error al actualizar vidas" }); }
 });
 
-router.put('/medallas', async (req, res) => {
-    const { entrenadorId, cantidad } = req.body;
+// RUTA: Actualizar Medallas de un Jugador
+router.put('/jugador/medallas', async (req, res) => {
+    const { id, accion } = req.body; // accion puede ser 1 (sumar) o -1 (restar)
+
     try {
-        const entrenador = await Entrenador.findByIdAndUpdate(entrenadorId, { medallas: cantidad }, { new: true });
-        if (!entrenador) return res.status(404).json({ mensaje: "Entrenador no encontrado" });
-        res.json({ mensaje: "Medallas actualizadas", medallas: entrenador.medallas });
-    } catch (error) { res.status(500).json({ mensaje: "Error medallas" }); }
+        const jugador = await Jugador.findById(id);
+        if (!jugador) return res.status(404).json({ mensaje: "Jugador no encontrado" });
+
+        // Calculamos nueva cantidad
+        let nuevasMedallas = (jugador.medallas || 0) + accion;
+        
+        // Límite: No menos de 0, no más de 16 (Kanto+Johto max, o lo que sea)
+        if (nuevasMedallas < 0) nuevasMedallas = 0;
+        if (nuevasMedallas > 16) nuevasMedallas = 16;
+
+        jugador.medallas = nuevasMedallas;
+        await jugador.save();
+
+        res.json({ mensaje: "Medallas actualizadas", medallas: nuevasMedallas });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: "Error del servidor" });
+    }
 });
 
 router.put('/victoria', async (req, res) => {
