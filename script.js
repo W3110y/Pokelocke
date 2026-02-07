@@ -757,6 +757,30 @@ if (formCombate) {
 /* ========================================================= */
 /* 7. FUNCIONES AUXILIARES                                   */
 /* ========================================================= */
+/* FUNCIÓN PARA CAMBIAR MEDALLAS */
+async function cambiarMedallas(idJugador, accion) {
+    try {
+        // Bloqueo visual temporal (opcional)
+        document.body.style.cursor = 'wait';
+
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/jugador/medallas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: idJugador, accion: accion })
+        });
+
+        if (res.ok) {
+            // Si sale bien, recargamos el dashboard para ver el cambio
+            await cargarDashboard();
+        } else {
+            console.error("Error al actualizar medallas");
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+}
 async function cambiarVidas(id, c) {
     try { const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/vidas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entrenadorId: id, cambio: c }) }); if (res.ok) cargarDashboard(); } catch (e) { console.error(e); }
 }
@@ -969,28 +993,3 @@ function inicializarDatalists() {
 
 // Ejecutar al inicio
 document.addEventListener('DOMContentLoaded', inicializarDatalists);
-
-/* FUNCIÓN PARA CAMBIAR MEDALLAS */
-async function cambiarMedallas(idJugador, accion) {
-    try {
-        // Bloqueo visual temporal (opcional)
-        document.body.style.cursor = 'wait';
-
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/jugador/medallas', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: idJugador, accion: accion })
-        });
-
-        if (res.ok) {
-            // Si sale bien, recargamos el dashboard para ver el cambio
-            await cargarDashboard();
-        } else {
-            console.error("Error al actualizar medallas");
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        document.body.style.cursor = 'default';
-    }
-}

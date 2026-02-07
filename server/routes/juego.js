@@ -151,11 +151,11 @@ router.put('/vidas', async (req, res) => {
 });
 
 // RUTA: Actualizar Medallas de un Jugador
-router.put('/jugador/medallas', async (req, res) => {
+router.put('/medallas', async (req, res) => {
     const { id, accion } = req.body; // accion puede ser 1 (sumar) o -1 (restar)
 
     try {
-        const jugador = await Jugador.findById(id);
+        const jugador = await Entrenador.findById(id);
         if (!jugador) return res.status(404).json({ mensaje: "Jugador no encontrado" });
 
         // Calculamos nueva cantidad
