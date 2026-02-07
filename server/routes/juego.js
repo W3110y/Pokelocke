@@ -12,7 +12,7 @@ const Combate = require('../models/Combate');
 
 // CREAR SALA Y HOST
 router.post('/crear', async (req, res) => {
-    const { hostName, partyName, partySize, rules, description } = req.body;
+    const { hostName, partyName, partySize, rules, description, vidas } = req.body;
 
     try {
         const salaExistente = await Sala.findOne({ nombre: partyName });
@@ -25,13 +25,19 @@ router.post('/crear', async (req, res) => {
             host: hostName,
             maxJugadores: partySize,
             reglas: rules,
-            descripcion: description
+            descripcion: description,
+            vidasIniciales: parseInt(vidas) || 10 // Guardamos el valor o 10 por defecto
         });
         await nuevaSala.save();
 
         let entrenador = await Entrenador.findOne({ nombre: hostName, sala: partyName });
         if (!entrenador) {
-            entrenador = new Entrenador({ nombre: hostName, sala: partyName, pokemons: [] });
+            entrenador = new Entrenador({ 
+                nombre: hostName, 
+                sala: partyName, 
+                pokemons: [],
+                vidas: parseInt(vidas) || 10 // Vidas iniciales también para el jugador
+            });
             await entrenador.save();
         }
 
@@ -79,8 +85,24 @@ router.get('/sala/:codigoSala', async (req, res) => {
         if (!infoSala) return res.status(404).json({ mensaje: "Sala no encontrada" });
 
         const jugadores = await Entrenador.find({ sala: codigoSala });
+        // --- LÓGICA DE CÁLCULO DE VIDAS ---
+        // Recorremos cada jugador antes de enviarlo al frontend
+        const jugadoresCalculados = jugadores.map(Entrenador => {
+            // 1. Contamos cuántos pokemons tienen estado 'muerto' o 'cementerio'
+            const muertos = Entrenador.pokemons.filter(p => p.estado === 'muerto' || p.estado === 'cementerio').length;
+            
+            // 2. Calculamos vidas restantes
+            let vidasRestantes = infoSala.vidasIniciales - muertos;
+            if (vidasRestantes < 0) vidasRestantes = 0; // No permitir negativos
 
-        res.json({ sala: infoSala, jugadores: jugadores });
+            // 3. Actualizamos el objeto jugador (solo en memoria para la respuesta, o guardamos si prefieres)
+            // Para ser seguros, lo devolvemos calculado:
+            return {
+                ...Entrenador.toObject(), // Convertimos documento Mongoose a objeto JS
+                vidas: vidasRestantes  // Sobrescribimos con el cálculo real
+            };
+        });
+        res.json({ sala: infoSala, jugadores: jugadoresCalculados });
 
     } catch (error) {
         console.error("Error al cargar sala:", error);

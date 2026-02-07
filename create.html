@@ -18,7 +18,8 @@
     </header>
 
     <section class="flex-grow-1 d-flex align-items-center justify-content-center py-5">
-        <div class="container" style="max-width: 600px; margin-top: 40px;"> <div class="poke-card fade-in-up delay-1">
+        <div class="container" style="max-width: 600px; margin-top: 40px;"> 
+            <div class="poke-card fade-in-up delay-1">
                 <div class="text-center mb-4">
                     <i class="bi bi-globe-americas text-info display-4"></i>
                     <h2 class="fw-bold text-white mt-2">Nueva Aventura</h2>
@@ -46,9 +47,14 @@
                         <label class="poke-label">Jugadores Máximos</label>
                     </div>
 
+                    <div class="poke-input-group mt-2">
+                        <input type="number" id="party-lives" class="poke-input" placeholder=" " min="1" max="99" value="10" required>
+                        <label class="poke-label">Vidas Iniciales</label>
+                    </div>
+
                     <div class="poke-input-group mt-4">
                         <textarea id="party-rules" class="poke-input" placeholder=" " rows="2"></textarea>
-                        <label class="poke-label">Reglas (Nuzlocke, Vidas, etc.)</label>
+                        <label class="poke-label">Reglas</label>
                     </div>
 
                     <div class="poke-input-group mt-2">

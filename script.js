@@ -50,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 partyName: document.getElementById('party-name').value,
                 partySize: document.getElementById('party-size').value,
                 rules: document.getElementById('party-rules').value,
-                description: document.getElementById('party-description').value
+                description: document.getElementById('party-description').value,
+                // Capturar las vidas del nuevo input
+                vidas: document.getElementById('party-lives').value 
             };
 
             const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/crear'; 
@@ -222,7 +224,6 @@ async function cargarDashboard() {
                 dashboardPanel.innerHTML = `
                     <div class="d-flex justify-content-between align-items-end mb-2 px-1">
                         <h5 class="section-title m-0 text-white">Mi Equipo Activo</h5>
-                        <small class="text-warning" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Editar</small>
                     </div>
                     
                     <a href="equipo.html" class="party-bar-btn" title="Click para gestionar equipo">
@@ -277,15 +278,10 @@ async function cargarDashboard() {
                     </thead>
                     <tbody>
                         ${ranking.map((j, i) => {
-                            let lifeColor = j.vidas === 1 ? 'text-danger' : 'text-success';
+                            let lifeColor = j.vidas <= 1 ? 'text-danger' : 'text-success';
                             if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
                             
                             // Botones de Host (Solo visibles si eres Host)
-                            const controlesVidas = soyHost ? `
-                                <div class="d-inline-flex ms-1" style="transform: scale(0.8);">
-                                    <button class="btn btn-outline-danger p-0 px-1 lh-1" onclick="cambiarVidas('${j._id}', -1)">-</button>
-                                    <button class="btn btn-outline-success p-0 px-1 lh-1" onclick="cambiarVidas('${j._id}', 1)">+</button>
-                                </div>` : '';
                             
                             const controlesWins = soyHost ? `
                                 <button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1 border-0" onclick="sumarVictoria('${j._id}')">
@@ -302,7 +298,7 @@ async function cargarDashboard() {
                                     </div>
                                 </td>
                                 <td class="text-center text-warning fw-bold small">${j.medallas || 0}</td>
-                                <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span>${controlesVidas}</td>
+                                <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td>
                                 <td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td>
                             </tr>`;
                         }).join('')}
