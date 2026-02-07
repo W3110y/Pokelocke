@@ -763,7 +763,7 @@ async function cambiarMedallas(idJugador, accion) {
         // Bloqueo visual temporal (opcional)
         document.body.style.cursor = 'wait';
 
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/jugador/medallas', {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/medallas', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: idJugador, accion: accion })
