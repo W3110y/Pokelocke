@@ -307,3 +307,59 @@ h1, h2, h3, h4, h5, .card-title, .text-dark, .text-body {
 /* Icono Flotante */
 .floating-icon { font-size: 3rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; display: inline-block; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+/* ========================================================= */
+/* 7. MINI EQUIPO (VISOR DE RIVALES)                         */
+/* ========================================================= */
+
+.mini-team-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 0 0 8px 8px;
+    margin-top: -5px; /* Para que pegue con la tarjeta de arriba */
+    display: none; /* Oculto por defecto */
+}
+
+/* Rejilla de 3x2 o 6x1 dependiendo del espacio */
+.mini-team-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+}
+
+.mini-slot {
+    width: 100%;
+    aspect-ratio: 1/1; /* Cuadrado perfecto */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.mini-poke-icon {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+
+/* Botón de desplegar */
+.btn-toggle-team {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.btn-toggle-team:hover {
+    color: var(--primary-color);
+}
+
+.btn-toggle-team.active {
+    transform: rotate(180deg);
+    color: var(--primary-color);
+}

@@ -177,22 +177,59 @@ async function cargarDashboard() {
             const descContent = document.getElementById('modal-desc-content');
             if (descContent) descContent.innerHTML = `<p class="lh-lg">${infoSala.descripcion || "Sin descripción."}</p>`;
 
-            // B. Lista Miembros (Sidebar Izquierdo)
+            // B. Lista Miembros (Sidebar Izquierdo - CON VISOR DE EQUIPO)
             const membersList = document.getElementById('members-list');
             if (membersList) {
                 membersList.innerHTML = listaJugadores.map(jugador => {
                     const isHost = jugador.nombre === infoSala.host;
                     const isMe = jugador.nombre === usuario.nombre;
-                    // Estilo: Usamos un fondo muy sutil en lugar de glass completo para no saturar
+                    const esMuerto = jugador.vidas === 0;
+                    
+                    // 1. Preparamos el HTML del equipo oculto
+                    const equipoRival = jugador.pokemons.filter(p => p.estado === 'equipo');
+                    let miniSlots = '';
+                    
+                    for(let i=0; i<6; i++) {
+                        const p = equipoRival[i];
+                        if(p) {
+                            miniSlots += `
+                            <div class="mini-slot" title="${p.mote} (${p.especie})">
+                                <img src="${p.imagen}" class="mini-poke-icon">
+                            </div>`;
+                        } else {
+                            miniSlots += `<div class="mini-slot opacity-25"></div>`;
+                        }
+                    }
+
+                    // 2. Renderizamos la tarjeta + el panel oculto
                     return `
-                    <div class="d-flex align-items-center gap-2 p-2 mb-2 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);">
-                        <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width:32px; height:32px; font-size: 0.8rem;">
-                            ${jugador.nombre.charAt(0).toUpperCase()}
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center gap-2 p-2 rounded position-relative" 
+                             style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); z-index: 2;">
+                            
+                            <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" 
+                                 style="width:32px; height:32px; font-size: 0.8rem; filter: ${esMuerto ? 'grayscale(1)' : 'none'}">
+                                ${jugador.nombre.charAt(0).toUpperCase()}
+                            </div>
+                            
+                            <div class="flex-grow-1 text-truncate">
+                                <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''} ${esMuerto ? 'text-decoration-line-through text-muted' : ''}">
+                                    ${jugador.nombre} ${isMe ? '(Tú)' : ''}
+                                </span>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : ''}
+                                    ${esMuerto ? '<span class="badge bg-danger" style="font-size:0.6em;">ELIMINADO</span>' : ''}
+                                </div>
+                            </div>
+
+                            <button class="btn-toggle-team" onclick="toggleTeamView('${jugador._id}', this)" title="Ver equipo">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
                         </div>
-                        <div class="flex-grow-1 text-truncate">
-                            <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''}">${jugador.nombre} ${isMe ? '(Tú)' : ''}</span>
-                            <div class="mt-1">
-                                ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : '<span class="badge bg-secondary opacity-50" style="font-size:0.6em; padding: 2px 6px;">ENTRENADOR</span>'}
+
+                        <div id="team-view-${jugador._id}" class="mini-team-container">
+                            <div class="mini-team-grid">
+                                ${miniSlots}
                             </div>
                         </div>
                     </div>`;
@@ -993,3 +1030,21 @@ function inicializarDatalists() {
 
 // Ejecutar al inicio
 document.addEventListener('DOMContentLoaded', inicializarDatalists);
+
+/* FUNCIÓN PARA ABRIR/CERRAR EQUIPO RIVAL */
+function toggleTeamView(idJugador, btnElement) {
+    const container = document.getElementById(`team-view-${idJugador}`);
+    
+    if (container) {
+        // Toggle de visibilidad
+        const isHidden = container.style.display === 'none' || container.style.display === '';
+        
+        if (isHidden) {
+            container.style.display = 'block';
+            btnElement.classList.add('active'); // Rota la flecha
+        } else {
+            container.style.display = 'none';
+            btnElement.classList.remove('active'); // Restaura la flecha
+        }
+    }
+}
