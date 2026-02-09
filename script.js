@@ -295,12 +295,11 @@ async function cargarDashboard() {
                 const selectP1 = document.getElementById('select-p1');
                 if (selectP1) selectP1.value = usuario.nombre;
                 
-                // Cargar Feed (Asumimos que esta función existe o la implementamos luego)
-                if(typeof cargarFeedCombates === 'function') {
-                    cargarFeedCombates(salaNombre); 
-                } else {
-                    document.getElementById('recent-battles-list').innerHTML = '<small class="text-muted">Feed no disponible</small>';
-                }
+                // --- NUEVO: ACTIVAR EL FORMULARIO ---
+                iniciarFormularioCombate();
+
+                // --- NUEVO: CARGAR EL FEED LATERAL ---
+                cargarFeedCombates(salaNombre);
 
                 leaderboardContainer.innerHTML = `
                 <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
@@ -802,11 +801,15 @@ async function cargarFeedCombates(salaNombre) {
     if (!container) return;
 
     try {
+        // 1. Apuntamos al servidor local
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
+        
+        if (!res.ok) throw new Error("Error API");
+        
         const combates = await res.json();
 
         if (combates.length === 0) {
-            container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad reciente</small>';
+            container.innerHTML = '<small class="text-white-50 d-block text-center py-4 fst-italic">Sin actividad reciente</small>';
             return;
         }
 
@@ -814,41 +817,43 @@ async function cargarFeedCombates(salaNombre) {
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
             
-            // Datos seguros
+            // Datos seguros (Snapshots de los equipos)
             const equipo1 = c.equipo1Snapshot || [];
             const equipo2 = c.equipo2Snapshot || [];
 
-            // Generador de iconos (Mostramos hasta 6)
+            // Generador de iconos mini (máximo 3 por espacio para que no sature el sidebar)
             const generarIconosMini = (imgs) => {
-                if (!imgs || imgs.length === 0) return '<span class="text-muted" style="font-size:0.6rem">- Sin equipo -</span>';
-                return imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+                if (!imgs || imgs.length === 0) return '<span class="text-white-50" style="font-size:0.6rem">-</span>';
+                // Mostramos solo 3 para que quepa en el sidebar estrecho
+                return imgs.slice(0, 3).map(url => `
+                    <img src="${url}" style="width: 18px; height: 18px; object-fit: contain; image-rendering: pixelated;">
+                `).join('');
             };
 
+            // Formato de fecha corto
+            const hora = new Date(c.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
             return `
-            <div class="glass-panel mb-3 p-2 border border-secondary border-opacity-25 fade-in">
-                
-                <div class="combat-layout vertical">
+            <div class="mb-3 pb-3 border-bottom border-white-10 fade-in-up">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-white-10 text-white-50" style="font-size: 0.6rem;">${hora}</span>
+                    <button class="btn btn-link p-0 text-info" style="font-size: 0.8rem;" onclick="verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')">
+                        <i class="bi bi-eye-fill"></i>
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-25 rounded p-2">
                     
-                    <div class="combat-side">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="small fw-bold ${esGanador1 ? 'text-warning' : 'text-muted'}">${c.entrenador1}</span>
-                            ${esGanador1 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
-                        </div>
-                        <div class="combat-team-grid">
-                            ${generarIconosMini(equipo1)}
-                        </div>
+                    <div class="text-center" style="width: 45%;">
+                        <div class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-white-50'}">${c.entrenador1}</div>
+                        <div class="d-flex justify-content-center mt-1">${generarIconosMini(equipo1)}</div>
                     </div>
 
-                    <div class="vs-badge-vertical">VS</div>
+                    <div class="text-muted small fw-bold">VS</div>
 
-                    <div class="combat-side">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="small fw-bold ${esGanador2 ? 'text-warning' : 'text-muted'}">${c.entrenador2}</span>
-                            ${esGanador2 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
-                        </div>
-                        <div class="combat-team-grid">
-                            ${generarIconosMini(equipo2)}
-                        </div>
+                    <div class="text-center" style="width: 45%;">
+                        <div class="small fw-bold text-truncate ${esGanador2 ? 'text-warning' : 'text-white-50'}">${c.entrenador2}</div>
+                        <div class="d-flex justify-content-center mt-1">${generarIconosMini(equipo2)}</div>
                     </div>
 
                 </div>
@@ -857,41 +862,70 @@ async function cargarFeedCombates(salaNombre) {
 
     } catch (e) { 
         console.error("Error cargando feed:", e);
-        container.innerHTML = '<small class="text-danger">Error de conexión</small>';
+        container.innerHTML = '<small class="text-danger d-block text-center">Error de conexión</small>';
     }
 }
 
-const formCombate = document.getElementById('form-combate');
-if (formCombate) {
+function iniciarFormularioCombate() {
+    const formCombate = document.getElementById('form-combate');
+    if (!formCombate) return;
+
+    // Clonamos para eliminar listeners previos (Evita envíos dobles)
     const newForm = formCombate.cloneNode(true);
     formCombate.parentNode.replaceChild(newForm, formCombate);
+
     newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+        
+        const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+        if(!usuarioRaw) return;
+        const usuario = JSON.parse(usuarioRaw);
+
         const p1 = document.getElementById('select-p1').value;
         const p2 = document.getElementById('select-p2').value;
         const ganador = document.getElementById('select-winner').value;
 
         if (p1 === p2) return alert("¡Un jugador no puede luchar contra sí mismo!");
 
+        // Feedback visual en el botón
         const btn = newForm.querySelector('button[type="submit"]');
-        btn.innerText = "Registrando..."; btn.disabled = true;
+        const textoOriginal = btn.innerText;
+        btn.innerText = "Registrando..."; 
+        btn.disabled = true;
 
         try {
+            // URL local
             const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/combate', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ sala: usuario.sala, entrenador1: p1, entrenador2: p2, ganador: ganador })
+                body: JSON.stringify({ 
+                    sala: usuario.sala, 
+                    entrenador1: p1, 
+                    entrenador2: p2, 
+                    ganador: ganador 
+                })
             });
+
             if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('combatModal')).hide();
-                cargarDashboard();
-                alert("✅ Combate registrado");
+                // Cerrar modal
+                const modalEl = document.getElementById('combatModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInstance.hide();
+                
+                // Recargar datos
+                await cargarDashboard();
+                alert("✅ Combate registrado correctamente");
             } else {
-                alert("Error al registrar");
+                const err = await res.json();
+                alert("Error: " + err.mensaje);
             }
-        } catch (error) { alert("Error de conexión"); }
-        finally { btn.innerText = "Guardar Resultado"; btn.disabled = false; }
+        } catch (error) { 
+            console.error(error);
+            alert("Error de conexión con el servidor"); 
+        } finally { 
+            btn.innerText = textoOriginal; 
+            btn.disabled = false; 
+        }
     });
 }
 
