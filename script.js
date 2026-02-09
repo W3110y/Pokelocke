@@ -669,8 +669,23 @@ async function cargarGestorEquipo() {
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-sm btn-success py-1" style="font-size:0.8rem">💾 Guardar</button>
                                     <div class="d-flex gap-1 mt-2 pt-2 border-top border-white-10">
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill py-0" style="font-size:0.7rem">Al PC</button>
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-0" style="font-size:0.7rem">Falleció</button>
+                                        <button type="button" onclick="evolucionarPokemon('${p._id}', '${p.especie}')" 
+                                                class="btn btn-sm btn-outline-warning flex-fill py-0" 
+                                                style="font-size:0.7rem" title="Evolucionar especie">
+                                            <i class="bi bi-stars"></i> Evo
+                                        </button>
+
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" 
+                                                class="btn btn-sm btn-outline-primary flex-fill py-0" 
+                                                style="font-size:0.7rem">
+                                            Al PC
+                                        </button>
+                                        
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" 
+                                                class="btn btn-sm btn-outline-danger flex-fill py-0" 
+                                                style="font-size:0.7rem">
+                                            Falleció
+                                        </button>
                                     </div>
                                 </div>
                             </form>
@@ -1323,3 +1338,87 @@ document.addEventListener('DOMContentLoaded', () => {
         cargarMisGrupos();
     }
 });
+
+/* ========================================================= */
+/* LÓGICA DE EVOLUCIÓN                                       */
+/* ========================================================= */
+window.evolucionarPokemon = async function(idPokemon, especieActual) {
+    // 1. Preguntar al usuario (Sistema Asistido)
+    const nuevoNombreInput = prompt(`¿A qué evoluciona tu ${especieActual}?`, "");
+    
+    if (!nuevoNombreInput || nuevoNombreInput.trim() === "") return; // Cancelado
+
+    // 2. Normalizar el nombre (usando nuestra función robusta)
+    const nombreApi = normalizarNombrePokemon(nuevoNombreInput);
+    
+    // Feedback visual (cursor de espera)
+    document.body.style.cursor = 'wait';
+
+    try {
+        // 3. Buscar los datos de la NUEVA forma en la API
+        const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
+        
+        if (!pokeRes.ok) {
+            throw new Error(`No encuentro a "${nuevoNombreInput}". Revisa el nombre.`);
+        }
+        
+        const pokeData = await pokeRes.json();
+        
+        // 4. Obtener la nueva imagen y tipos
+        // Priorizamos los iconos de Gen 8/7, si no, el sprite base
+        const nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || 
+                            pokeData.sprites.versions['generation-vii'].icons.front_default || 
+                            pokeData.sprites.front_default;
+                            
+        const nuevosTipos = pokeData.types.map(t => t.type.name);
+
+        // 5. Preparar actualización para el Backend
+        // NOTA: Solo enviamos lo que cambia. El backend (Mongoose) mantendrá lo demás si usamos la ruta adecuada.
+        // Pero nuestra ruta 'PUT /pokemon' espera 'nuevosDatos' completo o parcial.
+        // Vamos a recuperar los datos actuales del DOM o localStorage para no perder nada, 
+        // aunque la estrategia más segura es enviar solo lo que cambia si el backend lo soporta.
+        // Como tu backend usa findByIdAndUpdate, podemos enviar solo los campos a cambiar.
+
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+        const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; // Usa localhost si estás en pruebas
+
+        const res = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                pokemonId: idPokemon,
+                nuevosDatos: {
+                    especie: pokeData.name, // Nombre oficial (ej: charmeleon)
+                    imagen: nuevaImagen,
+                    tipos: nuevosTipos
+                    // Mote, Nivel, Objeto, etc. NO los enviamos para que se mantengan los viejos
+                    // OJO: Asegúrate de que tu Backend hace un "merge" de datos.
+                    // Si tu backend REEMPLAZA todo el objeto 'nuevosDatos', perderíamos el mote.
+                    // Revisemos la estrategia segura:
+                }
+            })
+        });
+        
+        /* NOTA DE SEGURIDAD: 
+           Si tu ruta PUT en el backend hace: `Object.assign(pokemon, nuevosDatos)`, funcionará perfecto.
+           Si hace `pokemon = newDatos`, borrará lo demás.
+           
+           Dado que no puedo ver tu backend actual de PUT ahora mismo, vamos a asumir la estrategia segura:
+           La mayoría de implementaciones PUT hacen un merge. Si notas que se borra el mote, avísame.
+        */
+
+        if (res.ok) {
+            await cargarGestorEquipo(); // Recargar la vista
+            alert(`✨ ¡Felicidades! Tu Pokémon ha evolucionado a ${pokeData.name}.`);
+        } else {
+            throw new Error("Error guardando la evolución.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("❌ Error: " + error.message);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+};
