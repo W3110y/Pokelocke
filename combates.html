@@ -27,33 +27,66 @@
         <a href="sala_grupo.html" class="nav-btn" title="Volver la sala">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <button class="nav-btn" id="theme-toggle" title="Cambiar Tema">
-            <i class="bi bi-sun-fill"></i> 
-        </button>
+        <div class="position-absolute start-50 translate-middle-x mt-2 text-center" style="pointer-events: none;">
+            <h5 class="text-white-50 m-0 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 2px;">Historial de Batallas</h5>
+            <h2 class="text-white fw-bold m-0" style="text-shadow: 0 0 15px rgba(236, 72, 153, 0.5);">ARENA</h2>
+        </div>
     </header>
 
     <!-- ============================================= -->
     <!-- MAIN CONTENT                                  -->
     <!-- ============================================= -->
     <section>
-        <div class="container py-5 mt-5">
-            <div class="text-center mb-5 fade-up">
-                <h1 class="fw-bold display-5">⚔️ Arena de Combate</h1>
-                <p class="text-muted lead">Registro oficial de enfrentamientos y resultados.</p>
-            </div>
-            <div class="row justify-content-center">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="text-white fw-bold mb-0">Cronología</h5>
-                    <span class="badge bg-secondary opacity-50">Temporada 1</span>
-                </div>
+        <div class="flex-grow-1 d-flex justify-content-center p-3" style="padding-top: 80px !important;">
+            <div class="container" style="max-width: 800px;">
+                <div class="glass-panel p-4 fade-in-up delay-1">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="text-white m-0"><i class="bi bi-clock-history me-2"></i>Registros de Combate</h4>
+                        <span class="badge bg-white-10 text-white-50" id="total-battles-count">0 batallas</span>
+                    </div>
 
-                <div id="battle-timeline" class="position-relative">
-                    <div class="timeline-line"></div>
+                    <div id="full-battles-list" class="d-flex flex-column gap-3">
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                            <p>Recuperando datos de la arena...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="battleDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered"> 
+                <div class="modal-content glass-modal">
+                    <div class="modal-header border-bottom border-white-10">
+                        <h5 class="modal-title fw-bold text-white"><i class="bi bi-eye me-2"></i>Análisis de Equipos</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-4 align-items-center">
+                            <div class="col-md-5">
+                                <div class="team-vs-container">
+                                    <h5 id="modal-p1-name" class="text-info fw-bold mb-3">Entrenador 1</h5>
+                                    <div id="modal-p1-team" class="team-vs-grid">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2 text-center">
+                                <h1 class="display-4 fw-bold fst-italic text-white-50" style="text-shadow: 0 0 20px rgba(255,255,255,0.2);">VS</h1>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="team-vs-container">
+                                    <h5 id="modal-p2-name" class="text-danger fw-bold mb-3">Entrenador 2</h5>
+                                    <div id="modal-p2-team" class="team-vs-grid">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     
-                    <div id="timeline-content">
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="text-muted mt-2">Cargando datos de la arena...</p>
+                        <div class="text-center mt-4 text-muted small">
+                            * Se muestran los equipos actuales de los entrenadores.
                         </div>
                     </div>
                 </div>

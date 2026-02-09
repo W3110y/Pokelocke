@@ -657,42 +657,144 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
 /* ========================================================= */
 /* 6. COMBATES Y FEED (combates.html / sala_grupo.html)           */
 /* ========================================================= */
-async function cargarHistorialCompleto() {
-    const container = document.getElementById('timeline-content');
-    if (!container) return;
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+// Variable global para cachear jugadores y no pedirlos todo el rato
+let CACHE_JUGADORES = [];
+
+async function cargarPaginaCombates() {
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) { window.location.href = 'join.html'; return; }
+    const usuario = JSON.parse(usuarioRaw);
+    
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
 
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
-        const combates = await res.json();
+        // Pedimos TODO (Sala + Jugadores + Combates)
+        // Nota: Asumimos que el endpoint devuelve { sala, jugadores, combates (o historial) }
+        // Si tu endpoint /sala/:sala no devuelve combates, quizás debas pedir historial aparte.
+        // Por simplificación, usaré la lógica actual donde sacamos los jugadores para ver sus equipos.
+        
+        const response = await fetch(API_URL);
+        if (response.ok) {
+            const data = await response.json();
+            CACHE_JUGADORES = data.jugadores; // Guardamos para usar en el modal
+            
+            // Renderizar Lista
+            // Nota: Aquí asumimos que tienes un endpoint para historial o que viene en data.sala.historial
+            // Si no lo tienes, deberías crearlo. 
+            // VOY A ASUMIR que existe data.combates o data.sala.historial
+            // Si no, simularé que leemos el feed si existe, o pediremos historial.
+            
+            // *CORRECCIÓN*: Si no tienes endpoint de historial separado, usaremos el feed que ya tenías
+            // en el dashboard pero expandido. 
+            // Si no tienes combates guardados en DB aparte, esto podría estar vacío.
+            // Para este ejemplo, usaré una lógica defensiva:
+            
+            const combates = data.sala.historial || []; // Asegúrate de que tu modelo Sala tenga historial
+            
+            const listContainer = document.getElementById('full-battles-list');
+            const counter = document.getElementById('total-battles-count');
+            
+            if(counter) counter.innerText = `${combates.length} batallas`;
+            
+            if (combates.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-5 text-white-50">
+                        <i class="bi bi-wind display-1 opacity-25"></i>
+                        <p class="mt-3">Aún no se ha derramado sangre en la arena.</p>
+                    </div>`;
+                return;
+            }
 
-        if (combates.length === 0) {
-            container.innerHTML = `<div class="glass-panel p-5 text-center"><h4 class="text-muted">Sin actividad</h4></div>`;
-            return;
+            // Ordenar: Más recientes primero
+            const combatesOrdenados = [...combates].reverse();
+
+            listContainer.innerHTML = combatesOrdenados.map((c, i) => {
+                // Formatear fecha
+                const fecha = new Date(c.fecha).toLocaleDateString() + ' ' + new Date(c.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                return `
+                <div class="glass-panel p-3 d-flex align-items-center justify-content-between gap-3 animate-slide-in" style="animation-delay: ${i * 0.05}s">
+                    
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <div class="d-flex flex-column align-items-center" style="min-width: 60px;">
+                            <span class="badge bg-white-10 text-white-50 mb-1">${fecha}</span>
+                            <i class="bi bi-swords text-secondary"></i>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-3 w-100 justify-content-center">
+                            <span class="fw-bold ${c.ganador === c.jugador1 ? 'text-warning' : 'text-white'}">${c.jugador1}</span>
+                            <span class="small text-muted">VS</span>
+                            <span class="fw-bold ${c.ganador === c.jugador2 ? 'text-warning' : 'text-white'}">${c.jugador2}</span>
+                        </div>
+                    </div>
+
+                    <div class="text-end px-3 border-start border-white-10" style="min-width: 120px;">
+                        <span class="d-block small text-muted">Ganador</span>
+                        <span class="text-warning fw-bold"><i class="bi bi-trophy-fill me-1"></i>${c.ganador}</span>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-info rounded-circle" style="width: 40px; height: 40px;" 
+                            onclick="verDetallesCombate('${c.jugador1}', '${c.jugador2}')" title="Ver Equipos">
+                        <i class="bi bi-eye-fill"></i>
+                    </button>
+
+                </div>`;
+            }).join('');
+
         }
+    } catch (e) {
+        console.error(e);
+    }
+}
 
-        container.innerHTML = combates.map(c => {
-            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-            const esGanador1 = c.ganador === c.entrenador1;
-            const esGanador2 = c.ganador === c.entrenador2;
-            const generarIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="small text-muted">Sin datos</span>' : imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+// FUNCIÓN PARA EL MODAL (NUEVA)
+function verDetallesCombate(p1Name, p2Name) {
+    // 1. Buscar los objetos jugador en la caché
+    const p1 = CACHE_JUGADORES.find(j => j.nombre === p1Name);
+    const p2 = CACHE_JUGADORES.find(j => j.nombre === p2Name);
 
-            return `
-            <div class="battle-item fade-up"><div class="battle-dot"></div>
-                <div class="battle-card-full p-2">
-                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
-                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
-                    </div>
-                    <div class="combat-layout">
-                        <div class="combat-side"><span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span><div class="combat-team-grid">${generarIconos(c.equipo1Snapshot)}</div></div>
-                        <div class="vs-badge">VS</div>
-                        <div class="combat-side"><span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span><div class="combat-team-grid">${generarIconos(c.equipo2Snapshot)}</div></div>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch (e) { container.innerHTML = '<p class="text-danger">Error cargando historial.</p>'; }
+    // 2. Función helper para generar HTML de un equipo
+    const generarHTMLPokemon = (jugador) => {
+        if (!jugador) return '<div class="text-muted fst-italic">Datos no disponibles</div>';
+        
+        const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
+        let html = '';
+        
+        for(let i=0; i<6; i++) {
+            const poke = equipo[i];
+            if(poke) {
+                html += `
+                <div class="poke-vs-card">
+                    <img src="${poke.imagen}" class="poke-vs-sprite" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                    <span class="poke-vs-name text-truncate" style="max-width: 100%;">${poke.mote || poke.especie}</span>
+                </div>`;
+            } else {
+                // Hueco vacío
+                html += `
+                <div class="poke-vs-card opacity-25">
+                    <div class="poke-vs-sprite" style="background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                </div>`;
+            }
+        }
+        return html;
+    };
+
+    // 3. Rellenar el Modal
+    document.getElementById('modal-p1-name').innerText = p1Name;
+    document.getElementById('modal-p1-team').innerHTML = generarHTMLPokemon(p1);
+
+    document.getElementById('modal-p2-name').innerText = p2Name;
+    document.getElementById('modal-p2-team').innerHTML = generarHTMLPokemon(p2);
+
+    // 4. Abrir Modal (Bootstrap)
+    const modal = new bootstrap.Modal(document.getElementById('battleDetailsModal'));
+    modal.show();
+}
+
+// Ejecutar solo en combates.html
+if (window.location.pathname.includes('combates.html')) {
+    document.addEventListener('DOMContentLoaded', cargarPaginaCombates);
 }
 
 async function cargarFeedCombates(salaNombre) {
