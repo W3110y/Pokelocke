@@ -2,6 +2,9 @@
 
 /* ========================================================= */
 /* 2. EFECTOS VISUALES (Typing Animation)                    */
+
+const Entrenador = require("./server/models/Entrenador");
+
 /* ========================================================= */
 const typingElement = document.getElementById("typing");
 if (typingElement) {
@@ -660,6 +663,60 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
 // Cache global para el modal de detalles
 let CACHE_JUGADORES_COMBAT = [];
 
+/* IMPORTANTE: Asignamos la función a 'window' para que el HTML 
+   generado dinámicamente pueda encontrarla al hacer click.
+*/
+window.verDetallesCombate = function(p1Name, p2Name) {
+    console.log("Solicitando detalles para:", p1Name, "vs", p2Name); // Debug para ver si llega
+
+    // 1. Buscar los objetos jugador en la caché
+    const p1 = CACHE_JUGADORES_COMBAT.find(j => j.nombre === p1Name);
+    const p2 = CACHE_JUGADORES_COMBAT.find(j => j.nombre === p2Name);
+
+    // 2. Función helper interna para generar HTML
+    const generarHTMLPokemon = (jugador) => {
+        // Si no encontramos al jugador (quizás se cambió el nombre o se borró), mostramos aviso
+        if (!jugador) return '<div class="text-white-50 fst-italic small py-4">Datos no disponibles</div>';
+        
+        const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
+        let html = '';
+        
+        // Rellenar 6 huecos siempre para mantener la rejilla
+        for(let i=0; i<6; i++) {
+            const poke = equipo[i];
+            if(poke) {
+                html += `
+                <div class="poke-vs-card">
+                    <img src="${poke.imagen}" class="poke-vs-sprite" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                    <span class="poke-vs-name text-truncate" style="max-width: 100%;">${poke.mote || poke.especie}</span>
+                </div>`;
+            } else {
+                // Hueco vacío estilizado
+                html += `
+                <div class="poke-vs-card opacity-25" style="border-style: dashed; border-color: rgba(255,255,255,0.2);">
+                    <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1);"></div>
+                </div>`;
+            }
+        }
+        return html;
+    };
+
+    // 3. Rellenar el Modal
+    const modalEl = document.getElementById('battleDetailsModal');
+    if(!modalEl) return console.error("No se encuentra el modal 'battleDetailsModal'");
+
+    document.getElementById('modal-p1-name').innerText = p1Name;
+    document.getElementById('modal-p1-team').innerHTML = generarHTMLPokemon(p1);
+
+    document.getElementById('modal-p2-name').innerText = p2Name;
+    document.getElementById('modal-p2-team').innerHTML = generarHTMLPokemon(p2);
+
+    // 4. Abrir Modal usando Bootstrap
+    // Intentamos obtener una instancia existente o creamos una nueva
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+};
+
 async function cargarPaginaCombates() {
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) { window.location.href = 'join.html'; return; }
@@ -747,51 +804,7 @@ async function cargarPaginaCombates() {
     }
 }
 
-// FUNCIÓN PARA EL MODAL (NUEVA)
-function verDetallesCombate(p1Name, p2Name) {
-    // 1. Buscar los objetos jugador en la caché
-    const p1 = CACHE_JUGADORES.find(j => j.nombre === p1Name);
-    const p2 = CACHE_JUGADORES.find(j => j.nombre === p2Name);
-
-    // 2. Función helper para generar HTML de un equipo
-    const generarHTMLPokemon = (jugador) => {
-        if (!jugador) return '<div class="text-muted fst-italic">Datos no disponibles</div>';
-        
-        const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
-        let html = '';
-        
-        for(let i=0; i<6; i++) {
-            const poke = equipo[i];
-            if(poke) {
-                html += `
-                <div class="poke-vs-card">
-                    <img src="${poke.imagen}" class="poke-vs-sprite" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                    <span class="poke-vs-name text-truncate" style="max-width: 100%;">${poke.mote || poke.especie}</span>
-                </div>`;
-            } else {
-                // Hueco vacío
-                html += `
-                <div class="poke-vs-card opacity-25">
-                    <div class="poke-vs-sprite" style="background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                </div>`;
-            }
-        }
-        return html;
-    };
-
-    // 3. Rellenar el Modal
-    document.getElementById('modal-p1-name').innerText = p1Name;
-    document.getElementById('modal-p1-team').innerHTML = generarHTMLPokemon(p1);
-
-    document.getElementById('modal-p2-name').innerText = p2Name;
-    document.getElementById('modal-p2-team').innerHTML = generarHTMLPokemon(p2);
-
-    // 4. Abrir Modal (Bootstrap)
-    const modal = new bootstrap.Modal(document.getElementById('battleDetailsModal'));
-    modal.show();
-}
-
-// Ejecutar solo en combates.html
+// Ejecutar carga solo si estamos en la página correcta
 if (window.location.pathname.includes('combates.html')) {
     document.addEventListener('DOMContentLoaded', cargarPaginaCombates);
 }
