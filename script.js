@@ -1,4 +1,159 @@
 
+/* ========================================================= */
+/* UTILIDADES GLOBALES (NORMALIZADOR DE NOMBRES)             */
+/* ========================================================= */
+
+const EXCEPCIONES_API = {
+    // --- Kanto & Johto (Símbolos y Formas) ---
+    'nidoran♀': 'nidoran-f',
+    'nidoran hk': 'nidoran-f', // Por si escriben hembra
+    'nidoran h': 'nidoran-f',
+    'nidoran f': 'nidoran-f',
+    'nidoran♂': 'nidoran-m',
+    'nidoran m': 'nidoran-m',
+    'farfetch\'d': 'farfetchd',
+    'mr. mime': 'mr-mime',
+    'ho-oh': 'ho-oh',
+    
+    // --- Hoenn & Sinnoh (Formas Base que requieren sufijo) ---
+    'deoxys': 'deoxys-normal',
+    'wormadam': 'wormadam-plant',
+    'giratina': 'giratina-altered',
+    'shaymin': 'shaymin-land',
+    'rotom': 'rotom', // Rotom base sí funciona, sus formas son rotom-heat, etc.
+    'mime jr.': 'mime-jr',
+    'porygon-z': 'porygon-z',
+
+    // --- Unova (El caso Darmanitan y Genios) ---
+    'darmanitan': 'darmanitan-standard',       // API requiere -standard
+    'darmanitan zen': 'darmanitan-zen',
+    'basculin': 'basculin-red-striped',
+    'tornadus': 'tornadus-incarnate',
+    'thundurus': 'thundurus-incarnate',
+    'landorus': 'landorus-incarnate',
+    'keldeo': 'keldeo-ordinary',
+    'meloetta': 'meloetta-aria',
+
+    // --- Kalos (Tildes y Formas) ---
+    'flabébé': 'flabebe',
+    'flabebe': 'flabebe',
+    'meowstic': 'meowstic-male',
+    'aegislash': 'aegislash-shield',
+    'pumpkaboo': 'pumpkaboo-average',
+    'gourgeist': 'gourgeist-average',
+    'zygarde': 'zygarde-50', // La forma base común
+
+    // --- Alola (Oricorio, Lycanroc, Minior, Tapus) ---
+    'oricorio': 'oricorio-baile',
+    'lycanroc': 'lycanroc-midday',
+    'wishiwashi': 'wishiwashi-solo',
+    'minior': 'minior-red-meteor',
+    'mimikyu': 'mimikyu-disguised',
+    'type: null': 'type-null',
+    'jangmo-o': 'jangmo-o',
+    'hakamo-o': 'hakamo-o',
+    'kommo-o': 'kommo-o',
+    'tapu koko': 'tapu-koko',
+    'tapu lele': 'tapu-lele',
+    'tapu bulu': 'tapu-bulu',
+    'tapu fini': 'tapu-fini',
+
+    // --- Galar (Darmanitan Galar, Urshifu, Toxtricity) ---
+    'darmanitan galar': 'darmanitan-galar-standard', // Caso crítico
+    'darmanitan galar zen': 'darmanitan-galar-zen',
+    'toxtricity': 'toxtricity-amped',
+    'eiscue': 'eiscue-ice',
+    'indeedee': 'indeedee-male',
+    'morpeko': 'morpeko-full-belly',
+    'urshifu': 'urshifu-single-strike',
+    'zacian': 'zacian', // Zacian base funciona
+    'zamazenta': 'zamazenta',
+    'eternatus': 'eternatus',
+    'sirfetch\'d': 'sirfetchd',
+    'mr. rime': 'mr-rime',
+
+    // --- Hisui (Sufijos especiales) ---
+    'basculegion': 'basculegion-male',
+    'enamorus': 'enamorus-incarnate',
+    'kleavor': 'kleavor', // Funciona directo
+    
+    // --- Paldea (Paradox y Tauros) ---
+    'tauros paldea': 'tauros-paldea-combat-breed', // El base de Paldea
+    'tauros paldea fuego': 'tauros-paldea-blaze-breed',
+    'tauros paldea agua': 'tauros-paldea-aqua-breed',
+    'oinkologne': 'oinkologne-male',
+    'maushold': 'maushold-family-of-four',
+    'squawkabilly': 'squawkabilly-green-plumage',
+    'palafin': 'palafin-zero',
+    'tatsugiri': 'tatsugiri-curly',
+    'dudunsparce': 'dudunsparce-two-segment',
+    'gimmighoul': 'gimmighoul-chest',
+    
+    // --- Paradox (Nombres compuestos) ---
+    'great tusk': 'great-tusk', 
+    'scream tail': 'scream-tail',
+    'brute bonnet': 'brute-bonnet',
+    'flutter mane': 'flutter-mane',
+    'slither wing': 'slither-wing',
+    'sandy shocks': 'sandy-shocks',
+    'roaring moon': 'roaring-moon',
+    'iron treads': 'iron-treads',
+    'iron bundle': 'iron-bundle',
+    'iron hands': 'iron-hands',
+    'iron jugulis': 'iron-jugulis',
+    'iron moth': 'iron-moth',
+    'iron thorns': 'iron-thorns',
+    'iron valiant': 'iron-valiant',
+    'walking wake': 'walking-wake',
+    'iron leaves': 'iron-leaves',
+    'gouging fire': 'gouging-fire',
+    'raging bolt': 'raging-bolt',
+    'iron boulder': 'iron-boulder',
+    'iron crown': 'iron-crown',
+    
+    // --- Treasures of Ruin ---
+    'wo-chien': 'wo-chien',
+    'chien-pao': 'chien-pao',
+    'ting-lu': 'ting-lu',
+    'chi-yu': 'chi-yu'
+};
+
+function normalizarNombrePokemon(nombre) {
+    if (!nombre) return 'unknown';
+    
+    // 1. Limpieza básica
+    let limpio = nombre.toLowerCase().trim();
+
+    // 2. Verificar diccionario manual (Prioridad Absoluta)
+    if (EXCEPCIONES_API[limpio]) {
+        return EXCEPCIONES_API[limpio];
+    }
+
+    // 3. Transformaciones automáticas (Regex)
+    // Esto maneja automáticamente cosas como "Rattata Alola" -> "rattata-alola"
+    // sin tener que ponerlos todos en el diccionario.
+    let procesado = limpio
+        .replace(/\./g, '')       // Mr. Mime -> mr mime
+        .replace(/'/g, '')        // Farfetch'd -> farfetchd
+        .replace(/:/g, '')        // Type: Null -> type null
+        .replace(/♀/g, '-f')      // Símbolos
+        .replace(/♂/g, '-m')
+        .replace(/é/g, 'e')       // Tildes
+        .replace(/\s+/g, '-');    // Espacios -> Guiones
+
+    // 4. Reglas especiales de sufijos comunes si el usuario los escribe
+    // Si el usuario escribe "Charizard Mega X", esto lo convierte a formato API
+    if (procesado.includes('-mega-x')) return procesado; 
+    if (procesado.includes('-mega-y')) return procesado;
+    if (procesado.includes('-mega')) return procesado;
+    if (procesado.includes('-gmax')) return procesado;
+    if (procesado.includes('-alola')) return procesado;
+    if (procesado.includes('-galar')) return procesado;
+    if (procesado.includes('-hisui')) return procesado;
+    if (procesado.includes('-paldea')) return procesado;
+
+    return procesado;
+}
 
 /* ========================================================= */
 /* 2. EFECTOS VISUALES (Typing Animation)                    */
@@ -556,6 +711,9 @@ if (formCaptura) {
     formCaptura.addEventListener('submit', async (e) => {
         e.preventDefault();
         const especieInput = document.getElementById('cap-especie').value.toLowerCase().trim();
+        // 2. NORMALIZAR ANTES DE LLAMAR A LA API
+        const especieNormalizada = normalizarNombrePokemon(inputUsuario);
+
         const mote = document.getElementById('cap-mote').value;
         const nivel = document.getElementById('cap-nivel').value;
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
@@ -565,7 +723,7 @@ if (formCaptura) {
         btnSubmit.disabled = true;
 
         try {
-            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${especieInput}`);
+            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${especieNormalizada}`);
             if (!pokeRes.ok) throw new Error("Pokemon no encontrado");
             const pokeData = await pokeRes.json();
             
