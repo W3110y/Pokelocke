@@ -341,11 +341,13 @@ async function cargarDashboard() {
                                 columnaMedallas = `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
                             }
 
-                            // Botones de Host (Solo visibles si eres Host)
+                            // AÑADIMOS LA NUEVA LÓGICA DE DOS BOTONES (Solo para Host)
                             const controlesWins = soyHost ? `
-                                <button class="btn btn-outline-warning btn-sm p-0 px-1 ms-1 border-0" onclick="sumarVictoria('${j._id}')">
-                                    <i class="bi bi-caret-up-fill"></i>
-                                </button>` : '';
+                                <div class="d-inline-flex ms-1 align-items-center bg-dark rounded border border-secondary" style="transform: scale(0.85);">
+                                    <button class="btn btn-sm btn-link text-white-50 p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', -1)">-</button>
+                                    <span class="text-white border-start border-end border-secondary px-2" style="font-size: 0.9em;">W</span>
+                                    <button class="btn btn-sm btn-link text-warning p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', 1)">+</button>
+                                </div>` : '';
 
                             return `
                             <tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;">
@@ -821,8 +823,23 @@ async function cambiarMedallas(idJugador, accion) {
 async function cambiarVidas(id, c) {
     try { const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/vidas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entrenadorId: id, cambio: c }) }); if (res.ok) cargarDashboard(); } catch (e) { console.error(e); }
 }
-async function sumarVictoria(id) {
-    try { const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/victoria', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entrenadorId: id }) }); if (res.ok) cargarDashboard(); } catch (e) { console.error(e); }
+/* FUNCIÓN PARA CAMBIAR VICTORIAS (WINS) */
+async function cambiarVictorias(idJugador, accion) {
+    try {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/victoria', { // Ajusta a tu URL si estás en prod
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: idJugador, accion: accion })
+        });
+
+        if (res.ok) {
+            await cargarDashboard(); // Recargamos para ver el cambio
+        } else {
+            console.error("Error al actualizar victorias");
+        }
+    } catch (e) {
+        console.error(e);
+    }
 }
 async function borrarSala() {
     const u = JSON.parse(localStorage.getItem('usuario_pokelocke'));

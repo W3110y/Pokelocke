@@ -176,11 +176,26 @@ router.put('/medallas', async (req, res) => {
 });
 
 router.put('/victoria', async (req, res) => {
-    const { entrenadorId } = req.body;
+    const { id, accion } = req.body; // accion: 1 (sumar) o -1 (restar)
+
     try {
-        const entrenador = await Entrenador.findByIdAndUpdate(entrenadorId, { $inc: { victorias: 1 } }, { new: true });
-        res.json({ mensaje: "Victoria registrada", victorias: entrenador.victorias });
-    } catch (error) { res.status(500).json({ mensaje: "Error victoria" }); }
+        const jugador = await Entrenador.findById(id);
+        if (!jugador) return res.status(404).json({ mensaje: "Jugador no encontrado" });
+
+        // Calculamos nueva cantidad
+        let nuevasWins = (jugador.victorias || 0) + accion;
+        
+        // Límite: No menos de 0
+        if (nuevasWins < 0) nuevasWins = 0;
+
+        jugador.victorias = nuevasWins;
+        await jugador.save();
+
+        res.json({ mensaje: "Victorias actualizadas", victorias: nuevasWins });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: "Error del servidor" });
+    }
 });
 
 /* ========================================================= */
