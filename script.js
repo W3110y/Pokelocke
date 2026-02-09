@@ -657,45 +657,39 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
 /* 6. COMBATES Y FEED (combates.html / sala_grupo.html)           */
 /* ========================================================= */
 
-// Variable global para cachear jugadores y no pedirlos todo el rato
-let CACHE_JUGADORES = [];
+// Cache global para el modal de detalles
+let CACHE_JUGADORES_COMBAT = [];
 
 async function cargarPaginaCombates() {
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) { window.location.href = 'join.html'; return; }
     const usuario = JSON.parse(usuarioRaw);
     
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
+    // 1. URL CORRECTA: Pedimos a la ruta de combates, NO a la de sala
+    const API_COMBATES = `https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`; 
+    // 2. Necesitamos también los jugadores para poder ver sus equipos en el modal
+    const API_JUGADORES = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
 
     try {
-        // Pedimos TODO (Sala + Jugadores + Combates)
-        // Nota: Asumimos que el endpoint devuelve { sala, jugadores, combates (o historial) }
-        // Si tu endpoint /sala/:sala no devuelve combates, quizás debas pedir historial aparte.
-        // Por simplificación, usaré la lógica actual donde sacamos los jugadores para ver sus equipos.
-        
-        const response = await fetch(API_URL);
-        if (response.ok) {
-            const data = await response.json();
-            CACHE_JUGADORES = data.jugadores; // Guardamos para usar en el modal
+        // Hacemos las dos peticiones en paralelo
+        const [resCombates, resSala] = await Promise.all([
+            fetch(API_COMBATES),
+            fetch(API_JUGADORES)
+        ]);
+
+        if (resCombates.ok && resSala.ok) {
+            const combates = await resCombates.json();
+            const dataSala = await resSala.json();
             
-            // Renderizar Lista
-            // Nota: Aquí asumimos que tienes un endpoint para historial o que viene en data.sala.historial
-            // Si no lo tienes, deberías crearlo. 
-            // VOY A ASUMIR que existe data.combates o data.sala.historial
-            // Si no, simularé que leemos el feed si existe, o pediremos historial.
-            
-            // *CORRECCIÓN*: Si no tienes endpoint de historial separado, usaremos el feed que ya tenías
-            // en el dashboard pero expandido. 
-            // Si no tienes combates guardados en DB aparte, esto podría estar vacío.
-            // Para este ejemplo, usaré una lógica defensiva:
-            
-            const combates = data.sala.historial || []; // Asegúrate de que tu modelo Sala tenga historial
-            
+            // Guardamos jugadores en cache para el modal de detalles
+            CACHE_JUGADORES_COMBAT = dataSala.jugadores;
+
             const listContainer = document.getElementById('full-battles-list');
             const counter = document.getElementById('total-battles-count');
             
             if(counter) counter.innerText = `${combates.length} batallas`;
             
+            // Caso: Sin combates
             if (combates.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-5 text-white-50">
@@ -705,45 +699,51 @@ async function cargarPaginaCombates() {
                 return;
             }
 
-            // Ordenar: Más recientes primero
-            const combatesOrdenados = [...combates].reverse();
-
-            listContainer.innerHTML = combatesOrdenados.map((c, i) => {
+            // Renderizar Lista
+            listContainer.innerHTML = combates.map((c, i) => {
                 // Formatear fecha
-                const fecha = new Date(c.fecha).toLocaleDateString() + ' ' + new Date(c.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const fechaObj = new Date(c.fecha);
+                const fechaStr = fechaObj.toLocaleDateString();
+                const horaStr = fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
+                // Determinar colores
+                const colorP1 = c.ganador === c.entrenador1 ? 'text-warning' : 'text-white';
+                const colorP2 = c.ganador === c.entrenador2 ? 'text-warning' : 'text-white';
+
                 return `
-                <div class="glass-panel p-3 d-flex align-items-center justify-content-between gap-3 animate-slide-in" style="animation-delay: ${i * 0.05}s">
+                <div class="glass-panel p-3 mb-3 d-flex align-items-center justify-content-between gap-3 animate-slide-in" 
+                     style="animation-delay: ${i * 0.05}s; border: 1px solid rgba(255,255,255,0.05);">
                     
-                    <div class="d-flex align-items-center gap-3 flex-grow-1">
-                        <div class="d-flex flex-column align-items-center" style="min-width: 60px;">
-                            <span class="badge bg-white-10 text-white-50 mb-1">${fecha}</span>
-                            <i class="bi bi-swords text-secondary"></i>
-                        </div>
-                        
-                        <div class="d-flex align-items-center gap-3 w-100 justify-content-center">
-                            <span class="fw-bold ${c.ganador === c.jugador1 ? 'text-warning' : 'text-white'}">${c.jugador1}</span>
-                            <span class="small text-muted">VS</span>
-                            <span class="fw-bold ${c.ganador === c.jugador2 ? 'text-warning' : 'text-white'}">${c.jugador2}</span>
-                        </div>
+                    <div class="d-flex flex-column align-items-center justify-content-center text-white-50 pe-3 border-end border-white-10" style="min-width: 80px;">
+                        <span class="small fw-bold">${fechaStr}</span>
+                        <span class="small" style="font-size: 0.7rem;">${horaStr}</span>
+                    </div>
+                    
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center gap-4">
+                        <span class="fw-bold fs-5 ${colorP1} text-end" style="width: 40%;">${c.entrenador1}</span>
+                        <span class="badge bg-white-10 text-muted">VS</span>
+                        <span class="fw-bold fs-5 ${colorP2} text-start" style="width: 40%;">${c.entrenador2}</span>
                     </div>
 
-                    <div class="text-end px-3 border-start border-white-10" style="min-width: 120px;">
-                        <span class="d-block small text-muted">Ganador</span>
+                    <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
+                        <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
                         <span class="text-warning fw-bold"><i class="bi bi-trophy-fill me-1"></i>${c.ganador}</span>
                     </div>
 
-                    <button class="btn btn-sm btn-outline-info rounded-circle" style="width: 40px; height: 40px;" 
-                            onclick="verDetallesCombate('${c.jugador1}', '${c.jugador2}')" title="Ver Equipos">
+                    <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center" 
+                            style="width: 38px; height: 38px;" 
+                            onclick="verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')" 
+                            title="Ver Equipos">
                         <i class="bi bi-eye-fill"></i>
                     </button>
 
                 </div>`;
             }).join('');
-
         }
     } catch (e) {
-        console.error(e);
+        console.error("Error cargando combates:", e);
+        const listContainer = document.getElementById('full-battles-list');
+        if(listContainer) listContainer.innerHTML = '<div class="text-center text-danger py-4">Error de conexión con el servidor</div>';
     }
 }
 
@@ -837,9 +837,6 @@ async function cargarFeedCombates(salaNombre) {
             <div class="mb-3 pb-3 border-bottom border-white-10 fade-in-up">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="badge bg-white-10 text-white-50" style="font-size: 0.6rem;">${hora}</span>
-                    <button class="btn btn-link p-0 text-info" style="font-size: 0.8rem;" onclick="verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')">
-                        <i class="bi bi-eye-fill"></i>
-                    </button>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-25 rounded p-2">

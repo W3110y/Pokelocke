@@ -353,17 +353,20 @@ router.post('/combate', async (req, res) => {
 });
 
 // OBTENER HISTORIAL
+// RUTA: Obtener historial de combates (con límite opcional)
 router.get('/combates/:sala', async (req, res) => {
-    const { sala } = req.params;
-    const { limite } = req.query;
-
     try {
-        let query = Combate.find({ sala }).sort({ fecha: -1 });
-        if (limite) query = query.limit(parseInt(limite));
-        
-        const combates = await query.exec();
+        const { sala } = req.params;
+        const limite = parseInt(req.query.limite) || 0; // Si es 0, devuelve TODOS
+
+        // Buscamos en la colección Combate, no dentro de Sala
+        const combates = await Combate.find({ sala: sala })
+            .sort({ fecha: -1 }) // Los más nuevos primero
+            .limit(limite);
+
         res.json(combates);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ mensaje: "Error obteniendo combates" });
     }
 });
