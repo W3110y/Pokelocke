@@ -295,11 +295,12 @@ async function cargarDashboard() {
                 const selectP1 = document.getElementById('select-p1');
                 if (selectP1) selectP1.value = usuario.nombre;
                 
-                // --- NUEVO: ACTIVAR EL FORMULARIO ---
-                iniciarFormularioCombate();
-
-                // --- NUEVO: CARGAR EL FEED LATERAL ---
-                cargarFeedCombates(salaNombre);
+                // Cargar Feed (Asumimos que esta función existe o la implementamos luego)
+                if(typeof cargarFeedCombates === 'function') {
+                    cargarFeedCombates(salaNombre); 
+                } else {
+                    document.getElementById('recent-battles-list').innerHTML = '<small class="text-muted">Feed no disponible</small>';
+                }
 
                 leaderboardContainer.innerHTML = `
                 <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
@@ -656,154 +657,42 @@ window.moverPokemon = async function(pokeId, nuevoEstado) {
 /* ========================================================= */
 /* 6. COMBATES Y FEED (combates.html / sala_grupo.html)           */
 /* ========================================================= */
-
-// Cache global para el modal de detalles
-let CACHE_JUGADORES_COMBAT = [];
-
-/* IMPORTANTE: Asignamos la función a 'window' para que el HTML 
-   generado dinámicamente pueda encontrarla al hacer click.
-*/
-window.verDetallesCombate = function(p1Name, p2Name) {
-    console.log("Solicitando detalles para:", p1Name, "vs", p2Name); // Debug para ver si llega
-
-    // 1. Buscar los objetos jugador en la caché
-    const p1 = CACHE_JUGADORES_COMBAT.find(j => j.nombre === p1Name);
-    const p2 = CACHE_JUGADORES_COMBAT.find(j => j.nombre === p2Name);
-
-    // 2. Función helper interna para generar HTML
-    const generarHTMLPokemon = (jugador) => {
-        // Si no encontramos al jugador (quizás se cambió el nombre o se borró), mostramos aviso
-        if (!jugador) return '<div class="text-white-50 fst-italic small py-4">Datos no disponibles</div>';
-        
-        const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
-        let html = '';
-        
-        // Rellenar 6 huecos siempre para mantener la rejilla
-        for(let i=0; i<6; i++) {
-            const poke = equipo[i];
-            if(poke) {
-                html += `
-                <div class="poke-vs-card">
-                    <img src="${poke.imagen}" class="poke-vs-sprite" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                    <span class="poke-vs-name text-truncate" style="max-width: 100%;">${poke.mote || poke.especie}</span>
-                </div>`;
-            } else {
-                // Hueco vacío estilizado
-                html += `
-                <div class="poke-vs-card opacity-25" style="border-style: dashed; border-color: rgba(255,255,255,0.2);">
-                    <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1);"></div>
-                </div>`;
-            }
-        }
-        return html;
-    };
-
-    // 3. Rellenar el Modal
-    const modalEl = document.getElementById('battleDetailsModal');
-    if(!modalEl) return console.error("No se encuentra el modal 'battleDetailsModal'");
-
-    document.getElementById('modal-p1-name').innerText = p1Name;
-    document.getElementById('modal-p1-team').innerHTML = generarHTMLPokemon(p1);
-
-    document.getElementById('modal-p2-name').innerText = p2Name;
-    document.getElementById('modal-p2-team').innerHTML = generarHTMLPokemon(p2);
-
-    // 4. Abrir Modal usando Bootstrap
-    // Intentamos obtener una instancia existente o creamos una nueva
-    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-    modal.show();
-};
-
-async function cargarPaginaCombates() {
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) { window.location.href = 'join.html'; return; }
-    const usuario = JSON.parse(usuarioRaw);
-    
-    // 1. URL CORRECTA: Pedimos a la ruta de combates, NO a la de sala
-    const API_COMBATES = `https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`; 
-    // 2. Necesitamos también los jugadores para poder ver sus equipos en el modal
-    const API_JUGADORES = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
+async function cargarHistorialCompleto() {
+    const container = document.getElementById('timeline-content');
+    if (!container) return;
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
     try {
-        // Hacemos las dos peticiones en paralelo
-        const [resCombates, resSala] = await Promise.all([
-            fetch(API_COMBATES),
-            fetch(API_JUGADORES)
-        ]);
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
+        const combates = await res.json();
 
-        if (resCombates.ok && resSala.ok) {
-            const combates = await resCombates.json();
-            const dataSala = await resSala.json();
-            
-            // Guardamos jugadores en cache para el modal de detalles
-            CACHE_JUGADORES_COMBAT = dataSala.jugadores;
-
-            const listContainer = document.getElementById('full-battles-list');
-            const counter = document.getElementById('total-battles-count');
-            
-            if(counter) counter.innerText = `${combates.length} batallas`;
-            
-            // Caso: Sin combates
-            if (combates.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="text-center py-5 text-white-50">
-                        <i class="bi bi-wind display-1 opacity-25"></i>
-                        <p class="mt-3">Aún no se ha derramado sangre en la arena.</p>
-                    </div>`;
-                return;
-            }
-
-            // Renderizar Lista
-            listContainer.innerHTML = combates.map((c, i) => {
-                // Formatear fecha
-                const fechaObj = new Date(c.fecha);
-                const fechaStr = fechaObj.toLocaleDateString();
-                const horaStr = fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                // Determinar colores
-                const colorP1 = c.ganador === c.entrenador1 ? 'text-warning' : 'text-white';
-                const colorP2 = c.ganador === c.entrenador2 ? 'text-warning' : 'text-white';
-
-                return `
-                <div class="glass-panel p-3 mb-3 d-flex align-items-center justify-content-between gap-3 animate-slide-in" 
-                     style="animation-delay: ${i * 0.05}s; border: 1px solid rgba(255,255,255,0.05);">
-                    
-                    <div class="d-flex flex-column align-items-center justify-content-center text-white-50 pe-3 border-end border-white-10" style="min-width: 80px;">
-                        <span class="small fw-bold">${fechaStr}</span>
-                        <span class="small" style="font-size: 0.7rem;">${horaStr}</span>
-                    </div>
-                    
-                    <div class="flex-grow-1 d-flex align-items-center justify-content-center gap-4">
-                        <span class="fw-bold fs-5 ${colorP1} text-end" style="width: 40%;">${c.entrenador1}</span>
-                        <span class="badge bg-white-10 text-muted">VS</span>
-                        <span class="fw-bold fs-5 ${colorP2} text-start" style="width: 40%;">${c.entrenador2}</span>
-                    </div>
-
-                    <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
-                        <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
-                        <span class="text-warning fw-bold"><i class="bi bi-trophy-fill me-1"></i>${c.ganador}</span>
-                    </div>
-
-                    <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center" 
-                            style="width: 38px; height: 38px;" 
-                            onclick="verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')" 
-                            title="Ver Equipos">
-                        <i class="bi bi-eye-fill"></i>
-                    </button>
-
-                </div>`;
-            }).join('');
+        if (combates.length === 0) {
+            container.innerHTML = `<div class="glass-panel p-5 text-center"><h4 class="text-muted">Sin actividad</h4></div>`;
+            return;
         }
-    } catch (e) {
-        console.error("Error cargando combates:", e);
-        const listContainer = document.getElementById('full-battles-list');
-        if(listContainer) listContainer.innerHTML = '<div class="text-center text-danger py-4">Error de conexión con el servidor</div>';
-    }
-}
 
-// Ejecutar carga solo si estamos en la página correcta
-if (window.location.pathname.includes('combates.html')) {
-    document.addEventListener('DOMContentLoaded', cargarPaginaCombates);
+        container.innerHTML = combates.map(c => {
+            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            const esGanador1 = c.ganador === c.entrenador1;
+            const esGanador2 = c.ganador === c.entrenador2;
+            const generarIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="small text-muted">Sin datos</span>' : imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+
+            return `
+            <div class="battle-item fade-up"><div class="battle-dot"></div>
+                <div class="battle-card-full p-2">
+                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
+                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
+                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
+                    </div>
+                    <div class="combat-layout">
+                        <div class="combat-side"><span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span><div class="combat-team-grid">${generarIconos(c.equipo1Snapshot)}</div></div>
+                        <div class="vs-badge">VS</div>
+                        <div class="combat-side"><span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span><div class="combat-team-grid">${generarIconos(c.equipo2Snapshot)}</div></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) { container.innerHTML = '<p class="text-danger">Error cargando historial.</p>'; }
 }
 
 async function cargarFeedCombates(salaNombre) {
@@ -811,15 +700,11 @@ async function cargarFeedCombates(salaNombre) {
     if (!container) return;
 
     try {
-        // 1. Apuntamos al servidor local
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
-        
-        if (!res.ok) throw new Error("Error API");
-        
         const combates = await res.json();
 
         if (combates.length === 0) {
-            container.innerHTML = '<small class="text-white-50 d-block text-center py-4 fst-italic">Sin actividad reciente</small>';
+            container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad reciente</small>';
             return;
         }
 
@@ -827,40 +712,41 @@ async function cargarFeedCombates(salaNombre) {
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
             
-            // Datos seguros (Snapshots de los equipos)
+            // Datos seguros
             const equipo1 = c.equipo1Snapshot || [];
             const equipo2 = c.equipo2Snapshot || [];
 
-            // Generador de iconos mini (máximo 3 por espacio para que no sature el sidebar)
+            // Generador de iconos (Mostramos hasta 6)
             const generarIconosMini = (imgs) => {
-                if (!imgs || imgs.length === 0) return '<span class="text-white-50" style="font-size:0.6rem">-</span>';
-                // Mostramos solo 3 para que quepa en el sidebar estrecho
-                return imgs.slice(0, 3).map(url => `
-                    <img src="${url}" style="width: 18px; height: 18px; object-fit: contain; image-rendering: pixelated;">
-                `).join('');
+                if (!imgs || imgs.length === 0) return '<span class="text-muted" style="font-size:0.6rem">- Sin equipo -</span>';
+                return imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
             };
 
-            // Formato de fecha corto
-            const hora = new Date(c.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
             return `
-            <div class="mb-3 pb-3 border-bottom border-white-10 fade-in-up">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-white-10 text-white-50" style="font-size: 0.6rem;">${hora}</span>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-25 rounded p-2">
+            <div class="glass-panel mb-3 p-2 border border-secondary border-opacity-25 fade-in">
+                
+                <div class="combat-layout vertical">
                     
-                    <div class="text-center" style="width: 45%;">
-                        <div class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-white-50'}">${c.entrenador1}</div>
-                        <div class="d-flex justify-content-center mt-1">${generarIconosMini(equipo1)}</div>
+                    <div class="combat-side">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold ${esGanador1 ? 'text-warning' : 'text-muted'}">${c.entrenador1}</span>
+                            ${esGanador1 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
+                        </div>
+                        <div class="combat-team-grid">
+                            ${generarIconosMini(equipo1)}
+                        </div>
                     </div>
 
-                    <div class="text-muted small fw-bold">VS</div>
+                    <div class="vs-badge-vertical">VS</div>
 
-                    <div class="text-center" style="width: 45%;">
-                        <div class="small fw-bold text-truncate ${esGanador2 ? 'text-warning' : 'text-white-50'}">${c.entrenador2}</div>
-                        <div class="d-flex justify-content-center mt-1">${generarIconosMini(equipo2)}</div>
+                    <div class="combat-side">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold ${esGanador2 ? 'text-warning' : 'text-muted'}">${c.entrenador2}</span>
+                            ${esGanador2 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
+                        </div>
+                        <div class="combat-team-grid">
+                            ${generarIconosMini(equipo2)}
+                        </div>
                     </div>
 
                 </div>
@@ -869,70 +755,41 @@ async function cargarFeedCombates(salaNombre) {
 
     } catch (e) { 
         console.error("Error cargando feed:", e);
-        container.innerHTML = '<small class="text-danger d-block text-center">Error de conexión</small>';
+        container.innerHTML = '<small class="text-danger">Error de conexión</small>';
     }
 }
 
-function iniciarFormularioCombate() {
-    const formCombate = document.getElementById('form-combate');
-    if (!formCombate) return;
-
-    // Clonamos para eliminar listeners previos (Evita envíos dobles)
+const formCombate = document.getElementById('form-combate');
+if (formCombate) {
     const newForm = formCombate.cloneNode(true);
     formCombate.parentNode.replaceChild(newForm, formCombate);
-
     newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-        if(!usuarioRaw) return;
-        const usuario = JSON.parse(usuarioRaw);
-
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
         const p1 = document.getElementById('select-p1').value;
         const p2 = document.getElementById('select-p2').value;
         const ganador = document.getElementById('select-winner').value;
 
         if (p1 === p2) return alert("¡Un jugador no puede luchar contra sí mismo!");
 
-        // Feedback visual en el botón
         const btn = newForm.querySelector('button[type="submit"]');
-        const textoOriginal = btn.innerText;
-        btn.innerText = "Registrando..."; 
-        btn.disabled = true;
+        btn.innerText = "Registrando..."; btn.disabled = true;
 
         try {
-            // URL local
             const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/combate', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    sala: usuario.sala, 
-                    entrenador1: p1, 
-                    entrenador2: p2, 
-                    ganador: ganador 
-                })
+                body: JSON.stringify({ sala: usuario.sala, entrenador1: p1, entrenador2: p2, ganador: ganador })
             });
-
             if (res.ok) {
-                // Cerrar modal
-                const modalEl = document.getElementById('combatModal');
-                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modalInstance.hide();
-                
-                // Recargar datos
-                await cargarDashboard();
-                alert("✅ Combate registrado correctamente");
+                bootstrap.Modal.getInstance(document.getElementById('combatModal')).hide();
+                cargarDashboard();
+                alert("✅ Combate registrado");
             } else {
-                const err = await res.json();
-                alert("Error: " + err.mensaje);
+                alert("Error al registrar");
             }
-        } catch (error) { 
-            console.error(error);
-            alert("Error de conexión con el servidor"); 
-        } finally { 
-            btn.innerText = textoOriginal; 
-            btn.disabled = false; 
-        }
+        } catch (error) { alert("Error de conexión"); }
+        finally { btn.innerText = "Guardar Resultado"; btn.disabled = false; }
     });
 }
 
