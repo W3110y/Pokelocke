@@ -1,108 +1,141 @@
 
 /* ========================================================= */
-/* UTILIDADES GLOBALES (NORMALIZADOR DE NOMBRES)             */
+/* UTILIDADES GLOBALES (NORMALIZADOR MAESTRO DE NOMBRES)     */
 /* ========================================================= */
 
 const EXCEPCIONES_API = {
-    // --- Kanto & Johto (Símbolos y Formas) ---
+    // --- GEN 1 & 2 (Nidorans y Farfetch'd) ---
     'nidoran♀': 'nidoran-f',
-    'nidoran hk': 'nidoran-f', // Por si escriben hembra
-    'nidoran h': 'nidoran-f',
     'nidoran f': 'nidoran-f',
     'nidoran♂': 'nidoran-m',
     'nidoran m': 'nidoran-m',
     'farfetch\'d': 'farfetchd',
     'mr. mime': 'mr-mime',
-    'ho-oh': 'ho-oh',
-    
-    // --- Hoenn & Sinnoh (Formas Base que requieren sufijo) ---
+    'ho-oh': 'ho-oh', // Guión obligatorio
+
+    // --- GEN 3 (Deoxys y Castform) ---
     'deoxys': 'deoxys-normal',
+    'deoxys attack': 'deoxys-attack',
+    'deoxys defense': 'deoxys-defense',
+    'deoxys speed': 'deoxys-speed',
+    'castform': 'castform', // Base ok
+    'castform sunny': 'castform-sunny',
+    'castform rainy': 'castform-rainy',
+    'castform snowy': 'castform-snowy',
+
+    // --- GEN 4 (Sinnoh: Las formas base obligatorias) ---
     'wormadam': 'wormadam-plant',
-    'giratina': 'giratina-altered',
-    'shaymin': 'shaymin-land',
-    'rotom': 'rotom', // Rotom base sí funciona, sus formas son rotom-heat, etc.
+    'wormadam sandy': 'wormadam-sandy',
+    'wormadam trash': 'wormadam-trash',
     'mime jr.': 'mime-jr',
     'porygon-z': 'porygon-z',
-
-    // --- Unova (El caso Darmanitan y Genios) ---
-    'darmanitan': 'darmanitan-standard',       // API requiere -standard
-    'darmanitan zen': 'darmanitan-zen',
+    'giratina': 'giratina-altered', // OBLIGATORIO
+    'giratina origin': 'giratina-origin',
+    'shaymin': 'shaymin-land',      // OBLIGATORIO
+    'shaymin sky': 'shaymin-sky',
+    'rotom': 'rotom', // Base ok, las formas se arreglan con el replace de espacios
+    
+    // --- GEN 5 (Unova: Genios y Darmanitan) ---
     'basculin': 'basculin-red-striped',
-    'tornadus': 'tornadus-incarnate',
-    'thundurus': 'thundurus-incarnate',
-    'landorus': 'landorus-incarnate',
+    'darmanitan': 'darmanitan-standard', // OBLIGATORIO
+    'darmanitan zen': 'darmanitan-zen',
+    'tornadus': 'tornadus-incarnate',   // OBLIGATORIO
+    'tornadus therian': 'tornadus-therian',
+    'thundurus': 'thundurus-incarnate', // OBLIGATORIO
+    'thundurus therian': 'thundurus-therian',
+    'landorus': 'landorus-incarnate',   // OBLIGATORIO
+    'landorus therian': 'landorus-therian',
     'keldeo': 'keldeo-ordinary',
+    'keldeo resolute': 'keldeo-resolute',
     'meloetta': 'meloetta-aria',
+    'meloetta pirouette': 'meloetta-pirouette',
 
-    // --- Kalos (Tildes y Formas) ---
+    // --- GEN 6 (Kalos: Tamaños y Géneros) ---
     'flabébé': 'flabebe',
     'flabebe': 'flabebe',
-    'meowstic': 'meowstic-male',
-    'aegislash': 'aegislash-shield',
-    'pumpkaboo': 'pumpkaboo-average',
-    'gourgeist': 'gourgeist-average',
-    'zygarde': 'zygarde-50', // La forma base común
+    'meowstic': 'meowstic-male',        // OBLIGATORIO
+    'meowstic female': 'meowstic-female',
+    'aegislash': 'aegislash-shield',    // OBLIGATORIO
+    'aegislash blade': 'aegislash-blade',
+    'pumpkaboo': 'pumpkaboo-average',   // OBLIGATORIO
+    'gourgeist': 'gourgeist-average',   // OBLIGATORIO
+    'zygarde': 'zygarde-50',            // OBLIGATORIO
+    'zygarde 10': 'zygarde-10',
+    'zygarde complete': 'zygarde-complete',
 
-    // --- Alola (Oricorio, Lycanroc, Minior, Tapus) ---
+    // --- GEN 7 (Alola: Tapus, Oricorio, Lycanroc) ---
+    'type: null': 'type-null',
     'oricorio': 'oricorio-baile',
     'lycanroc': 'lycanroc-midday',
     'wishiwashi': 'wishiwashi-solo',
     'minior': 'minior-red-meteor',
     'mimikyu': 'mimikyu-disguised',
-    'type: null': 'type-null',
-    'jangmo-o': 'jangmo-o',
-    'hakamo-o': 'hakamo-o',
-    'kommo-o': 'kommo-o',
     'tapu koko': 'tapu-koko',
     'tapu lele': 'tapu-lele',
     'tapu bulu': 'tapu-bulu',
     'tapu fini': 'tapu-fini',
+    'jangmo-o': 'jangmo-o',
+    'hakamo-o': 'hakamo-o',
+    'kommo-o': 'kommo-o',
+    // Los "Alola" se arreglan solos con el replace (ej: Rattata Alola -> rattata-alola)
 
-    // --- Galar (Darmanitan Galar, Urshifu, Toxtricity) ---
-    'darmanitan galar': 'darmanitan-galar-standard', // Caso crítico
-    'darmanitan galar zen': 'darmanitan-galar-zen',
+    // --- GEN 8 (Galar: Urshifu, Toxtricity y el caos de Darmanitan) ---
     'toxtricity': 'toxtricity-amped',
+    'mr. rime': 'mr-rime',
+    'sirfetch\'d': 'sirfetchd',
     'eiscue': 'eiscue-ice',
     'indeedee': 'indeedee-male',
     'morpeko': 'morpeko-full-belly',
     'urshifu': 'urshifu-single-strike',
-    'zacian': 'zacian', // Zacian base funciona
+    'urshifu rapid': 'urshifu-rapid-strike',
+    'zacian': 'zacian', // API cambió, ahora 'zacian' es valido (hero)
     'zamazenta': 'zamazenta',
     'eternatus': 'eternatus',
-    'sirfetch\'d': 'sirfetchd',
-    'mr. rime': 'mr-rime',
+    'calyrex ice': 'calyrex-ice',
+    'calyrex shadow': 'calyrex-shadow',
+    // CASO CRÍTICO: Darmanitan Galar
+    'darmanitan galar': 'darmanitan-galar-standard', 
+    'darmanitan galar zen': 'darmanitan-galar-zen',
 
-    // --- Hisui (Sufijos especiales) ---
+    // --- HISUI (Legends Arceus) ---
     'basculegion': 'basculegion-male',
     'enamorus': 'enamorus-incarnate',
-    'kleavor': 'kleavor', // Funciona directo
-    
-    // --- Paldea (Paradox y Tauros) ---
-    'tauros paldea': 'tauros-paldea-combat-breed', // El base de Paldea
-    'tauros paldea fuego': 'tauros-paldea-blaze-breed',
-    'tauros paldea agua': 'tauros-paldea-aqua-breed',
+    'dialga origin': 'dialga-origin',
+    'palkia origin': 'palkia-origin',
+    // Los "Hisui" se arreglan solos (ej: Zorua Hisui -> zorua-hisui)
+
+    // --- GEN 9 (Paldea: El caos moderno) ---
     'oinkologne': 'oinkologne-male',
     'maushold': 'maushold-family-of-four',
     'squawkabilly': 'squawkabilly-green-plumage',
     'palafin': 'palafin-zero',
+    'palafin hero': 'palafin-hero',
     'tatsugiri': 'tatsugiri-curly',
     'dudunsparce': 'dudunsparce-two-segment',
     'gimmighoul': 'gimmighoul-chest',
-    
-    // --- Paradox (Nombres compuestos) ---
+    'wo-chien': 'wo-chien',
+    'chien-pao': 'chien-pao',
+    'ting-lu': 'ting-lu',
+    'chi-yu': 'chi-yu',
+    // Tauros Paldea tiene 3 formas
+    'tauros paldea': 'tauros-paldea-combat-breed', 
+    'tauros paldea fuego': 'tauros-paldea-blaze-breed',
+    'tauros paldea agua': 'tauros-paldea-aqua-breed',
+
+    // --- PARADOX (Nombres compuestos) ---
     'great tusk': 'great-tusk', 
     'scream tail': 'scream-tail',
     'brute bonnet': 'brute-bonnet',
     'flutter mane': 'flutter-mane',
     'slither wing': 'slither-wing',
     'sandy shocks': 'sandy-shocks',
-    'roaring moon': 'roaring-moon',
     'iron treads': 'iron-treads',
     'iron bundle': 'iron-bundle',
     'iron hands': 'iron-hands',
     'iron jugulis': 'iron-jugulis',
     'iron moth': 'iron-moth',
     'iron thorns': 'iron-thorns',
+    'roaring moon': 'roaring-moon',
     'iron valiant': 'iron-valiant',
     'walking wake': 'walking-wake',
     'iron leaves': 'iron-leaves',
@@ -110,48 +143,39 @@ const EXCEPCIONES_API = {
     'raging bolt': 'raging-bolt',
     'iron boulder': 'iron-boulder',
     'iron crown': 'iron-crown',
-    
-    // --- Treasures of Ruin ---
-    'wo-chien': 'wo-chien',
-    'chien-pao': 'chien-pao',
-    'ting-lu': 'ting-lu',
-    'chi-yu': 'chi-yu'
+    'hydrapple': 'hydrapple',
+    'archaludon': 'archaludon',
+    'terapagos': 'terapagos-normal'
 };
 
 function normalizarNombrePokemon(nombre) {
     if (!nombre) return 'unknown';
     
-    // 1. Limpieza básica
+    // 1. Limpieza inicial: Minúsculas y quitar espacios extra laterales
     let limpio = nombre.toLowerCase().trim();
 
-    // 2. Verificar diccionario manual (Prioridad Absoluta)
+    // 2. BUSQUEDA DIRECTA EN DICCIONARIO (Prioridad Máxima)
+    // Esto captura cosas como "Giratina" -> "giratina-altered"
     if (EXCEPCIONES_API[limpio]) {
         return EXCEPCIONES_API[limpio];
     }
 
-    // 3. Transformaciones automáticas (Regex)
-    // Esto maneja automáticamente cosas como "Rattata Alola" -> "rattata-alola"
-    // sin tener que ponerlos todos en el diccionario.
+    // 3. LIMPIEZA REGEX (Automática)
+    // Transforma lo que el usuario escribe a formato "slug"
     let procesado = limpio
         .replace(/\./g, '')       // Mr. Mime -> mr mime
         .replace(/'/g, '')        // Farfetch'd -> farfetchd
         .replace(/:/g, '')        // Type: Null -> type null
-        .replace(/♀/g, '-f')      // Símbolos
+        .replace(/♀/g, '-f')      // Simbolos
         .replace(/♂/g, '-m')
         .replace(/é/g, 'e')       // Tildes
-        .replace(/\s+/g, '-');    // Espacios -> Guiones
+        .replace(/\s+/g, '-');    // Espacios INTERNOS -> Guiones
 
-    // 4. Reglas especiales de sufijos comunes si el usuario los escribe
-    // Si el usuario escribe "Charizard Mega X", esto lo convierte a formato API
-    if (procesado.includes('-mega-x')) return procesado; 
-    if (procesado.includes('-mega-y')) return procesado;
-    if (procesado.includes('-mega')) return procesado;
-    if (procesado.includes('-gmax')) return procesado;
-    if (procesado.includes('-alola')) return procesado;
-    if (procesado.includes('-galar')) return procesado;
-    if (procesado.includes('-hisui')) return procesado;
-    if (procesado.includes('-paldea')) return procesado;
-
+    // 4. DETECCIÓN DE SUFIJOS (Para Megas y Gigamax)
+    // Si el usuario escribe "Charizard Mega X", el replace lo dejó como "charizard-mega-x", 
+    // lo cual es CORRECTO para la API, así que no tocamos nada.
+    // Solo devolvemos el procesado.
+    
     return procesado;
 }
 
