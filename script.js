@@ -2,9 +2,6 @@
 
 /* ========================================================= */
 /* 2. EFECTOS VISUALES (Typing Animation)                    */
-
-const Entrenador = require("./server/models/Entrenador");
-
 /* ========================================================= */
 const typingElement = document.getElementById("typing");
 if (typingElement) {
