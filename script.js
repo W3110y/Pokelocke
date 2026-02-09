@@ -729,58 +729,107 @@ async function cargarGestorEquipo() {
     }
 }
 
-// LÓGICA DE CAPTURA (Gen 8 Priority)
-const formCaptura = document.getElementById('form-captura');
-if (formCaptura) {
-    formCaptura.addEventListener('submit', async (e) => {
+/* ========================================================= */
+/* LÓGICA DE CAPTURA (CORREGIDA Y NORMALIZADA)               */
+/* ========================================================= */
+function iniciarCaptura() {
+    const formCaptura = document.getElementById('form-captura');
+    if (!formCaptura) return; // Si no estamos en la página de equipo, salimos.
+
+    // 1. Limpieza de Listeners previos (Evita que se envíe doble o no haga nada)
+    const newForm = formCaptura.cloneNode(true);
+    formCaptura.parentNode.replaceChild(newForm, formCaptura);
+
+    // 2. Añadir el evento al nuevo formulario limpio
+    newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const especieInput = document.getElementById('cap-especie').value.toLowerCase().trim();
-        // 2. NORMALIZAR ANTES DE LLAMAR A LA API
-        const especieNormalizada = normalizarNombrePokemon(inputUsuario);
+        
+        // ELEMENTOS DEL DOM
+        const inputEspecie = document.getElementById('cap-especie');
+        const inputMote = document.getElementById('cap-mote');
+        const inputNivel = document.getElementById('cap-nivel');
+        const btnSubmit = newForm.querySelector('button[type="submit"]');
+        
+        // DATOS BÁSICOS
+        const rawName = inputEspecie.value;
+        const mote = inputMote.value;
+        const nivel = inputNivel.value;
+        const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+        
+        if (!usuarioRaw) return alert("Error: Sesión no encontrada.");
+        const usuario = JSON.parse(usuarioRaw);
 
-        const mote = document.getElementById('cap-mote').value;
-        const nivel = document.getElementById('cap-nivel').value;
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-
-        const btnSubmit = formCaptura.querySelector('button[type="submit"]');
-        btnSubmit.innerText = "Buscando...";
+        // FEEDBACK VISUAL (Para que el usuario sepa que está pasando algo)
+        const textoOriginal = btnSubmit.innerText;
+        btnSubmit.innerText = "🔍 Buscando en la Pokédex...";
         btnSubmit.disabled = true;
 
         try {
-            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${especieNormalizada}`);
-            if (!pokeRes.ok) throw new Error("Pokemon no encontrado");
+            // ---------------------------------------------------------
+            // PASO CRÍTICO: NORMALIZACIÓN
+            // Convertimos "Darmanitan" -> "darmanitan-standard"
+            // ---------------------------------------------------------
+            const nombreApi = normalizarNombrePokemon(rawName);
+            console.log(`Buscando en API: ${rawName} -> ${nombreApi}`); // Debug en consola
+
+            // 1. PETICIÓN A POKEAPI
+            const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
+            
+            if (!pokeRes.ok) {
+                throw new Error(`Pokémon "${rawName}" no encontrado. Intenta con otro nombre.`);
+            }
+            
             const pokeData = await pokeRes.json();
             
+            // 2. SELECCIÓN DE IMAGEN (Prioridad: Gen 8 -> Gen 7 -> Default)
             const imagenUrl = pokeData.sprites.versions['generation-viii'].icons.front_default || 
                               pokeData.sprites.versions['generation-vii'].icons.front_default || 
                               pokeData.sprites.front_default;
-            const tipos = pokeData.types.map(t => t.type.name);
+            
+            // 3. GUARDADO EN NUESTRO SERVIDOR
+            // Nota: Usa tu URL correcta (localhost o render)
+            // Si estás probando en local, cambia esto a http://localhost:3000...
+            const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
 
-            const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon', {
+            btnSubmit.innerText = "💾 Guardando...";
+            
+            const serverRes = await fetch(API_BACKEND, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     entrenadorId: usuario._id,
-                    especie: pokeData.name,
-                    mote: mote,
+                    especie: pokeData.name, // Guardamos el nombre técnico (ej: darmanitan-standard)
+                    mote: mote || pokeData.name,
                     nivel: parseInt(nivel),
                     imagen: imagenUrl,
-                    tipos: tipos
+                    tipos: pokeData.types.map(t => t.type.name)
                 })
             });
 
-            if (res.ok) {
-                formCaptura.reset();
-                bootstrap.Modal.getInstance(document.getElementById('captureModal')).hide();
-                cargarGestorEquipo(); 
-                alert(`✅ ¡${mote || pokeData.name} atrapado!`);
+            if (serverRes.ok) {
+                // ÉXITO
+                newForm.reset(); // Limpiar formulario
+                
+                // Cerrar Modal Bootstrap
+                const modalEl = document.getElementById('captureModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if(modal) modal.hide();
+
+                // Recargar la lista de equipo visualmente
+                await cargarGestorEquipo(); 
+                
+                alert(`✅ ¡${mote || pokeData.name} capturado exitosamente!`);
             } else {
-                alert("Error al guardar");
+                const errorData = await serverRes.json();
+                throw new Error(errorData.mensaje || "Error al guardar en el servidor");
             }
+
         } catch (error) {
-            alert("Error: " + error.message);
+            console.error(error);
+            alert("❌ Error: " + error.message);
         } finally {
-            btnSubmit.innerText = "¡Atrapado!";
+            // RESTAURAR BOTÓN
+            btnSubmit.innerText = textoOriginal;
             btnSubmit.disabled = false;
         }
     });
@@ -1247,3 +1296,30 @@ function toggleTeamView(idJugador, btnElement) {
         }
     }
 }
+
+/* ========================================================= */
+/* INICIALIZADOR AUTOMÁTICO (FINAL DEL ARCHIVO)              */
+/* ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Si estamos en el Dashboard
+    if (document.getElementById('my-dashboard-panel')) {
+        cargarDashboard();
+    }
+    
+    // Si estamos en el Gestor de Equipo (equipo.html)
+    if (document.getElementById('active-team-grid')) {
+        cargarGestorEquipo(); // Carga los pokemons existentes
+        iniciarCaptura();     // <--- AÑADE ESTO: Activa el botón de capturar
+    }
+    
+    // Si estamos en Combates
+    if (document.getElementById('timeline-content')) {
+        cargarHistorialCompleto();
+    }
+    
+    // Si estamos en Grupos
+    if (document.getElementById('groups-grid')) {
+        cargarMisGrupos();
+    }
+});
