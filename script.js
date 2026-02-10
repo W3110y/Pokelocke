@@ -2,11 +2,6 @@
 /* 1. CONFIGURACIÓN Y UTILIDADES GLOBALES                                    */
 /* ========================================================================== */
 
-// DETECCIÓN AUTOMÁTICA DE ENTORNO (Local vs Producción)
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000' 
-    : 'https://pokelocke-8kjm.onrender.com';
-
 // DICCIONARIO MAESTRO DE NOMBRES (API SLUGS)
 const EXCEPCIONES_API = {
     // Kanto/Johto
@@ -140,7 +135,6 @@ function initFormulariosAcceso() {
     if (createForm) {
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = createForm.querySelector('button[type="submit"]');
             
             const formData = {
                 hostName: document.getElementById('host-name').value,
@@ -151,9 +145,12 @@ function initFormulariosAcceso() {
                 vidas: document.getElementById('party-lives').value 
             };
 
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/crear';
+
             try {
+                const btn = createForm.querySelector('button[type="submit"]');
                 btn.disabled = true; btn.innerText = "Creando...";
-                const response = await fetch(`${API_BASE}/api/juego/crear`, {
+                const response = await fetch(`${API_URL}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
@@ -167,11 +164,14 @@ function initFormulariosAcceso() {
                     guardarPartidaEnHistorial(data.entrenador, data.sala);
                     window.location.href = 'sala.html';
                 } else {
-                    throw new Error(data.mensaje);
+                    alert("❌ Error: " + (data.mensaje || "Error desconocido"));
+                    btn.disabled = false;
+                    btn.innerText = "Create Party";
                 }
             } catch (error) {
-                alert("❌ Error: " + error.message);
-                btn.disabled = false; btn.innerText = "Create Party";
+                console.error(error);
+                alert("❌ Error de conexión");
+                createForm.querySelector('button').disabled = false;
             }
         });
     }
@@ -187,13 +187,21 @@ function initFormulariosAcceso() {
                 sala: document.getElementById('partyName').value.trim()
             };
 
+            if (!formData.nombre || !formData.sala) return alert("Por favor rellena ambos campos");
+
+            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/unirse'; 
+
             try {
-                btn.disabled = true; btn.innerText = "Entrando...";
-                const response = await fetch(`${API_BASE}/api/juego/unirse`, {
+                const btn = joinForm.querySelector('button');
+                btn.disabled = true;
+                btn.innerText = "Entrando...";
+
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
+
                 const data = await response.json();
 
                 if (response.ok) {
@@ -204,18 +212,21 @@ function initFormulariosAcceso() {
                     }
                     window.location.href = 'sala_grupo.html';
                 } else {
-                    throw new Error(data.mensaje);
+                    alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
+                    btn.disabled = false;
+                    btn.innerText = "Join Party";
                 }
             } catch (error) {
-                alert("❌ Error: " + error.message);
-                btn.disabled = false; btn.innerText = "Join Party";
+                console.error(error);
+                alert("❌ Error de conexión");
+                joinForm.querySelector('button').disabled = false;
             }
         });
     }
 }
 
 /* ========================================================================== */
-/* 4. DASHBOARD (SALA.HTML)                                                  */
+/* 4. DASHBOARD (SALA_GRUPO.HTML)                                                  */
 /* ========================================================================== */
 async function cargarDashboard() {
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
@@ -234,9 +245,14 @@ async function cargarDashboard() {
     ponerCargador('leaderboard-container', 'Calculando ranking...');
     ponerCargador('recent-battles-list', 'Obteniendo historial...');
 
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
+
     try {
-        const response = await fetch(`${API_BASE}/api/juego/sala/${salaNombre}`);
-        if (!response.ok) throw new Error("Error al obtener datos de la sala");
+        const response = await fetch(API_URL);
+        if (response.status === 404) {
+            alert("⛔ LA SALA YA NO EXISTE");
+            window.location.href = 'groups.html';
+        }
 
         const data = await response.json(); 
         const infoSala = data.sala;
@@ -266,33 +282,51 @@ async function cargarDashboard() {
                 const equipoRival = jugador.pokemons.filter(p => p.estado === 'equipo');
                 let miniSlots = '';
                 for(let i=0; i<6; i++) {
-                    const p = equipoRival[i];
-                    if(p) {
-                        miniSlots += `<div class="mini-slot" title="${p.mote} (${p.especie})"><img src="${p.imagen}" class="mini-poke-icon"></div>`;
-                    } else {
-                        miniSlots += `<div class="mini-slot opacity-25"></div>`;
+                        const p = equipoRival[i];
+                        if(p) {
+                            miniSlots += `
+                            <div class="mini-slot" title="${p.mote} (${p.especie})">
+                                <img src="${p.imagen}" class="mini-poke-icon">
+                            </div>`;
+                        } else {
+                            miniSlots += `<div class="mini-slot opacity-25"></div>`;
+                        }
                     }
-                }
 
+                // Renderizamos la tarjeta + el panel oculto
                 return `
-                <div class="mb-2">
-                    <div class="d-flex align-items-center gap-2 p-2 rounded position-relative" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); z-index: 2;">
-                        <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" style="width:32px; height:32px; font-size: 0.8rem; filter: ${esMuerto ? 'grayscale(1)' : 'none'}">${jugador.nombre.charAt(0).toUpperCase()}</div>
-                        <div class="flex-grow-1 text-truncate">
-                            <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''} ${esMuerto ? 'text-decoration-line-through text-muted' : ''}">${jugador.nombre} ${isMe ? '(Tú)' : ''}</span>
-                            <div class="mt-1 d-flex align-items-center gap-2">
-                                ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : ''}
-                                ${esMuerto ? '<span class="badge bg-danger" style="font-size:0.6em;">ELIMINADO</span>' : ''}
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center gap-2 p-2 rounded position-relative" 
+                             style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); z-index: 2;">
+                            
+                            <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" 
+                                 style="width:32px; height:32px; font-size: 0.8rem; filter: ${esMuerto ? 'grayscale(1)' : 'none'}">
+                                ${jugador.nombre.charAt(0).toUpperCase()}
+                            </div>
+                            
+                            <div class="flex-grow-1 text-truncate">
+                                <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''} ${esMuerto ? 'text-decoration-line-through text-muted' : ''}">
+                                    ${jugador.nombre} ${isMe ? '(Tú)' : ''}
+                                </span>
+                                <div class="mt-1 d-flex align-items-center gap-2">
+                                    ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : ''}
+                                    ${esMuerto ? '<span class="badge bg-danger" style="font-size:0.6em;">ELIMINADO</span>' : ''}
+                                </div>
+                            </div>
+
+                            <button class="btn-toggle-team" onclick="toggleTeamView('${jugador._id}', this)" title="Ver equipo">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
+
+                        <div id="team-view-${jugador._id}" class="mini-team-container">
+                            <div class="mini-team-grid">
+                                ${miniSlots}
                             </div>
                         </div>
-                        <button class="btn-toggle-team" onclick="toggleTeamView('${jugador._id}', this)" title="Ver equipo"><i class="bi bi-chevron-down"></i></button>
-                    </div>
-                    <div id="team-view-${jugador._id}" class="mini-team-container">
-                        <div class="mini-team-grid">${miniSlots}</div>
-                    </div>
-                </div>`;
-            }).join('');
-        }
+                    </div>`;
+                }).join('');
+            }
 
         // C. Panel Central (Botón Equipo)
         const miUsuario = listaJugadores.find(u => u._id === usuario._id);
@@ -333,41 +367,87 @@ async function cargarDashboard() {
 
             leaderboardContainer.innerHTML = `
             <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
-                <thead><tr class="text-white-50 small border-bottom border-white-10 text-uppercase" style="font-size: 0.7rem;"><th class="ps-3">#</th><th>Entrenador</th><th class="text-center">Medallas</th><th class="text-center">Vidas</th><th class="text-center">Wins</th></tr></thead>
-                <tbody>
+                    <thead>
+                        <tr class="text-white-50 small border-bottom border-white-10 text-uppercase" style="font-size: 0.7rem;">
+                            <th class="ps-3">#</th>
+                            <th>Entrenador</th>
+                            <th class="text-center">Medallas</th>
+                            <th class="text-center">Vidas</th>
+                            <th class="text-center">Wins</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     ${ranking.map((j, i) => {
                         let lifeColor = j.vidas <= 1 ? 'text-danger' : 'text-success';
                         if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
                         const soyYo = j.nombre === usuario.nombre;
 
                         // Botones Medallas (Solo para mí)
-                        let colMedallas = soyYo ? 
-                            `<div class="d-flex justify-content-center gap-2"><button class="btn btn-sm btn-link text-white-50 p-0" onclick="cambiarMedallas('${j._id}', -1)"><i class="bi bi-dash-circle"></i></button><span class="text-warning fw-bold fs-6">${j.medallas || 0}</span><button class="btn btn-sm btn-link text-warning p-0" onclick="cambiarMedallas('${j._id}', 1)"><i class="bi bi-plus-circle-fill"></i></button></div>` 
-                            : `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
-
+                        let columnaMedallas = '';
+                            
+                            if (soyYo) {
+                                columnaMedallas = `
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <button class="btn btn-sm btn-link text-white-50 p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', -1)">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                    <span class="text-warning fw-bold fs-6">${j.medallas || 0}</span>
+                                    <button class="btn btn-sm btn-link text-warning p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', 1)">
+                                        <i class="bi bi-plus-circle-fill"></i>
+                                    </button>
+                                </div>`;
+                            } else {
+                                // Vista para otros jugadores (solo número)
+                                columnaMedallas = `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
+                            }
                         // Botones Wins (Solo Host)
-                        const controlesWins = soyHost ? `<div class="d-inline-flex ms-1 align-items-center bg-dark rounded border border-secondary" style="transform: scale(0.85);"><button class="btn btn-sm btn-link text-white-50 p-0 px-2" onclick="cambiarVictorias('${j._id}', -1)">-</button><span class="text-white border-start border-end border-secondary px-2" style="font-size: 0.9em;">W</span><button class="btn btn-sm btn-link text-warning p-0 px-2" onclick="cambiarVictorias('${j._id}', 1)">+</button></div>` : '';
+                        const controlesWins = soyHost ? `
+                                <div class="d-inline-flex ms-1 align-items-center bg-dark rounded border border-secondary" style="transform: scale(0.85);">
+                                    <button class="btn btn-sm btn-link text-white-50 p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', -1)">-</button>
+                                    <span class="text-white border-start border-end border-secondary px-2" style="font-size: 0.9em;">W</span>
+                                    <button class="btn btn-sm btn-link text-warning p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', 1)">+</button>
+                                </div>` : '';
 
-                        return `<tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;"><td class="fw-bold text-white-50 small ps-3">${i + 1}</td><td><div class="d-flex align-items-center gap-2"><div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div><span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">${j.nombre} ${soyYo ? '(Tú)' : ''}</span></div></td><td class="text-center">${colMedallas}</td><td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td><td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td></tr>`;
-                    }).join('')}
-                </tbody>
-            </table>`;
-        }
+                            return `
+                            <tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;">
+                                <td class="fw-bold text-white-50 small ps-3">${i + 1}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div>
+                                        <span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">
+                                            ${j.nombre} ${soyYo ? '(Tú)' : ''}
+                                        </span>
+                                    </div>
+                                </td>
+                                
+                                <td class="text-center">${columnaMedallas}</td>
+                                
+                                <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td>
+                                <td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>`;
+            }
 
         // E. Feed y Formulario
         cargarFeedCombates(salaNombre);
         initFormularioCombate(); // Inicializa el listener del modal de registro
 
         // F. Botón Borrar (Host)
-        const contAcciones = document.getElementById('host-actions-container');
-        if (contAcciones && infoSala.host === usuario.nombre) {
-            contAcciones.innerHTML = `<button class="btn btn-outline-danger btn-sm w-100 mt-2" onclick="borrarSala()"><i class="bi bi-trash-fill me-2"></i> Eliminar Sala</button>`;
-        }
-
+        const contenedorAcciones = document.getElementById('host-actions-container');
+            if (contenedorAcciones) {
+                contenedorAcciones.innerHTML = ''; 
+                if (infoSala.host === usuario.nombre) {
+                    const btnBorrar = document.createElement('button');
+                    btnBorrar.className = 'btn btn-outline-danger btn-sm w-100 mt-2 opacity-75 hover-opacity-100';
+                    btnBorrar.innerHTML = '<i class="bi bi-trash-fill me-2"></i> Eliminar Sala Permanentemente';
+                    btnBorrar.onclick = borrarSala;
+                    contenedorAcciones.appendChild(btnBorrar);
+                }
+            }
     } catch (error) { 
         console.error("Error dashboard:", error); 
-        const panel = document.getElementById('my-dashboard-panel');
-        if(panel) panel.innerHTML = `<div class="text-center text-danger p-4">Error de conexión con la sala.</div>`;
     }
 }
 
@@ -389,8 +469,8 @@ async function cargarGestorEquipo() {
     activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando...</p></div></div>';
     
     try {
-        const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
-        if (!res.ok) throw new Error("Error fetching data");
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        if (!res.ok) throw new Error("Error servidor");
         const data = await res.json();
         
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
@@ -527,8 +607,10 @@ function iniciarCaptura() {
                               pokeData.sprites.versions['generation-vii'].icons.front_default || 
                               pokeData.sprites.front_default;
 
+            const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
+
             btnSubmit.innerText = "💾 Guardando...";
-            const serverRes = await fetch(`${API_BASE}/api/juego/pokemon`, {
+            const serverRes = await fetch(`${API_BACKEND}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -577,9 +659,10 @@ window.evolucionarPokemon = async function(idPokemon, especieActual) {
 
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
+        const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
         // 2. Enviar actualización parcial (Solo especie, imagen y tipos)
         // El resto (mote, nivel, objeto) se mantiene en el servidor si la ruta es PUT parcial.
-        const res = await fetch(`${API_BASE}/api/juego/pokemon`, {
+        const res = await fetch(`${API_BACKEND}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -613,8 +696,10 @@ window.guardarEdicionInline = async function(event, id, especieOriginal) {
     const txt = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true;
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
+    const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon';
+
     try {
-        const res = await fetch(`${API_BASE}/api/juego/pokemon`, {
+        const res = await fetch(`${API_BACKEND}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -635,15 +720,17 @@ window.guardarEdicionInline = async function(event, id, especieOriginal) {
 
 window.moverPokemon = async function(pokeId, nuevoEstado) {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+    const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon';
     try {
-        const res = await fetch(`${API_BASE}/api/juego/pokemon/mover`, {
+        const res = await fetch(`${API_BACKEND}/mover`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ entrenadorId: usuario._id, pokemonId: pokeId, nuevoEstado: nuevoEstado })
         });
         if (res.ok) cargarGestorEquipo();
-        else alert("Error movimiento");
-    } catch (e) { alert("Error de conexión"); }
+        else { const d = await res.json(); alert("⚠️ " + d.mensaje); }
+    } catch (e) { alert("Error de conexión."); }
 };
 
 /* ========================================================================== */
@@ -667,7 +754,7 @@ function initFormularioCombate() {
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
         try {
-            const res = await fetch(`${API_BASE}/api/juego/combate`, {
+            const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combate`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
@@ -685,12 +772,50 @@ function initFormularioCombate() {
     });
 }
 
+async function cargarHistorialCompleto() {
+    const container = document.getElementById('timeline-content');
+    if (!container) return;
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+    try {
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
+        const combates = await res.json();
+
+        if (combates.length === 0) {
+            container.innerHTML = `<div class="glass-panel p-5 text-center"><h4 class="text-muted">Sin actividad</h4></div>`;
+            return;
+        }
+
+        container.innerHTML = combates.map(c => {
+            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            const esGanador1 = c.ganador === c.entrenador1;
+            const esGanador2 = c.ganador === c.entrenador2;
+            const generarIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="small text-muted">Sin datos</span>' : imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+
+            return `
+            <div class="battle-item fade-up"><div class="battle-dot"></div>
+                <div class="battle-card-full p-2">
+                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
+                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
+                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
+                    </div>
+                    <div class="combat-layout">
+                        <div class="combat-side"><span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span><div class="combat-team-grid">${generarIconos(c.equipo1Snapshot)}</div></div>
+                        <div class="vs-badge">VS</div>
+                        <div class="combat-side"><span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span><div class="combat-team-grid">${generarIconos(c.equipo2Snapshot)}</div></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) { container.innerHTML = '<p class="text-danger">Error cargando historial.</p>'; }
+}
+
 async function cargarFeedCombates(salaNombre) {
     const container = document.getElementById('recent-battles-list');
     if (!container) return;
 
     try {
-        const res = await fetch(`${API_BASE}/api/juego/combates/${salaNombre}?limite=3`);
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
         const combates = await res.json();
 
         if (combates.length === 0) {
@@ -711,7 +836,6 @@ async function cargarFeedCombates(salaNombre) {
             <div class="mb-3 pb-3 border-bottom border-white-10 fade-in-up">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="badge bg-white-10 text-white-50" style="font-size: 0.6rem;">${hora}</span>
-                    <button class="btn btn-link p-0 text-info" style="font-size: 0.8rem;" onclick="window.verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')"><i class="bi bi-eye-fill"></i></button>
                 </div>
                 <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-25 rounded p-2">
                     <div class="text-center" style="width: 45%;"><div class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-white-50'}">${c.entrenador1}</div><div class="d-flex justify-content-center mt-1">${genIconos(equipo1)}</div></div>
@@ -720,9 +844,13 @@ async function cargarFeedCombates(salaNombre) {
                 </div>
             </div>`;
         }).join('');
-    } catch(e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error cargando feed:", e);
+        container.innerHTML = '<small class="text-danger">Error de conexión</small>';
+    }
 }
 
+// Funcion no usada actualmente
 window.verDetallesCombate = function(p1Name, p2Name) {
     // Usamos caché de jugadores (o la de sala si venimos del dashboard)
     const lista = window.CACHE_JUGADORES_COMBAT || window.CACHE_JUGADORES_SALA || [];
@@ -761,9 +889,12 @@ window.verDetallesCombate = function(p1Name, p2Name) {
 let DB_MOVIMIENTOS_CACHE = {};
 async function inicializarDiccionarioMovimientos() {
     if(document.getElementById('datalist-moves')) return;
+
+    const API_BASE = 'https://pokelocke-8kjm.onrender.com';
+
     try {
         const res = await fetch(`${API_BASE}/api/datos/movimientos`);
-        if(!res.ok) return;
+        if(!res.ok) throw new Error("Error fetching moves");
         const movs = await res.json();
         movs.forEach(m => DB_MOVIMIENTOS_CACHE[m.nombreEsp] = m.nombreIng);
         
@@ -772,6 +903,7 @@ async function inicializarDiccionarioMovimientos() {
             const op = document.createElement('option'); op.value = m; dl.appendChild(op);
         });
         document.body.appendChild(dl);
+        console.log(`✅ Diccionario cargado: ${Object.keys(DB_MOVIMIENTOS_CACHE).length} movimientos.`);
     } catch(e) { console.error("Error cache movimientos", e); }
 }
 
@@ -783,6 +915,72 @@ function inicializarDatalists() {
         const op = document.createElement('option'); op.value = o; dl.appendChild(op);
     });
     document.body.appendChild(dl);
+}
+
+async function exportarShowdown() {
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return;
+    const usuario = JSON.parse(usuarioRaw);
+
+    try {
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const data = await res.json();
+        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
+
+        if (equipo.length === 0) return alert("Equipo vacío");
+
+        // Diccionario Naturalezas (Ya lo tenías)
+        const natMap = { "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid", "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy", "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty", "Floja": "Lax", "Osada": "Bold" };
+
+        let txt = "";
+
+        equipo.forEach(p => {
+            // 1. TRADUCCIÓN DE OBJETO
+            // Buscamos en DB_OBJETOS. Si no está, usamos el texto original.
+            // .trim() quita espacios accidentales.
+            const objEspanol = (p.objeto || "").trim();
+            const objIngles = DB_OBJETOS[objEspanol] || objEspanol; 
+
+            // Construir línea 1: Mote (Especie) @ Objeto
+            let linea1 = "";
+            if (p.mote && p.mote !== p.especie) {
+                linea1 = `${p.mote} (${p.especie})`; // Showdown asume que la especie está en inglés por defecto si viene de API, si no, habría que traducir especie también, pero la API suele dar nombres universales o ingleses en 'species.name'.
+            } else {
+                linea1 = p.especie;
+            }
+            if (objIngles) linea1 += ` @ ${objIngles}`;
+            
+            txt += `${linea1}\n`;
+            txt += `Level: ${p.nivel}\n`;
+            
+            if (p.naturaleza && natMap[p.naturaleza]) {
+                txt += `${natMap[p.naturaleza]} Nature\n`;
+            }
+
+            // 2. TRADUCCIÓN DE ATAQUES
+            if (p.ataques) {
+                p.ataques.forEach(move => {
+                    if (move && move.trim() !== "") {
+                        const moveEsp = move.trim();
+                        // Buscamos traducción, si no existe, dejamos el original
+                        // Antes: const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
+                        // Ahora:
+                        const moveEng = DB_MOVIMIENTOS_CACHE[moveEsp] || moveEsp;
+                        txt += `- ${moveEng}\n`;
+                    }
+                });
+            }
+            txt += "\n";
+        });
+
+        await navigator.clipboard.writeText(txt);
+        alert("✅ Copiado al portapapeles (Traducido al Inglés)");
+
+    } catch (e) { 
+        console.error(e);
+        alert("Error exportando: " + e.message); 
+    }
 }
 
 // Helpers para Typing
@@ -800,21 +998,56 @@ function initTypingEffect(el) {
     type();
 }
 
-// Helpers Vidas/Medallas/Wins
-async function cambiarMedallas(id, c) { callUpdate(id, c, 'medallas'); }
-async function cambiarVictorias(id, c) { callUpdate(id, c, 'victorias'); } // Nota: La ruta en backend debe ser /jugador/victorias
-async function cambiarVidas(id, c) { callUpdate(id, c, 'vidas'); } // Esta es calculada auto, pero por si acaso
-
-async function callUpdate(id, accion, tipo) {
+async function cambiarMedallas(idJugador, accion) {
     try {
-        const ruta = tipo === 'medallas' ? 'medallas' : (tipo === 'victorias' ? 'victorias' : 'vidas'); // Ajustar según rutas backend
-        // Como estandarizamos a /api/juego/jugador/medallas o /jugador/victorias
-        const res = await fetch(`${API_BASE}/api/juego/jugador/${ruta}`, {
-            method: 'PUT', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ id, accion })
+        // Bloqueo visual temporal (opcional)
+        document.body.style.cursor = 'wait';
+
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/medallas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: idJugador, accion: accion })
         });
-        if(res.ok) cargarDashboard();
-    } catch(e) { console.error(e); }
+
+        if (res.ok) {
+            // Si sale bien, recargamos el dashboard para ver el cambio
+            await cargarDashboard();
+        } else {
+            console.error("Error al actualizar medallas");
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+}
+async function cambiarVidas(id, c) {
+    try { 
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/vidas', { 
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ entrenadorId: id, cambio: c })
+         }); 
+         if (res.ok) cargarDashboard(); 
+        } catch (e) { console.error(e); }
+}
+/* FUNCIÓN PARA CAMBIAR VICTORIAS (WINS) */
+async function cambiarVictorias(idJugador, accion) {
+    try {
+        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/victoria', { // Ajusta a tu URL si estás en prod
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: idJugador, accion: accion })
+        });
+
+        if (res.ok) {
+            await cargarDashboard(); // Recargamos para ver el cambio
+        } else {
+            console.error("Error al actualizar victorias");
+        }
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function toggleTeamView(id, btn) {
@@ -830,6 +1063,9 @@ async function borrarSala() {
     const u = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     const s = JSON.parse(localStorage.getItem('sala_info'));
     if(!confirm(`¿Borrar sala ${s.nombre}?`)) return;
+
+    const API_BASE = 'https://pokelocke-8kjm.onrender.com';
+
     try {
         const res = await fetch(`${API_BASE}/api/juego/sala`, {
             method: 'DELETE', headers: {'Content-Type':'application/json'},
@@ -871,7 +1107,7 @@ function cargarMisGrupos() {
                              style="width: 50px; height: 50px; font-size: 1.5rem; font-weight: bold; color: white;">
                             ${s.sala.charAt(0).toUpperCase()}
                         </div>
-                        <span class="badge bg-white text-white border">
+                        <span class="badge bg-black text-white border">
                             <i class="bi bi-person-fill"></i> ${s.miNombre}
                         </span>
                     </div>
