@@ -1,36 +1,44 @@
-/* ========================================================= */
-/* 1. CORE: VARIABLES & BASE (Tipografía y Fondo)            */
-/* ========================================================= */
+/* ========================================================================== */
+/* 1. CORE: VARIABLES, FUENTES Y FONDO                                        */
+/* ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-    /* Colores Principales */
-    --primary-color: #6366f1; /* Indigo */
-    --accent-color: #ec4899;  /* Rosa */
-    --shadow-glow: rgba(99, 102, 241, 0.5);
-
-    /* Definición del Tema Único (Dark/Glass) */
-    --bg-deep: #0f172a;
+    /* Paleta de Colores */
+    --primary-color: #6366f1; /* Indigo Brillante */
+    --accent-color: #ec4899;  /* Rosa Neón */
+    --warning-color: #ffcb05; /* Amarillo Pokémon */
+    --bg-deep: #0f172a;       /* Azul Noche Profundo */
+    
+    /* Textos */
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     
-    /* Variables de Cristal */
+    /* Efectos de Cristal (Glassmorphism) */
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-blur: blur(16px);
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-    --card-hover-bg: rgba(30, 41, 59, 0.8);
+    --shadow-glow: rgba(99, 102, 241, 0.5);
+    
+    /* Interacción */
+    --card-hover-bg: rgba(30, 41, 59, 0.9);
 }
+
+/* Scrollbar Personalizado (Para que no salga blanca) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
 body {
     font-family: 'Outfit', sans-serif;
     color: var(--text-main);
     min-height: 100vh;
-    
-    /* FONDO ANIMADO (Único y Definitivo) */
     background: linear-gradient(-45deg, #1a1c2c, #4a1c40, #1c2c4a, #1a1c2c);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
     background-attachment: fixed;
+    overflow-x: hidden;
 }
 
 @keyframes gradientBG {
@@ -39,289 +47,252 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Parches para forzar textos claros en componentes de Bootstrap */
-h1, h2, h3, h4, h5, .card-title, .text-dark, .text-body {
-    color: var(--text-main) !important;
-}
+/* Overrides de Bootstrap para Modo Oscuro Forzado */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !important; }
 .text-muted { color: var(--text-muted) !important; }
+.modal-content { background: transparent; border: none; }
 
-/* ========================================================= */
-/* 2. COMPONENTES UI: TARJETAS Y PANELES                     */
-/* ========================================================= */
+/* ========================================================================== */
+/* 2. COMPONENTES UI: PANELES Y TARJETAS                                      */
+/* ========================================================================== */
 
-/* Paneles de Cristal Genéricos */
-.glass-panel, .btn-glass, .navbar {
+/* Panel de Cristal Base */
+.glass-panel, .btn-glass, .navbar, .card, .group-card {
     background: var(--glass-bg) !important;
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border) !important;
-}
-
-.glass-panel { border-radius: 12px; }
-
-/* Tarjetas Bootstrap Estándar (Dashboard) */
-.card, .group-card {
-    background: var(--glass-bg) !important;
-    border: var(--glass-border) !important;
-    color: var(--text-main);
     border-radius: 16px !important;
-    transition: transform 0.3s, box-shadow 0.3s;
+    color: var(--text-main);
 }
+
+/* Tarjetas Interactivas */
+.card, .group-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; }
 .card:hover, .group-card:hover {
     transform: translateY(-5px);
     background: var(--card-hover-bg) !important;
     border-color: var(--primary-color) !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
-/* NUEVA Tarjeta "Poke-Card" (Hub Principal) */
-.poke-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 3rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.poke-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Modales */
+/* Modal Estilizado */
 .glass-modal {
     background: rgba(15, 23, 42, 0.95) !important;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text-main);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border-radius: 20px;
 }
 
-/* ========================================================= */
-/* 3. NAVEGACIÓN Y DASHBOARD                                 */
-/* ========================================================= */
+/* ========================================================================== */
+/* 3. LAYOUT Y NAVEGACIÓN                                                     */
+/* ========================================================================== */
 
-/* Header Minimalista Flotante */
+/* Header Flotante */
 .minimal-header {
     position: fixed; top: 0; left: 0; width: 100%;
     padding: 20px 30px;
     display: flex; justify-content: space-between; align-items: center;
-    z-index: 1050; background: transparent;
-    pointer-events: none; /* Click-through */
+    z-index: 1050; pointer-events: none; /* Permite clicks a través */
 }
-.minimal-header .btn, .nav-btn { pointer-events: auto; z-index: 1051; }
+.minimal-header .nav-btn { pointer-events: auto; }
 
 .nav-btn {
     width: 45px; height: 45px; border-radius: 50%;
-    background: var(--glass-bg); backdrop-filter: var(--glass-blur);
-    border: var(--glass-border); color: var(--text-main);
+    background: var(--glass-bg); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2); color: white;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; text-decoration: none;
-    transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-size: 1.2rem; text-decoration: none; transition: all 0.3s;
 }
-.nav-btn:hover {
-    transform: scale(1.15); background: var(--primary-color);
-    color: white; box-shadow: 0 0 15px var(--shadow-glow);
-}
+.nav-btn:hover { background: var(--primary-color); transform: scale(1.1); box-shadow: 0 0 15px var(--primary-color); }
 
-/* Grid del Dashboard */
+/* Grid Principal (Sala) */
 .dashboard-container {
     display: grid;
-    grid-template-columns: 250px 1fr 250px;
+    grid-template-columns: 260px 1fr 280px; /* Sidebar Izq | Centro | Sidebar Der */
     gap: 20px;
     padding: 90px 20px 40px 20px;
-    max-width: 1600px; margin: 0 auto;
-    min-height: 100vh;
+    max-width: 1800px; margin: 0 auto;
+    height: 100vh; overflow: hidden; /* Fija la altura a la pantalla */
+}
+
+/* Contenido Scrollable dentro del Grid */
+.dashboard-container > aside, .dashboard-container > main {
+    overflow-y: auto; 
+    height: 100%; 
+    padding-right: 5px; /* Espacio para scrollbar */
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .dashboard-container { grid-template-columns: 1fr 300px; }
+    .sidebar-left { display: none; } /* Ocultar lista miembros en tablets pequeñas si quieres, o moverla */
 }
 @media (max-width: 992px) {
-    .dashboard-container { grid-template-columns: 1fr; padding: 80px 15px; }
+    .dashboard-container { 
+        display: flex; flex-direction: column; 
+        height: auto; overflow: visible;
+    }
 }
 
-/* ========================================================= */
-/* 4. FORMULARIOS E INPUTS (Estilo Pokédex)                  */
-/* ========================================================= */
+/* ========================================================================== */
+/* 4. FORMULARIOS (ESTILO POKÉDEX)                                            */
+/* ========================================================================== */
 
-/* Inputs Grandes (Login/Register) */
+/* Inputs Grandes (Login) */
 .poke-input-group { position: relative; margin-bottom: 2rem; }
 .poke-input {
     width: 100%; padding: 10px 0; font-size: 1.1rem; color: #fff;
     border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-    outline: none; background: transparent; transition: border-color 0.3s;
+    background: transparent; outline: none; transition: 0.3s;
 }
-.poke-input::placeholder { color: transparent; }
 .poke-label {
     position: absolute; top: 10px; left: 0; font-size: 1rem;
-    color: rgba(255, 255, 255, 0.5); pointer-events: none; transition: 0.3s ease all;
+    color: rgba(255, 255, 255, 0.5); pointer-events: none; transition: 0.3s;
 }
 .poke-input:focus ~ .poke-label, .poke-input:not(:placeholder-shown) ~ .poke-label {
-    top: -20px; font-size: 0.8rem; color: var(--primary-color);
-    font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+    top: -20px; font-size: 0.8rem; color: var(--primary-color); font-weight: 700;
 }
-.poke-input:focus { border-bottom: 2px solid var(--primary-color); }
+.poke-input:focus { border-bottom-color: var(--primary-color); }
 
-/* Inputs Pequeños (Editor de Equipo) */
+/* Inputs Pequeños (Editor) */
 .mini-input {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white; font-size: 0.75rem; padding: 2px 6px;
+    color: white; font-size: 0.8rem; padding: 4px 8px;
     width: 100%; border-radius: 4px;
 }
-.mini-input:focus { outline: none; border-color: var(--primary-color); background: rgba(255, 255, 255, 0.1); }
-.mini-form-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
+.mini-input:focus { border-color: var(--warning-color); outline: none; }
+.mini-form-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; }
 
-/* Botón Start (Amarillo) */
+/* Botón Start */
 .btn-start {
     background: linear-gradient(45deg, #ffcb05, #c7a008);
-    border: none; color: #212529; font-weight: 900;
+    border: none; color: #000; font-weight: 800;
     text-transform: uppercase; letter-spacing: 2px;
-    padding: 15px 30px; border-radius: 50px;
-    transition: all 0.3s; width: 100%;
-    box-shadow: 0 0 15px rgba(255, 203, 5, 0.4);
+    padding: 15px; border-radius: 50px; width: 100%;
+    box-shadow: 0 0 20px rgba(255, 203, 5, 0.3);
+    transition: 0.3s;
 }
-.btn-start:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(255, 203, 5, 0.6); color: #000; }
+.btn-start:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 203, 5, 0.6); }
 
-/* ========================================================= */
-/* 5. GESTIÓN DE EQUIPO Y BATALLAS                           */
-/* ========================================================= */
+/* ========================================================================== */
+/* 5. ELEMENTOS DE JUEGO (EQUIPO, PC, BATALLAS)                               */
+/* ========================================================================== */
 
-/* Barra de Equipo (Header Dashboard) */
+/* Barra de Equipo (Dashboard Main) */
 .party-bar-btn {
-    display: flex; justify-content: space-between; align-items: center;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
     background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50px; padding: 10px 20px; transition: all 0.3s ease;
-    cursor: pointer; text-decoration: none; width: 100%; max-width: 600px; margin: 0 auto;
+    border-radius: 12px; padding: 10px; transition: all 0.3s;
+    text-decoration: none; max-width: 600px; margin: 0 auto;
 }
 .party-bar-btn:hover {
-    background: rgba(99, 102, 241, 0.2); border-color: var(--primary-color);
-    transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    background: rgba(255, 255, 255, 0.05); border-color: var(--primary-color);
+    transform: translateY(-2px);
 }
-.party-slot { width: 60px; height: 50px; display: flex; align-items: center; justify-content: center; }
+.party-slot { 
+    aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; 
+    position: relative;
+}
 .party-icon {
-    width: 100%; height: 100%; object-fit: contain; object-position: center;
-    image-rendering: pixelated; filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
-    will-change: transform;
+    width: 100%; height: 100%; object-fit: contain; 
+    image-rendering: pixelated; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    transition: transform 0.2s;
 }
-.empty-shadow { width: 40px; height: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; }
-
-/* Tarjetas de Gestión (PC/Equipo) */
-.manage-card {
-    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px; padding: 15px; height: 100%;
-    transition: transform 0.2s; display: flex; flex-direction: column;
-    justify-content: space-between; align-items: center;
-}
-.manage-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--primary-color); }
-.manage-card img {
-    width: 80px !important; height: 60px !important;
-    object-fit: contain; object-position: center bottom;
-    image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); margin-bottom: 5px;
-}
-.slot-empty {
-    border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;
-    height: 100%; min-height: 160px; display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); background: rgba(0,0,0,0.1);
-}
-
-/* Acordeón de Edición */
-.edit-collapse-panel {
-    background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 10px; padding: 10px; border-radius: 0 0 12px 12px;
-}
-.btn-toggle-edit {
-    width: 100%; background: transparent; border: none;
-    border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-muted);
-    font-size: 0.8rem; padding: 5px 0; transition: all 0.2s;
-}
-.btn-toggle-edit:hover { background: rgba(255,255,255,0.05); color: white; }
-
-/* Estilos de Combate (Timeline) */
-.timeline-line {
-    position: absolute; left: 20px; top: 0; bottom: 0; width: 2px;
-    background: rgba(255, 255, 255, 0.1); z-index: 0;
-}
-.battle-item { position: relative; margin-bottom: 2rem; padding-left: 50px; z-index: 1; }
-.battle-dot {
-    position: absolute; left: 11px; top: 15px; width: 20px; height: 20px;
-    border-radius: 50%; background: var(--bg-deep);
-    border: 2px solid var(--primary-color); box-shadow: 0 0 10px var(--shadow-glow); z-index: 2;
-}
-.battle-card-full {
-    background: var(--glass-bg); border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px; padding: 15px; transition: transform 0.2s;
-}
-
-/* Layout Combate: Horizontal (Historial) */
-.combat-layout { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; }
-.combat-side { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.combat-team-grid {
-    display: flex; justify-content: center; flex-wrap: wrap; gap: 2px;
-    margin-top: 5px; background: rgba(0,0,0,0.2); padding: 4px;
-    border-radius: 20px; min-height: 35px;
-}
-.combat-poke-icon { width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5)); }
-.vs-badge { font-family: 'Impact', sans-serif; font-size: 1.2rem; color: var(--text-muted); font-style: italic; padding: 0 10px; }
-
-/* Layout Combate: Vertical (Sidebar) */
-.combat-layout.vertical { flex-direction: column; gap: 5px; padding: 5px 0; }
-.combat-layout.vertical .combat-side { width: 100%; }
-.combat-layout.vertical .vs-badge-vertical {
-    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
-    letter-spacing: 2px; margin: 2px 0; width: 100%; text-align: center; position: relative;
-}
-.combat-layout.vertical .vs-badge-vertical::before, .combat-layout.vertical .vs-badge-vertical::after {
-    content: ""; display: inline-block; width: 30px; height: 1px;
-    background: rgba(255, 255, 255, 0.1); vertical-align: middle; margin: 0 5px;
-}
-/* Iconos más pequeños en sidebar */
-.combat-layout.vertical .combat-poke-icon, .combat-layout.mini .combat-poke-icon { width: 24px; height: 24px; }
-
-/* ========================================================= */
-/* 6. ANIMACIONES Y UTILIDADES                               */
-/* ========================================================= */
-
-/* Entrada Suave (Fade Up) */
-.fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
-@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-
-/* Salto de Pokémon (Team Bar) */
+/* Animación de Salto (Compartida) */
 @keyframes pokemon-bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    50% { transform: translateY(-5px); }
 }
-.party-bar-btn:hover .party-icon { animation: pokemon-bounce 0.6s infinite; }
+.party-bar-btn:hover .party-icon { animation: pokemon-bounce 0.6s infinite ease-in-out; }
+/* Desfase para que no salten a la vez */
+.party-slot:nth-child(1) .party-icon { animation-delay: 0.0s; }
+.party-slot:nth-child(2) .party-icon { animation-delay: 0.1s; }
+.party-slot:nth-child(3) .party-icon { animation-delay: 0.2s; }
+.party-slot:nth-child(4) .party-icon { animation-delay: 0.3s; }
+.party-slot:nth-child(5) .party-icon { animation-delay: 0.4s; }
+.party-slot:nth-child(6) .party-icon { animation-delay: 0.5s; }
 
-/* Cargador */
-.loading-state {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 3rem 1rem; color: var(--text-muted); width: 100%; min-height: 150px; animation: fade-in 0.3s ease;
+/* Tarjetas de Gestión (PC/Editor) */
+.manage-card {
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; padding: 15px; height: 100%;
+    display: flex; flex-direction: column; justify-content: space-between;
 }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-.loading-state p { margin-top: 10px; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; animation: pulse 1.5s infinite; }
+.manage-card img { filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); }
 
-/* Icono Flotante */
-.floating-icon { font-size: 3rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; display: inline-block; }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+/* ========================================================================== */
+/* 6. MODAL DE DETALLES VS (NUEVO E IMPORTANTE)                               */
+/* ========================================================================== */
 
-/* ========================================================= */
-/* 7. MINI EQUIPO (VISOR DE RIVALES)                         */
-/* ========================================================= */
+.team-vs-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.team-vs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas x 2 filas */
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.poke-vs-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 90px;
+    transition: transform 0.2s;
+}
+.poke-vs-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+}
+
+.poke-vs-sprite {
+    width: 56px; height: 56px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+    /* Usamos la misma animación de rebote */
+    animation: pokemon-bounce 2s infinite ease-in-out;
+}
+/* Desfase aleatorio para naturalidad */
+.poke-vs-card:nth-child(odd) .poke-vs-sprite { animation-delay: 0.1s; }
+.poke-vs-card:nth-child(even) .poke-vs-sprite { animation-delay: 0.4s; }
+
+.poke-vs-name {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================================================== */
+/* 7. SIDEBAR Y MINI EQUIPOS (VISOR RIVALES)                                  */
+/* ========================================================================== */
 
 .mini-team-container {
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 10px;
+    padding: 8px;
     border-radius: 0 0 8px 8px;
-    margin-top: -5px; /* Para que pegue con la tarjeta de arriba */
+    margin-top: -4px; /* Pegado a la tarjeta superior */
     display: none; /* Oculto por defecto */
 }
 
-/* Rejilla de 3x2 o 6x1 dependiendo del espacio */
 .mini-team-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -329,37 +300,36 @@ h1, h2, h3, h4, h5, .card-title, .text-dark, .text-body {
 }
 
 .mini-slot {
-    width: 100%;
-    aspect-ratio: 1/1; /* Cuadrado perfecto */
+    aspect-ratio: 1/1;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    display: flex; align-items: center; justify-content: center;
 }
 
 .mini-poke-icon {
-    width: 90%;
-    height: 90%;
-    object-fit: contain;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+    width: 85%; height: 85%;
+    object-fit: contain; image-rendering: pixelated;
 }
 
-/* Botón de desplegar */
 .btn-toggle-team {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    transition: transform 0.3s ease, color 0.3s ease;
+    background: transparent; border: none; color: var(--text-muted);
+    transition: 0.3s;
 }
+.btn-toggle-team:hover { color: var(--primary-color); }
+.btn-toggle-team.active { transform: rotate(180deg); color: var(--primary-color); }
 
-.btn-toggle-team:hover {
-    color: var(--primary-color);
-}
+/* ========================================================================== */
+/* 8. ANIMACIONES Y UTILIDADES GENÉRICAS                                      */
+/* ========================================================================== */
 
-.btn-toggle-team.active {
-    transform: rotate(180deg);
-    color: var(--primary-color);
+.fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+.loading-state {
+    padding: 2rem; color: var(--text-muted); text-align: center;
+    width: 100%; display: flex; flex-direction: column; align-items: center;
 }

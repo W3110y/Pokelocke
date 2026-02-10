@@ -20,122 +20,112 @@
 </head>
 
 <body>
+    <!-- ============================================= -->
+    <!-- Header                                       -->
+    <!-- ============================================= -->
     <header class="minimal-header">
-        <a href="sala_grupo.html" class="nav-btn" title="Guardar y Volver">
+        <a href="sala_grupo.html" class="nav-btn" title="Volver a la Sala">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <h5 class="m-0 fw-bold text-uppercase text-muted" style="pointer-events: none;">Gestión de Equipo</h5>
-        <button class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#captureModal">
-            <i class="bi bi-vinyl"></i> Capturar
+        
+        <div class="position-absolute start-50 translate-middle-x mt-2 text-center" style="pointer-events: none;">
+            <h5 class="text-white-50 m-0 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 2px;">Centro Pokémon</h5>
+            <h2 class="text-white fw-bold m-0" style="text-shadow: 0 0 15px rgba(255, 203, 5, 0.5);">GESTIÓN</h2>
+        </div>
+
+        <button class="btn btn-start py-2 px-4 shadow-sm" style="width: auto; font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#captureModal">
+            <i class="bi bi-vinyl-fill me-2"></i> Capturar
         </button>
     </header>
 
-    <div class="container py-5 mt-4 fade-in">
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-end mb-3 px-2">
-                <div class="d-flex align-items-center gap-3">
-                    <h5 class="fw-bold m-0 text-warning"><i class="bi bi-backpack-fill"></i> Equipo Activo</h5>
-                    
-                    <button onclick="exportarShowdown()" class="btn btn-sm d-flex align-items-center gap-2" style="font-size: 0.8rem; border-color: rgba(255,255,255,0.2);">
-                        <i class="bi bi-file-earmark-code"></i> Copiar para Showdown
-                    </button>
+    <!-- ============================================= -->
+    <!-- MAIN CONTENT                                  -->
+    <!-- ============================================= -->
+    <section>
+    <main class="flex-grow-1 p-3" style="padding-top: 100px !important;">
+        <div class="container" style="max-width: 1200px;">
+
+            <div class="mb-5 fade-in-up delay-1">
+                <div class="d-flex justify-content-between align-items-end mb-3 px-2 border-bottom border-white-10 pb-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <h4 class="fw-bold m-0 text-warning"><i class="bi bi-backpack-fill me-2"></i>Equipo Activo</h4>
+                        <button onclick="exportarShowdown()" class="btn btn-sm btn-outline-light opacity-50 hover-opacity-100 py-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-clipboard-check me-1"></i> Copiar (Showdown)
+                        </button>
+                    </div>
+                    <span id="team-counter" class="badge bg-warning text-dark fw-bold fs-6">0/6</span>
                 </div>
                 
-                <span id="team-counter" class="badge bg-warning text-dark">0/6</span>
-            </div>
-            
-            <div class="glass-panel p-4">
-                <div id="active-team-grid" class="row g-3">
+                <div class="glass-panel p-4">
+                    <div id="active-team-grid" class="row g-4">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-warning" role="status"></div>
+                            <p class="text-muted mt-2">Abriendo Pokéballs...</p>
+                        </div>
                     </div>
-            </div>
-        </div>
-
-        <div class="mb-5">
-            <h5 class="fw-bold mb-3 px-2 text-primary"><i class="bi bi-pc-display"></i> Caja de PC</h5>
-            <div class="glass-panel p-4">
-                <div id="pc-box-grid" class="row g-2">
-                    </div>
-            </div>
-        </div>
-
-        <div class="opacity-75">
-            <h5 class="fw-bold mb-3 px-2 text-secondary"><i class="bi bi-emoji-dizzy-fill"></i> Cementerio</h5>
-            <div class="glass-panel p-4 border-secondary">
-                <div id="graveyard-grid" class="row g-2">
-                    </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="modal fade" id="captureModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-panel border-white-10">
-                <div class="modal-header border-bottom border-white-10">
-                    <h5 class="modal-title fw-bold">🎯 Nueva Captura</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+            </div>
+
+            <div class="mb-5 fade-in-up delay-2">
+                <h5 class="fw-bold mb-3 px-2 text-primary border-bottom border-white-10 pb-2">
+                    <i class="bi bi-pc-display me-2"></i>Caja de Almacenamiento
+                </h5>
+                <div class="glass-panel p-4 bg-opacity-50">
+                    <div id="pc-box-grid" class="row g-3">
+                        </div>
+                </div>
+            </div>
+
+            <div class="mb-5 fade-in-up delay-3 opacity-75">
+                <h5 class="fw-bold mb-3 px-2 text-secondary border-bottom border-white-10 pb-2">
+                    <i class="bi bi-emoji-dizzy-fill me-2"></i>Cementerio
+                </h5>
+                <div class="glass-panel p-4 border-secondary bg-transparent">
+                    <div id="graveyard-grid" class="row g-3">
+                        </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="modal fade" id="captureModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold text-white"><i class="bi bi-vinyl-fill me-2 text-danger"></i>Nueva Captura</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
                     <form id="form-captura">
-                        <div class="mb-3">
-                            <label class="small text-muted">Especie (Inglés)</label>
-                            <input type="text" id="cap-especie" class="form-control bg-dark text-white border-secondary" placeholder="Ej: Pikachu" required>
-                            <div class="form-text x-small">Buscaremos la imagen automáticamente.</div>
+                        <div class="mb-4">
+                            <label class="mini-form-label text-warning mb-1">Especie</label>
+                            <input type="text" id="cap-especie" class="form-control bg-dark text-white border-secondary" placeholder="Ej: Pikachu, Rattata Alola..." required autocomplete="off">
+                            <div class="form-text text-white-50 x-small mt-1"><i class="bi bi-info-circle me-1"></i>Escribe el nombre en inglés. Detectamos formas regionales automáticamente.</div>
                         </div>
-                        <div class="row">
-                            <div class="col-8 mb-3">
-                                <label class="small text-muted">Mote</label>
-                                <input type="text" id="cap-mote" class="form-control bg-dark text-white border-secondary" placeholder="Opcional">
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-8">
+                                <label class="mini-form-label mb-1">Mote (Opcional)</label>
+                                <input type="text" id="cap-mote" class="form-control bg-dark text-white border-secondary" placeholder="Apodo">
                             </div>
-                            <div class="col-4 mb-3">
-                                <label class="small text-muted">Nivel</label>
-                                <input type="number" id="cap-nivel" class="form-control bg-dark text-white border-secondary" value="5" min="1" max="100" required>
+                            <div class="col-4">
+                                <label class="mini-form-label mb-1">Nivel</label>
+                                <input type="number" id="cap-nivel" class="form-control bg-dark text-white border-secondary text-center fw-bold" value="5" min="1" max="100" required>
                             </div>
                         </div>
+
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success">¡Atrapado!</button>
+                            <button type="submit" class="btn btn-success fw-bold py-2 shadow-sm">
+                                <i class="bi bi-check-circle-fill me-2"></i>Registrar Captura
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-panel border-white-10">
-                <div class="modal-header border-bottom border-white-10">
-                    <h5 class="modal-title fw-bold">✏️ Editar Datos</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="form-editar">
-                        <input type="hidden" id="edit-id"> <div class="mb-3 text-center">
-                            <img id="edit-preview" src="" style="width:80px; height:80px;">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="small text-muted">Especie (Si evoluciona, cámbialo)</label>
-                            <input type="text" id="edit-especie" class="form-control bg-dark text-white border-secondary" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-8 mb-3">
-                                <label class="small text-muted">Mote</label>
-                                <input type="text" id="edit-mote" class="form-control bg-dark text-white border-secondary">
-                            </div>
-                            <div class="col-4 mb-3">
-                                <label class="small text-muted">Nivel</label>
-                                <input type="number" id="edit-nivel" class="form-control bg-dark text-white border-secondary" min="1" max="100" required>
-                            </div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 
     <!-- ============================================= -->
     <!-- FOOTER                                        -->

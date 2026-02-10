@@ -1,298 +1,199 @@
+/* ========================================================================== */
+/* 1. CONFIGURACIÓN Y UTILIDADES GLOBALES                                    */
+/* ========================================================================== */
 
-/* ========================================================= */
-/* UTILIDADES GLOBALES (NORMALIZADOR MAESTRO DE NOMBRES)     */
-/* ========================================================= */
+// DETECCIÓN AUTOMÁTICA DE ENTORNO (Local vs Producción)
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000' 
+    : 'https://pokelocke-8kjm.onrender.com';
 
+// DICCIONARIO MAESTRO DE NOMBRES (API SLUGS)
 const EXCEPCIONES_API = {
-    // --- GEN 1 & 2 (Nidorans y Farfetch'd) ---
-    'nidoran♀': 'nidoran-f',
-    'nidoran f': 'nidoran-f',
-    'nidoran♂': 'nidoran-m',
-    'nidoran m': 'nidoran-m',
-    'farfetch\'d': 'farfetchd',
-    'mr. mime': 'mr-mime',
-    'ho-oh': 'ho-oh', // Guión obligatorio
-
-    // --- GEN 3 (Deoxys y Castform) ---
-    'deoxys': 'deoxys-normal',
-    'deoxys attack': 'deoxys-attack',
-    'deoxys defense': 'deoxys-defense',
-    'deoxys speed': 'deoxys-speed',
-    'castform': 'castform', // Base ok
-    'castform sunny': 'castform-sunny',
-    'castform rainy': 'castform-rainy',
-    'castform snowy': 'castform-snowy',
-
-    // --- GEN 4 (Sinnoh: Las formas base obligatorias) ---
-    'wormadam': 'wormadam-plant',
-    'wormadam sandy': 'wormadam-sandy',
-    'wormadam trash': 'wormadam-trash',
-    'mime jr.': 'mime-jr',
-    'porygon-z': 'porygon-z',
-    'giratina': 'giratina-altered', // OBLIGATORIO
-    'giratina origin': 'giratina-origin',
-    'shaymin': 'shaymin-land',      // OBLIGATORIO
-    'shaymin sky': 'shaymin-sky',
-    'rotom': 'rotom', // Base ok, las formas se arreglan con el replace de espacios
-    
-    // --- GEN 5 (Unova: Genios y Darmanitan) ---
-    'basculin': 'basculin-red-striped',
-    'darmanitan': 'darmanitan-standard', // OBLIGATORIO
-    'darmanitan zen': 'darmanitan-zen',
-    'tornadus': 'tornadus-incarnate',   // OBLIGATORIO
-    'tornadus therian': 'tornadus-therian',
-    'thundurus': 'thundurus-incarnate', // OBLIGATORIO
-    'thundurus therian': 'thundurus-therian',
-    'landorus': 'landorus-incarnate',   // OBLIGATORIO
-    'landorus therian': 'landorus-therian',
-    'keldeo': 'keldeo-ordinary',
-    'keldeo resolute': 'keldeo-resolute',
-    'meloetta': 'meloetta-aria',
-    'meloetta pirouette': 'meloetta-pirouette',
-
-    // --- GEN 6 (Kalos: Tamaños y Géneros) ---
-    'flabébé': 'flabebe',
-    'flabebe': 'flabebe',
-    'meowstic': 'meowstic-male',        // OBLIGATORIO
-    'meowstic female': 'meowstic-female',
-    'aegislash': 'aegislash-shield',    // OBLIGATORIO
-    'aegislash blade': 'aegislash-blade',
-    'pumpkaboo': 'pumpkaboo-average',   // OBLIGATORIO
-    'gourgeist': 'gourgeist-average',   // OBLIGATORIO
-    'zygarde': 'zygarde-50',            // OBLIGATORIO
-    'zygarde 10': 'zygarde-10',
-    'zygarde complete': 'zygarde-complete',
-
-    // --- GEN 7 (Alola: Tapus, Oricorio, Lycanroc) ---
-    'type: null': 'type-null',
-    'oricorio': 'oricorio-baile',
-    'lycanroc': 'lycanroc-midday',
-    'wishiwashi': 'wishiwashi-solo',
-    'minior': 'minior-red-meteor',
-    'mimikyu': 'mimikyu-disguised',
-    'tapu koko': 'tapu-koko',
-    'tapu lele': 'tapu-lele',
-    'tapu bulu': 'tapu-bulu',
-    'tapu fini': 'tapu-fini',
-    'jangmo-o': 'jangmo-o',
-    'hakamo-o': 'hakamo-o',
-    'kommo-o': 'kommo-o',
-    // Los "Alola" se arreglan solos con el replace (ej: Rattata Alola -> rattata-alola)
-
-    // --- GEN 8 (Galar: Urshifu, Toxtricity y el caos de Darmanitan) ---
-    'toxtricity': 'toxtricity-amped',
-    'mr. rime': 'mr-rime',
-    'sirfetch\'d': 'sirfetchd',
-    'eiscue': 'eiscue-ice',
-    'indeedee': 'indeedee-male',
-    'morpeko': 'morpeko-full-belly',
-    'urshifu': 'urshifu-single-strike',
-    'urshifu rapid': 'urshifu-rapid-strike',
-    'zacian': 'zacian', // API cambió, ahora 'zacian' es valido (hero)
-    'zamazenta': 'zamazenta',
-    'eternatus': 'eternatus',
-    'calyrex ice': 'calyrex-ice',
-    'calyrex shadow': 'calyrex-shadow',
-    // CASO CRÍTICO: Darmanitan Galar
-    'darmanitan galar': 'darmanitan-galar-standard', 
+    // Kanto/Johto
+    'nidoran♀': 'nidoran-f', 'nidoran f': 'nidoran-f',
+    'nidoran♂': 'nidoran-m', 'nidoran m': 'nidoran-m',
+    'farfetch\'d': 'farfetchd', 'mr. mime': 'mr-mime', 'ho-oh': 'ho-oh',
+    // Hoenn/Sinnoh
+    'deoxys': 'deoxys-normal', 'wormadam': 'wormadam-plant',
+    'mime jr.': 'mime-jr', 'porygon-z': 'porygon-z',
+    'giratina': 'giratina-altered', 'shaymin': 'shaymin-land',
+    // Unova
+    'basculin': 'basculin-red-striped', 'darmanitan': 'darmanitan-standard',
+    'darmanitan zen': 'darmanitan-zen', 'tornadus': 'tornadus-incarnate',
+    'thundurus': 'thundurus-incarnate', 'landorus': 'landorus-incarnate',
+    'keldeo': 'keldeo-ordinary', 'meloetta': 'meloetta-aria',
+    // Kalos
+    'flabébé': 'flabebe', 'flabebe': 'flabebe', 'meowstic': 'meowstic-male',
+    'aegislash': 'aegislash-shield', 'pumpkaboo': 'pumpkaboo-average',
+    'gourgeist': 'gourgeist-average', 'zygarde': 'zygarde-50',
+    // Alola
+    'type: null': 'type-null', 'oricorio': 'oricorio-baile',
+    'lycanroc': 'lycanroc-midday', 'wishiwashi': 'wishiwashi-solo',
+    'minior': 'minior-red-meteor', 'mimikyu': 'mimikyu-disguised',
+    'tapu koko': 'tapu-koko', 'tapu lele': 'tapu-lele',
+    'tapu bulu': 'tapu-bulu', 'tapu fini': 'tapu-fini',
+    'jangmo-o': 'jangmo-o', 'hakamo-o': 'hakamo-o', 'kommo-o': 'kommo-o',
+    // Galar
+    'toxtricity': 'toxtricity-amped', 'mr. rime': 'mr-rime',
+    'sirfetch\'d': 'sirfetchd', 'eiscue': 'eiscue-ice',
+    'indeedee': 'indeedee-male', 'morpeko': 'morpeko-full-belly',
+    'urshifu': 'urshifu-single-strike', 'zacian': 'zacian',
+    'zamazenta': 'zamazenta', 'eternatus': 'eternatus',
+    'calyrex ice': 'calyrex-ice', 'calyrex shadow': 'calyrex-shadow',
+    'darmanitan galar': 'darmanitan-galar-standard',
     'darmanitan galar zen': 'darmanitan-galar-zen',
-
-    // --- HISUI (Legends Arceus) ---
-    'basculegion': 'basculegion-male',
-    'enamorus': 'enamorus-incarnate',
-    'dialga origin': 'dialga-origin',
-    'palkia origin': 'palkia-origin',
-    // Los "Hisui" se arreglan solos (ej: Zorua Hisui -> zorua-hisui)
-
-    // --- GEN 9 (Paldea: El caos moderno) ---
-    'oinkologne': 'oinkologne-male',
-    'maushold': 'maushold-family-of-four',
-    'squawkabilly': 'squawkabilly-green-plumage',
-    'palafin': 'palafin-zero',
-    'palafin hero': 'palafin-hero',
-    'tatsugiri': 'tatsugiri-curly',
-    'dudunsparce': 'dudunsparce-two-segment',
-    'gimmighoul': 'gimmighoul-chest',
-    'wo-chien': 'wo-chien',
-    'chien-pao': 'chien-pao',
-    'ting-lu': 'ting-lu',
-    'chi-yu': 'chi-yu',
-    // Tauros Paldea tiene 3 formas
-    'tauros paldea': 'tauros-paldea-combat-breed', 
+    // Hisui
+    'basculegion': 'basculegion-male', 'enamorus': 'enamorus-incarnate',
+    'dialga origin': 'dialga-origin', 'palkia origin': 'palkia-origin',
+    // Paldea
+    'oinkologne': 'oinkologne-male', 'maushold': 'maushold-family-of-four',
+    'squawkabilly': 'squawkabilly-green-plumage', 'palafin': 'palafin-zero',
+    'tatsugiri': 'tatsugiri-curly', 'dudunsparce': 'dudunsparce-two-segment',
+    'gimmighoul': 'gimmighoul-chest', 'wo-chien': 'wo-chien',
+    'chien-pao': 'chien-pao', 'ting-lu': 'ting-lu', 'chi-yu': 'chi-yu',
+    'tauros paldea': 'tauros-paldea-combat-breed',
     'tauros paldea fuego': 'tauros-paldea-blaze-breed',
     'tauros paldea agua': 'tauros-paldea-aqua-breed',
-
-    // --- PARADOX (Nombres compuestos) ---
-    'great tusk': 'great-tusk', 
-    'scream tail': 'scream-tail',
-    'brute bonnet': 'brute-bonnet',
-    'flutter mane': 'flutter-mane',
-    'slither wing': 'slither-wing',
-    'sandy shocks': 'sandy-shocks',
-    'iron treads': 'iron-treads',
-    'iron bundle': 'iron-bundle',
-    'iron hands': 'iron-hands',
-    'iron jugulis': 'iron-jugulis',
-    'iron moth': 'iron-moth',
-    'iron thorns': 'iron-thorns',
-    'roaring moon': 'roaring-moon',
-    'iron valiant': 'iron-valiant',
-    'walking wake': 'walking-wake',
-    'iron leaves': 'iron-leaves',
-    'gouging fire': 'gouging-fire',
-    'raging bolt': 'raging-bolt',
-    'iron boulder': 'iron-boulder',
-    'iron crown': 'iron-crown',
-    'hydrapple': 'hydrapple',
-    'archaludon': 'archaludon',
+    // Paradox
+    'great tusk': 'great-tusk', 'scream tail': 'scream-tail',
+    'brute bonnet': 'brute-bonnet', 'flutter mane': 'flutter-mane',
+    'slither wing': 'slither-wing', 'sandy shocks': 'sandy-shocks',
+    'iron treads': 'iron-treads', 'iron bundle': 'iron-bundle',
+    'iron hands': 'iron-hands', 'iron jugulis': 'iron-jugulis',
+    'iron moth': 'iron-moth', 'iron thorns': 'iron-thorns',
+    'roaring moon': 'roaring-moon', 'iron valiant': 'iron-valiant',
+    'walking wake': 'walking-wake', 'iron leaves': 'iron-leaves',
+    'gouging fire': 'gouging-fire', 'raging bolt': 'raging-bolt',
+    'iron boulder': 'iron-boulder', 'iron crown': 'iron-crown',
+    'hydrapple': 'hydrapple', 'archaludon': 'archaludon',
     'terapagos': 'terapagos-normal'
 };
 
 function normalizarNombrePokemon(nombre) {
     if (!nombre) return 'unknown';
-    
-    // 1. Limpieza inicial: Minúsculas y quitar espacios extra laterales
     let limpio = nombre.toLowerCase().trim();
 
-    // 2. BUSQUEDA DIRECTA EN DICCIONARIO (Prioridad Máxima)
-    // Esto captura cosas como "Giratina" -> "giratina-altered"
-    if (EXCEPCIONES_API[limpio]) {
-        return EXCEPCIONES_API[limpio];
-    }
+    if (EXCEPCIONES_API[limpio]) return EXCEPCIONES_API[limpio];
 
-    // 3. LIMPIEZA REGEX (Automática)
-    // Transforma lo que el usuario escribe a formato "slug"
+    // Reglas Regex Genéricas
     let procesado = limpio
         .replace(/\./g, '')       // Mr. Mime -> mr mime
         .replace(/'/g, '')        // Farfetch'd -> farfetchd
         .replace(/:/g, '')        // Type: Null -> type null
-        .replace(/♀/g, '-f')      // Simbolos
+        .replace(/♀/g, '-f')      // Símbolos
         .replace(/♂/g, '-m')
         .replace(/é/g, 'e')       // Tildes
-        .replace(/\s+/g, '-');    // Espacios INTERNOS -> Guiones
+        .replace(/\s+/g, '-');    // Espacios -> Guiones
 
-    // 4. DETECCIÓN DE SUFIJOS (Para Megas y Gigamax)
-    // Si el usuario escribe "Charizard Mega X", el replace lo dejó como "charizard-mega-x", 
-    // lo cual es CORRECTO para la API, así que no tocamos nada.
-    // Solo devolvemos el procesado.
-    
     return procesado;
 }
 
-/* ========================================================= */
-/* 2. EFECTOS VISUALES (Typing Animation)                    */
-/* ========================================================= */
-const typingElement = document.getElementById("typing");
-if (typingElement) {
-    const messages = [
-        "Begin your Pokémon journey",
-        "Group with friends",
-        "Track your battles",
-        "Analyze your stats",
-        "Become a Pokémon Master!"
-    ];
-    let msgIdx = 0, charIdx = 0;
+const ponerCargador = (id, msg) => { 
+    const el = document.getElementById(id); 
+    if (el) el.innerHTML = `<div class="loading-state"><div class="spinner-border text-primary"></div><p>${msg}</p></div>`; 
+};
 
-    function type() {
-        if (charIdx <= messages[msgIdx].length) {
-            typingElement.textContent = messages[msgIdx].substring(0, charIdx++);
-            setTimeout(type, 80);
-        } else {
-            setTimeout(erase, 1500);
-        }
-    }
-
-    function erase() {
-        if (charIdx >= 0) {
-            typingElement.textContent = messages[msgIdx].substring(0, charIdx--);
-            setTimeout(erase, 50);
-        } else {
-            msgIdx = (msgIdx + 1) % messages.length;
-            setTimeout(type, 300);
-        }
-    }
-    type();
-}
-
-/* ========================================================= */
-/* 3. GESTIÓN DE SALAS (Crear y Unirse)                      */
-/* ========================================================= */
+/* ========================================================================== */
+/* 2. INICIALIZADOR PRINCIPAL (CEREBRO)                                      */
+/* ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- CREAR SALA ---
+    // A. Pantalla de Inicio (Typing Effect)
+    const typingElement = document.getElementById("typing");
+    if (typingElement) initTypingEffect(typingElement);
+
+    // B. Crear/Unirse Sala
+    initFormulariosAcceso();
+
+    // C. Dashboard (Sala)
+    if (window.location.pathname.includes('sala.html')) {
+        cargarDashboard();
+    }
+
+    // D. Gestor de Equipo (PC/Captura/Evo)
+    if (document.getElementById('active-team-grid')) {
+        cargarGestorEquipo();
+        iniciarCaptura(); // Activa el botón del modal
+    }
+
+    // E. Historial de Combates
+    if (window.location.pathname.includes('combates.html')) {
+        cargarHistorialCompleto();
+    }
+
+    // F. Mis Grupos
+    if (document.getElementById('groups-grid')) {
+        cargarMisGrupos();
+    }
+
+    // G. Carga de Diccionarios (Segundo plano)
+    inicializarDiccionarioMovimientos();
+    inicializarDatalists();
+});
+
+/* ========================================================================== */
+/* 3. LÓGICA DE SALAS (CREAR / UNIRSE)                                       */
+/* ========================================================================== */
+function initFormulariosAcceso() {
+    // Crear Sala
     const createForm = document.getElementById('form-create-party');
     if (createForm) {
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = createForm.querySelector('button[type="submit"]');
+            
             const formData = {
                 hostName: document.getElementById('host-name').value,
                 partyName: document.getElementById('party-name').value,
                 partySize: document.getElementById('party-size').value,
                 rules: document.getElementById('party-rules').value,
                 description: document.getElementById('party-description').value,
-                // Capturar las vidas del nuevo input
                 vidas: document.getElementById('party-lives').value 
             };
 
-            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/crear'; 
-
             try {
-                const btn = createForm.querySelector('button[type="submit"]');
-                btn.disabled = true;
-                btn.innerText = "Creando...";
-
-                const response = await fetch(API_URL, {
+                btn.disabled = true; btn.innerText = "Creando...";
+                const response = await fetch(`${API_BASE}/api/juego/crear`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert("✅ ¡Sala creada! Reglas guardadas.");
+                    alert("✅ ¡Sala creada!");
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     localStorage.setItem('sala_info', JSON.stringify(data.sala)); 
                     guardarPartidaEnHistorial(data.entrenador, data.sala);
-                    window.location.href = 'sala_grupo.html';
+                    window.location.href = 'sala.html';
                 } else {
-                    alert("❌ Error: " + (data.mensaje || "Error desconocido"));
-                    btn.disabled = false;
-                    btn.innerText = "Create Party";
+                    throw new Error(data.mensaje);
                 }
             } catch (error) {
-                console.error(error);
-                alert("❌ Error de conexión");
-                createForm.querySelector('button').disabled = false;
+                alert("❌ Error: " + error.message);
+                btn.disabled = false; btn.innerText = "Create Party";
             }
         });
     }
 
-    // --- UNIRSE A SALA ---
+    // Unirse Sala
     const joinForm = document.getElementById('form-join-party');
     if (joinForm) {
         joinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = joinForm.querySelector('button');
             const formData = {
                 nombre: document.getElementById('playerName').value.trim(),
                 sala: document.getElementById('partyName').value.trim()
             };
 
-            if (!formData.nombre || !formData.sala) return alert("Por favor rellena ambos campos");
-
-            const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/unirse'; 
-
             try {
-                const btn = joinForm.querySelector('button');
-                btn.disabled = true;
-                btn.innerText = "Entrando...";
-
-                const response = await fetch(API_URL, {
+                btn.disabled = true; btn.innerText = "Entrando...";
+                const response = await fetch(`${API_BASE}/api/juego/unirse`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-
                 const data = await response.json();
 
                 if (response.ok) {
@@ -301,24 +202,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
                         guardarPartidaEnHistorial(data.entrenador, data.salaInfo);
                     }
-                    window.location.href = 'sala_grupo.html';
+                    window.location.href = 'sala.html';
                 } else {
-                    alert("❌ Error: " + (data.mensaje || "No se pudo unir"));
-                    btn.disabled = false;
-                    btn.innerText = "Join Party";
+                    throw new Error(data.mensaje);
                 }
             } catch (error) {
-                console.error(error);
-                alert("❌ Error de conexión");
-                joinForm.querySelector('button').disabled = false;
+                alert("❌ Error: " + error.message);
+                btn.disabled = false; btn.innerText = "Join Party";
             }
         });
     }
-});
+}
 
-/* ========================================================= */
-/* 4. DASHBOARD PRINCIPAL (sala_grupo.html)                       */
-/* ========================================================= */
+/* ========================================================================== */
+/* 4. DASHBOARD (SALA.HTML)                                                  */
+/* ========================================================================== */
 async function cargarDashboard() {
     const usuarioRaw = localStorage.getItem('usuario_pokelocke');
     if (!usuarioRaw) { window.location.href = 'join.html'; return; }
@@ -326,305 +224,191 @@ async function cargarDashboard() {
     const usuario = JSON.parse(usuarioRaw);
     const salaNombre = usuario.sala; 
 
-    // Info estática rápida
+    // Renderizado rápido desde cache
     const salaInfoRaw = localStorage.getItem('sala_info');
     if (salaInfoRaw) renderizarInfoSala(JSON.parse(salaInfoRaw));
 
-    // Feedback de carga
+    // Spinners de carga
     ponerCargador('members-list', 'Buscando entrenadores...');
-    ponerCargador('my-dashboard-panel', 'Abriendo Pokéball...');
+    ponerCargador('my-dashboard-panel', 'Sincronizando equipo...');
     ponerCargador('leaderboard-container', 'Calculando ranking...');
-    ponerCargador('recent-battles-list', 'Sincronizando arena...');
-
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${salaNombre}`;
+    ponerCargador('recent-battles-list', 'Obteniendo historial...');
 
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`${API_BASE}/api/juego/sala/${salaNombre}`);
+        if (!response.ok) throw new Error("Error al obtener datos de la sala");
+
+        const data = await response.json(); 
+        const infoSala = data.sala;
+        const listaJugadores = data.jugadores;
         
-        if (response.ok) {
-            const data = await response.json(); 
-            const infoSala = data.sala;
-            const listaJugadores = data.jugadores;
-            
-            // Actualizar cabecera principal
-            renderizarInfoSala(infoSala);
+        // Cache global para el modal de combates
+        window.CACHE_JUGADORES_SALA = listaJugadores;
 
-            // A. Modales Info y Reglas
-            const rulesContent = document.getElementById('modal-rules-content');
-            if (rulesContent) rulesContent.innerHTML = `<p class="lh-lg">${infoSala.reglas || "No hay reglas definidas para esta sala."}</p>`;
-            
-            const descContent = document.getElementById('modal-desc-content');
-            if (descContent) descContent.innerHTML = `<p class="lh-lg">${infoSala.descripcion || "Sin descripción."}</p>`;
+        renderizarInfoSala(infoSala);
 
-            // B. Lista Miembros (Sidebar Izquierdo - CON VISOR DE EQUIPO)
-            const membersList = document.getElementById('members-list');
-            if (membersList) {
-                membersList.innerHTML = listaJugadores.map(jugador => {
-                    const isHost = jugador.nombre === infoSala.host;
-                    const isMe = jugador.nombre === usuario.nombre;
-                    const esMuerto = jugador.vidas === 0;
-                    
-                    // 1. Preparamos el HTML del equipo oculto
-                    const equipoRival = jugador.pokemons.filter(p => p.estado === 'equipo');
-                    let miniSlots = '';
-                    
-                    for(let i=0; i<6; i++) {
-                        const p = equipoRival[i];
-                        if(p) {
-                            miniSlots += `
-                            <div class="mini-slot" title="${p.mote} (${p.especie})">
-                                <img src="${p.imagen}" class="mini-poke-icon">
-                            </div>`;
-                        } else {
-                            miniSlots += `<div class="mini-slot opacity-25"></div>`;
-                        }
-                    }
+        // A. Modales Info/Reglas
+        const rulesContent = document.getElementById('modal-rules-content');
+        if (rulesContent) rulesContent.innerHTML = `<p class="lh-lg">${infoSala.reglas || "Sin reglas definidas."}</p>`;
+        
+        const descContent = document.getElementById('modal-desc-content');
+        if (descContent) descContent.innerHTML = `<p class="lh-lg">${infoSala.descripcion || "Sin descripción."}</p>`;
 
-                    // 2. Renderizamos la tarjeta + el panel oculto
-                    return `
-                    <div class="mb-2">
-                        <div class="d-flex align-items-center gap-2 p-2 rounded position-relative" 
-                             style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); z-index: 2;">
-                            
-                            <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" 
-                                 style="width:32px; height:32px; font-size: 0.8rem; filter: ${esMuerto ? 'grayscale(1)' : 'none'}">
-                                ${jugador.nombre.charAt(0).toUpperCase()}
-                            </div>
-                            
-                            <div class="flex-grow-1 text-truncate">
-                                <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''} ${esMuerto ? 'text-decoration-line-through text-muted' : ''}">
-                                    ${jugador.nombre} ${isMe ? '(Tú)' : ''}
-                                </span>
-                                <div class="mt-1 d-flex align-items-center gap-2">
-                                    ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : ''}
-                                    ${esMuerto ? '<span class="badge bg-danger" style="font-size:0.6em;">ELIMINADO</span>' : ''}
-                                </div>
-                            </div>
-
-                            <button class="btn-toggle-team" onclick="toggleTeamView('${jugador._id}', this)" title="Ver equipo">
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-
-                        <div id="team-view-${jugador._id}" class="mini-team-container">
-                            <div class="mini-team-grid">
-                                ${miniSlots}
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('');
-            }
-
-            // C. Panel Central (Barra Pixel Art - ESTO ES EL BOTÓN)
-            const miUsuario = listaJugadores.find(u => u._id === usuario._id);
-            const dashboardPanel = document.getElementById('my-dashboard-panel');
-
-            if (miUsuario && dashboardPanel) {
-                const equipo = miUsuario.pokemons.filter(p => p.estado === 'equipo');
-                let slotsHTML = '';
+        // B. Lista Miembros (Sidebar Izquierdo)
+        const membersList = document.getElementById('members-list');
+        if (membersList) {
+            membersList.innerHTML = listaJugadores.map(jugador => {
+                const isHost = jugador.nombre === infoSala.host;
+                const isMe = jugador.nombre === usuario.nombre;
+                const esMuerto = jugador.vidas === 0;
                 
-                // Generar los 6 slots
-                for (let i = 0; i < 6; i++) {
-                    const poke = equipo[i];
-                    if (poke) {
-                        slotsHTML += `
-                        <div class="party-slot" title="${poke.mote} (${poke.especie})">
-                            <img src="${poke.imagen}" class="party-icon" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
-                        </div>`;
+                // Mini-Slots para el desplegable
+                const equipoRival = jugador.pokemons.filter(p => p.estado === 'equipo');
+                let miniSlots = '';
+                for(let i=0; i<6; i++) {
+                    const p = equipoRival[i];
+                    if(p) {
+                        miniSlots += `<div class="mini-slot" title="${p.mote} (${p.especie})"><img src="${p.imagen}" class="mini-poke-icon"></div>`;
                     } else {
-                        slotsHTML += `<div class="party-slot"><div class="empty-shadow"></div></div>`;
+                        miniSlots += `<div class="mini-slot opacity-25"></div>`;
                     }
                 }
 
-                // Inyectamos el HTML. Nota que usamos la clase 'party-bar-btn' en el <a>
-                dashboardPanel.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-end mb-2 px-1">
-                        <h5 class="section-title m-0 text-white">Mi Equipo Activo</h5>
+                return `
+                <div class="mb-2">
+                    <div class="d-flex align-items-center gap-2 p-2 rounded position-relative" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); z-index: 2;">
+                        <div class="rounded-circle bg-gradient bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" style="width:32px; height:32px; font-size: 0.8rem; filter: ${esMuerto ? 'grayscale(1)' : 'none'}">${jugador.nombre.charAt(0).toUpperCase()}</div>
+                        <div class="flex-grow-1 text-truncate">
+                            <span class="d-block lh-1 small fw-bold text-white ${isMe ? 'text-warning' : ''} ${esMuerto ? 'text-decoration-line-through text-muted' : ''}">${jugador.nombre} ${isMe ? '(Tú)' : ''}</span>
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                ${isHost ? '<span class="badge bg-warning text-dark border border-warning" style="font-size:0.6em; padding: 2px 6px;">HOST</span>' : ''}
+                                ${esMuerto ? '<span class="badge bg-danger" style="font-size:0.6em;">ELIMINADO</span>' : ''}
+                            </div>
+                        </div>
+                        <button class="btn-toggle-team" onclick="toggleTeamView('${jugador._id}', this)" title="Ver equipo"><i class="bi bi-chevron-down"></i></button>
                     </div>
-                    
-                    <a href="equipo.html" class="party-bar-btn" title="Click para gestionar equipo">
-                        ${slotsHTML}
-                    </a>
-                    
-                    <div class="text-center mt-2">
-                        <span class="manage-hint text-white-50" style="font-size: 0.7rem;">Haz clic en la barra para abrir el PC</span>
+                    <div id="team-view-${jugador._id}" class="mini-team-container">
+                        <div class="mini-team-grid">${miniSlots}</div>
                     </div>
-                `;
-            }
-
-            // D. Leaderboard (Tabla de Clasificación)
-            const leaderboardContainer = document.getElementById('leaderboard-container');
-            if (leaderboardContainer) {
-                const ranking = [...listaJugadores].sort((a, b) => {
-                    // Orden: Quien tenga más medallas va primero. Si empate, quien tenga más vidas.
-                    if ((b.medallas || 0) !== (a.medallas || 0)) return (b.medallas || 0) - (a.medallas || 0);
-                    return b.vidas - a.vidas;
-                });
-                
-                const soyHost = infoSala.host === usuario.nombre;
-
-                // Llenar selects del modal de combate
-                const selects = ['select-p1', 'select-p2', 'select-winner'];
-                selects.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-                });
-                
-                // Pre-seleccionar mi nombre en Jugador 1
-                const selectP1 = document.getElementById('select-p1');
-                if (selectP1) selectP1.value = usuario.nombre;
-                
-                // Cargar Feed (Asumimos que esta función existe o la implementamos luego)
-                if(typeof cargarFeedCombates === 'function') {
-                    cargarFeedCombates(salaNombre); 
-                } else {
-                    document.getElementById('recent-battles-list').innerHTML = '<small class="text-muted">Feed no disponible</small>';
-                }
-
-                leaderboardContainer.innerHTML = `
-                <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
-                    <thead>
-                        <tr class="text-white-50 small border-bottom border-white-10 text-uppercase" style="font-size: 0.7rem;">
-                            <th class="ps-3">#</th>
-                            <th>Entrenador</th>
-                            <th class="text-center">Medallas</th>
-                            <th class="text-center">Vidas</th>
-                            <th class="text-center">Wins</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${ranking.map((j, i) => {
-                            let lifeColor = j.vidas <= 1 ? 'text-danger' : 'text-success';
-                            if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
-                            
-                            // IDENTIFICACIÓN: ¿Soy yo?
-                            const soyYo = j.nombre === usuario.nombre;
-
-                            // LÓGICA VISUAL DE MEDALLAS
-                            // Si soy yo, muestro botones. Si no, solo el número.
-                            let columnaMedallas = '';
-                            
-                            if (soyYo) {
-                                columnaMedallas = `
-                                <div class="d-flex align-items-center justify-content-center gap-2">
-                                    <button class="btn btn-sm btn-link text-white-50 p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', -1)">
-                                        <i class="bi bi-dash-circle"></i>
-                                    </button>
-                                    <span class="text-warning fw-bold fs-6">${j.medallas || 0}</span>
-                                    <button class="btn btn-sm btn-link text-warning p-0 text-decoration-none" onclick="cambiarMedallas('${j._id}', 1)">
-                                        <i class="bi bi-plus-circle-fill"></i>
-                                    </button>
-                                </div>`;
-                            } else {
-                                // Vista para otros jugadores (solo número)
-                                columnaMedallas = `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
-                            }
-
-                            // AÑADIMOS LA NUEVA LÓGICA DE DOS BOTONES (Solo para Host)
-                            const controlesWins = soyHost ? `
-                                <div class="d-inline-flex ms-1 align-items-center bg-dark rounded border border-secondary" style="transform: scale(0.85);">
-                                    <button class="btn btn-sm btn-link text-white-50 p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', -1)">-</button>
-                                    <span class="text-white border-start border-end border-secondary px-2" style="font-size: 0.9em;">W</span>
-                                    <button class="btn btn-sm btn-link text-warning p-0 px-2 text-decoration-none" onclick="cambiarVictorias('${j._id}', 1)">+</button>
-                                </div>` : '';
-
-                            return `
-                            <tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;">
-                                <td class="fw-bold text-white-50 small ps-3">${i + 1}</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div>
-                                        <span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">
-                                            ${j.nombre} ${soyYo ? '(Tú)' : ''}
-                                        </span>
-                                    </div>
-                                </td>
-                                
-                                <td class="text-center">${columnaMedallas}</td>
-                                
-                                <td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td>
-                                <td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>`;
-            }
-
-            // E. Acciones Host (Botón Borrar)
-            const contenedorAcciones = document.getElementById('host-actions-container');
-            if (contenedorAcciones) {
-                contenedorAcciones.innerHTML = ''; 
-                if (infoSala.host === usuario.nombre) {
-                    const btnBorrar = document.createElement('button');
-                    btnBorrar.className = 'btn btn-outline-danger btn-sm w-100 mt-2 opacity-75 hover-opacity-100';
-                    btnBorrar.innerHTML = '<i class="bi bi-trash-fill me-2"></i> Eliminar Sala Permanentemente';
-                    btnBorrar.onclick = borrarSala;
-                    contenedorAcciones.appendChild(btnBorrar);
-                }
-            }
-
-        } else if (response.status === 404) {
-            alert("⛔ LA SALA YA NO EXISTE");
-            window.location.href = 'groups.html';
+                </div>`;
+            }).join('');
         }
+
+        // C. Panel Central (Botón Equipo)
+        const miUsuario = listaJugadores.find(u => u._id === usuario._id);
+        const dashboardPanel = document.getElementById('my-dashboard-panel');
+
+        if (miUsuario && dashboardPanel) {
+            const equipo = miUsuario.pokemons.filter(p => p.estado === 'equipo');
+            let slotsHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const poke = equipo[i];
+                slotsHTML += poke 
+                    ? `<div class="party-slot" title="${poke.mote}"><img src="${poke.imagen}" class="party-icon" onerror="this.style.display='none'"></div>`
+                    : `<div class="party-slot"><div class="empty-shadow"></div></div>`;
+            }
+
+            dashboardPanel.innerHTML = `
+                <div class="d-flex justify-content-between align-items-end mb-2 px-1"><h5 class="section-title m-0 text-white">Mi Equipo Activo</h5></div>
+                <a href="equipo.html" class="party-bar-btn" title="Gestionar equipo">${slotsHTML}</a>
+                <div class="text-center mt-2"><span class="manage-hint text-white-50" style="font-size: 0.7rem;">Haz clic para abrir el PC</span></div>`;
+        }
+
+        // D. Leaderboard (Ranking)
+        const leaderboardContainer = document.getElementById('leaderboard-container');
+        if (leaderboardContainer) {
+            const ranking = [...listaJugadores].sort((a, b) => {
+                if ((b.medallas || 0) !== (a.medallas || 0)) return (b.medallas || 0) - (a.medallas || 0);
+                return b.vidas - a.vidas;
+            });
+            const soyHost = infoSala.host === usuario.nombre;
+
+            // Rellenar selects del modal de Combate
+            ['select-p1', 'select-p2', 'select-winner'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = listaJugadores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            });
+            const selP1 = document.getElementById('select-p1');
+            if (selP1) selP1.value = usuario.nombre;
+
+            leaderboardContainer.innerHTML = `
+            <table class="table table-borderless m-0 align-middle" style="color: var(--text-main);">
+                <thead><tr class="text-white-50 small border-bottom border-white-10 text-uppercase" style="font-size: 0.7rem;"><th class="ps-3">#</th><th>Entrenador</th><th class="text-center">Medallas</th><th class="text-center">Vidas</th><th class="text-center">Wins</th></tr></thead>
+                <tbody>
+                    ${ranking.map((j, i) => {
+                        let lifeColor = j.vidas <= 1 ? 'text-danger' : 'text-success';
+                        if(j.vidas === 0) lifeColor = 'text-muted text-decoration-line-through';
+                        const soyYo = j.nombre === usuario.nombre;
+
+                        // Botones Medallas (Solo para mí)
+                        let colMedallas = soyYo ? 
+                            `<div class="d-flex justify-content-center gap-2"><button class="btn btn-sm btn-link text-white-50 p-0" onclick="cambiarMedallas('${j._id}', -1)"><i class="bi bi-dash-circle"></i></button><span class="text-warning fw-bold fs-6">${j.medallas || 0}</span><button class="btn btn-sm btn-link text-warning p-0" onclick="cambiarMedallas('${j._id}', 1)"><i class="bi bi-plus-circle-fill"></i></button></div>` 
+                            : `<span class="text-warning fw-bold opacity-75">${j.medallas || 0}</span>`;
+
+                        // Botones Wins (Solo Host)
+                        const controlesWins = soyHost ? `<div class="d-inline-flex ms-1 align-items-center bg-dark rounded border border-secondary" style="transform: scale(0.85);"><button class="btn btn-sm btn-link text-white-50 p-0 px-2" onclick="cambiarVictorias('${j._id}', -1)">-</button><span class="text-white border-start border-end border-secondary px-2" style="font-size: 0.9em;">W</span><button class="btn btn-sm btn-link text-warning p-0 px-2" onclick="cambiarVictorias('${j._id}', 1)">+</button></div>` : '';
+
+                        return `<tr class="${j.vidas === 0 ? 'opacity-50' : ''} border-bottom border-white-10" style="background: transparent;"><td class="fw-bold text-white-50 small ps-3">${i + 1}</td><td><div class="d-flex align-items-center gap-2"><div class="rounded-circle bg-white-10 d-flex justify-content-center align-items-center text-white fw-bold small" style="width:24px;height:24px;">${j.nombre.charAt(0).toUpperCase()}</div><span class="small fw-bold ${j.vidas === 0 ? 'text-decoration-line-through' : 'text-white'}">${j.nombre} ${soyYo ? '(Tú)' : ''}</span></div></td><td class="text-center">${colMedallas}</td><td class="text-center small"><span class="${lifeColor} fw-bold">${j.vidas}</span></td><td class="text-center text-info small">${j.victorias || 0}${controlesWins}</td></tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        // E. Feed y Formulario
+        cargarFeedCombates(salaNombre);
+        initFormularioCombate(); // Inicializa el listener del modal de registro
+
+        // F. Botón Borrar (Host)
+        const contAcciones = document.getElementById('host-actions-container');
+        if (contAcciones && infoSala.host === usuario.nombre) {
+            contAcciones.innerHTML = `<button class="btn btn-outline-danger btn-sm w-100 mt-2" onclick="borrarSala()"><i class="bi bi-trash-fill me-2"></i> Eliminar Sala</button>`;
+        }
+
     } catch (error) { 
         console.error("Error dashboard:", error); 
+        const panel = document.getElementById('my-dashboard-panel');
+        if(panel) panel.innerHTML = `<div class="text-center text-danger p-4">Error de conexión con la sala.</div>`;
     }
 }
 
-// Función auxiliar para actualizar solo textos estáticos
 function renderizarInfoSala(sala) {
-    const titleEl = document.getElementById('view-party-name');
-    if(titleEl) titleEl.innerText = sala.nombre;
-    
-    const hostEl = document.getElementById('view-host-name');
-    if(hostEl) hostEl.innerText = sala.host;
+    const t = document.getElementById('view-party-name'); if(t) t.innerText = sala.nombre;
+    const h = document.getElementById('view-host-name'); if(h) h.innerText = sala.host;
 }
 
-// DETECTOR DE PÁGINA: Ejecutar solo si estamos en sala.html
-if (window.location.pathname.includes('sala.html')) {
-    document.addEventListener('DOMContentLoaded', cargarDashboard);
-}
-
-/* ========================================================= */
-/* 5. GESTOR DE EQUIPO (equipo.html)                         */
-/* ========================================================= */
+/* ========================================================================== */
+/* 5. GESTIÓN DE EQUIPO (PC / CAPTURA / EVOLUCIÓN)                           */
+/* ========================================================================== */
 async function cargarGestorEquipo() {
     const activeGrid = document.getElementById('active-team-grid');
     if (!activeGrid) return; 
 
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) return;
-    const usuario = JSON.parse(usuarioRaw);
-
-    // Carga Visual
-    document.getElementById('active-team-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando Equipo...</p></div></div>';
-    document.getElementById('pc-box-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-primary"></div><p>Accediendo al PC...</p></div></div>';
-    document.getElementById('graveyard-grid').innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-secondary"></div><p>Visitando cementerio...</p></div></div>';
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    
+    // Estados de Carga
+    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando...</p></div></div>';
     
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        if (!res.ok) throw new Error("Error servidor");
+        const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
+        if (!res.ok) throw new Error("Error fetching data");
         const data = await res.json();
         
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
         if (!miPerfil) return;
         
-        const pokemons = miPerfil.pokemons || [];
-        const equipo = pokemons.filter(p => p.estado === 'equipo');
-        const caja = pokemons.filter(p => p.estado === 'caja');
-        const cementerio = pokemons.filter(p => p.estado === 'cementerio');
+        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
+        const caja = miPerfil.pokemons.filter(p => p.estado === 'caja');
+        const cementerio = miPerfil.pokemons.filter(p => p.estado === 'cementerio');
 
-        const counterEl = document.getElementById('team-counter');
-        if(counterEl) counterEl.innerText = `${equipo.length}/6`;
+        document.getElementById('team-counter').innerText = `${equipo.length}/6`;
 
-        // EQUIPO (Con Edición)
+        // --- EQUIPO ACTIVO ---
         let htmlEquipo = '';
         const naturalezas = ["Firme", "Alegre", "Modesta", "Miedosa", "Audaz", "Placida", "Serena", "Grosera", "Cauta", "Agitada", "Rara", "Fuerte", "Docil"];
 
         equipo.forEach((p) => {
             const atq = p.ataques && p.ataques.length === 4 ? p.ataques : ["", "", "", ""];
-            const optionsNaturaleza = naturalezas.map(n => `<option value="${n}" ${p.naturaleza === n ? 'selected' : ''}>${n}</option>`).join('');
+            const optNat = naturalezas.map(n => `<option value="${n}" ${p.naturaleza === n ? 'selected' : ''}>${n}</option>`).join('');
             const collapseId = `collapseEdit-${p._id}`;
 
             htmlEquipo += `
@@ -639,7 +423,7 @@ async function cargarGestorEquipo() {
                             ${p.objeto ? `<span class="badge bg-dark border border-secondary text-info">📦 ${p.objeto}</span>` : ''}
                         </div>
                     </div>
-                    <button class="btn-toggle-edit" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}"><i class="bi bi-chevron-down"></i> Editar Datos</button>
+                    <button class="btn-toggle-edit" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}"><i class="bi bi-chevron-down"></i> Editar</button>
                     <div class="collapse" id="${collapseId}">
                         <div class="edit-collapse-panel text-start">
                             <form onsubmit="guardarEdicionInline(event, '${p._id}', '${p.especie}')">
@@ -648,44 +432,22 @@ async function cargarGestorEquipo() {
                                     <div class="col-4"><label class="mini-form-label">Nivel</label><input type="number" name="nivel" class="mini-input" value="${p.nivel}" min="1" max="100"></div>
                                 </div>
                                 <div class="row g-1 mb-2">
-                                    <div class="col-6">
-                                        <label class="mini-form-label">Objeto</label>
-                                        <input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" placeholder="Nada" list="datalist-items" autocomplete="off">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="mini-form-label">Naturaleza</label>
-                                        <select name="naturaleza" class="mini-input bg-dark">
-                                            ${optionsNaturaleza}
-                                        </select>
-                                    </div>
+                                    <div class="col-6"><label class="mini-form-label">Objeto</label><input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" list="datalist-items" autocomplete="off"></div>
+                                    <div class="col-6"><label class="mini-form-label">Naturaleza</label><select name="naturaleza" class="mini-input bg-dark">${optNat}</select></div>
                                 </div>
                                 <label class="mini-form-label text-warning">Movimientos</label>
                                 <div class="d-grid gap-1 mb-3">
-                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-" list="datalist-moves" autocomplete="off">
-                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-" list="datalist-moves" autocomplete="off">
-                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-" list="datalist-moves" autocomplete="off">
-                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-" list="datalist-moves" autocomplete="off">
+                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-" list="datalist-moves">
+                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-" list="datalist-moves">
+                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-" list="datalist-moves">
+                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-" list="datalist-moves">
                                 </div>
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-sm btn-success py-1" style="font-size:0.8rem">💾 Guardar</button>
+                                    <button type="submit" class="btn btn-sm btn-success py-1">💾 Guardar</button>
                                     <div class="d-flex gap-1 mt-2 pt-2 border-top border-white-10">
-                                        <button type="button" onclick="evolucionarPokemon('${p._id}', '${p.especie}')" 
-                                                class="btn btn-sm btn-outline-warning flex-fill py-0" 
-                                                style="font-size:0.7rem" title="Evolucionar especie">
-                                            <i class="bi bi-stars"></i> Evo
-                                        </button>
-
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" 
-                                                class="btn btn-sm btn-outline-primary flex-fill py-0" 
-                                                style="font-size:0.7rem">
-                                            Al PC
-                                        </button>
-                                        
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" 
-                                                class="btn btn-sm btn-outline-danger flex-fill py-0" 
-                                                style="font-size:0.7rem">
-                                            Falleció
-                                        </button>
+                                        <button type="button" onclick="evolucionarPokemon('${p._id}', '${p.especie}')" class="btn btn-sm btn-outline-warning flex-fill py-0" title="Evolucionar"><i class="bi bi-stars"></i> Evo</button>
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill py-0">Al PC</button>
+                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-0">Falleció</button>
                                     </div>
                                 </div>
                             </form>
@@ -694,18 +456,16 @@ async function cargarGestorEquipo() {
                 </div>
             </div>`;
         });
-
+        
+        // Rellenar huecos vacíos
         for(let i = equipo.length; i < 6; i++) {
             htmlEquipo += `<div class="col-12 col-md-6 col-lg-4"><div class="slot-empty"><div class="text-center opacity-50"><i class="bi bi-plus-circle display-6"></i><div class="mt-2 small">Vacío</div></div></div></div>`;
         }
         activeGrid.innerHTML = htmlEquipo;
 
-        // PC (Solo movimiento)
+        // --- CAJA PC ---
         const pcGrid = document.getElementById('pc-box-grid');
-        if(caja.length === 0) {
-            pcGrid.innerHTML = '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>';
-        } else {
-            pcGrid.innerHTML = caja.map(p => `
+        pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>' : caja.map(p => `
             <div class="col-6 col-md-3 col-lg-2 fade-in">
                 <div class="manage-card">
                     <div class="text-center mb-2">
@@ -719,12 +479,10 @@ async function cargarGestorEquipo() {
                     </div>
                 </div>
             </div>`).join('');
-        }
 
-        // CEMENTERIO
+        // --- CEMENTERIO ---
         const graveGrid = document.getElementById('graveyard-grid');
-        if(cementerio.length > 0) {
-            graveGrid.innerHTML = cementerio.map(p => `
+        graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
             <div class="col-4 col-md-3 col-lg-2">
                 <div class="manage-card bg-danger bg-opacity-10 border-danger">
                     <div class="text-center mb-1" style="filter: grayscale(100%);">
@@ -734,144 +492,136 @@ async function cargarGestorEquipo() {
                     <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-link text-muted py-0 w-100" style="font-size:0.6rem; text-decoration:none;">Revivir</button>
                 </div>
             </div>`).join('');
-        } else {
-            graveGrid.innerHTML = '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>';
-        }
 
     } catch(e) { 
-        console.error("🔥 Error crítico:", e); 
+        console.error(e); 
         activeGrid.innerHTML = `<div class="col-12 text-center text-danger">Error de conexión</div>`;
     }
 }
 
-/* ========================================================= */
-/* LÓGICA DE CAPTURA (CORREGIDA Y NORMALIZADA)               */
-/* ========================================================= */
 function iniciarCaptura() {
     const formCaptura = document.getElementById('form-captura');
-    if (!formCaptura) return; // Si no estamos en la página de equipo, salimos.
+    if (!formCaptura) return;
 
-    // 1. Limpieza de Listeners previos (Evita que se envíe doble o no haga nada)
+    // Clonar para limpiar listeners viejos
     const newForm = formCaptura.cloneNode(true);
     formCaptura.parentNode.replaceChild(newForm, formCaptura);
 
-    // 2. Añadir el evento al nuevo formulario limpio
     newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // ELEMENTOS DEL DOM
         const inputEspecie = document.getElementById('cap-especie');
-        const inputMote = document.getElementById('cap-mote');
-        const inputNivel = document.getElementById('cap-nivel');
         const btnSubmit = newForm.querySelector('button[type="submit"]');
-        
-        // DATOS BÁSICOS
         const rawName = inputEspecie.value;
-        const mote = inputMote.value;
-        const nivel = inputNivel.value;
-        const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-        
-        if (!usuarioRaw) return alert("Error: Sesión no encontrada.");
-        const usuario = JSON.parse(usuarioRaw);
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
-        // FEEDBACK VISUAL (Para que el usuario sepa que está pasando algo)
-        const textoOriginal = btnSubmit.innerText;
-        btnSubmit.innerText = "🔍 Buscando en la Pokédex...";
-        btnSubmit.disabled = true;
+        const txtOriginal = btnSubmit.innerText;
+        btnSubmit.innerText = "🔍 Buscando..."; btnSubmit.disabled = true;
 
         try {
-            // ---------------------------------------------------------
-            // PASO CRÍTICO: NORMALIZACIÓN
-            // Convertimos "Darmanitan" -> "darmanitan-standard"
-            // ---------------------------------------------------------
             const nombreApi = normalizarNombrePokemon(rawName);
-            console.log(`Buscando en API: ${rawName} -> ${nombreApi}`); // Debug en consola
-
-            // 1. PETICIÓN A POKEAPI
             const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
-            
-            if (!pokeRes.ok) {
-                throw new Error(`Pokémon "${rawName}" no encontrado. Intenta con otro nombre.`);
-            }
+            if (!pokeRes.ok) throw new Error(`Pokémon "${rawName}" no encontrado.`);
             
             const pokeData = await pokeRes.json();
-            
-            // 2. SELECCIÓN DE IMAGEN (Prioridad: Gen 8 -> Gen 7 -> Default)
             const imagenUrl = pokeData.sprites.versions['generation-viii'].icons.front_default || 
                               pokeData.sprites.versions['generation-vii'].icons.front_default || 
                               pokeData.sprites.front_default;
-            
-            // 3. GUARDADO EN NUESTRO SERVIDOR
-            // Nota: Usa tu URL correcta (localhost o render)
-            // Si estás probando en local, cambia esto a http://localhost:3000...
-            const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
 
             btnSubmit.innerText = "💾 Guardando...";
-            
-            const serverRes = await fetch(API_BACKEND, {
+            const serverRes = await fetch(`${API_BASE}/api/juego/pokemon`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     entrenadorId: usuario._id,
-                    especie: pokeData.name, // Guardamos el nombre técnico (ej: darmanitan-standard)
-                    mote: mote || pokeData.name,
-                    nivel: parseInt(nivel),
+                    especie: pokeData.name,
+                    mote: document.getElementById('cap-mote').value || pokeData.name,
+                    nivel: parseInt(document.getElementById('cap-nivel').value),
                     imagen: imagenUrl,
                     tipos: pokeData.types.map(t => t.type.name)
                 })
             });
 
             if (serverRes.ok) {
-                // ÉXITO
-                newForm.reset(); // Limpiar formulario
-                
-                // Cerrar Modal Bootstrap
-                const modalEl = document.getElementById('captureModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
+                newForm.reset();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('captureModal'));
                 if(modal) modal.hide();
-
-                // Recargar la lista de equipo visualmente
                 await cargarGestorEquipo(); 
-                
-                alert(`✅ ¡${mote || pokeData.name} capturado exitosamente!`);
+                alert("✅ Capturado!");
             } else {
-                const errorData = await serverRes.json();
-                throw new Error(errorData.mensaje || "Error al guardar en el servidor");
+                throw new Error("Error al guardar");
             }
-
         } catch (error) {
-            console.error(error);
-            alert("❌ Error: " + error.message);
+            alert("❌ " + error.message);
         } finally {
-            // RESTAURAR BOTÓN
-            btnSubmit.innerText = textoOriginal;
-            btnSubmit.disabled = false;
+            btnSubmit.innerText = txtOriginal; btnSubmit.disabled = false;
         }
     });
 }
 
-// GUARDAR EDICIÓN INLINE
+window.evolucionarPokemon = async function(idPokemon, especieActual) {
+    const nuevoNombreInput = prompt(`¿A qué evoluciona tu ${especieActual}?`, "");
+    if (!nuevoNombreInput || !nuevoNombreInput.trim()) return;
+
+    const nombreApi = normalizarNombrePokemon(nuevoNombreInput);
+    document.body.style.cursor = 'wait';
+
+    try {
+        // 1. Obtener datos de la evolución
+        const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
+        if (!pokeRes.ok) throw new Error(`No encuentro a "${nuevoNombreInput}".`);
+        
+        const pokeData = await pokeRes.json();
+        const nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || 
+                            pokeData.sprites.versions['generation-vii'].icons.front_default || 
+                            pokeData.sprites.front_default;
+
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+
+        // 2. Enviar actualización parcial (Solo especie, imagen y tipos)
+        // El resto (mote, nivel, objeto) se mantiene en el servidor si la ruta es PUT parcial.
+        const res = await fetch(`${API_BASE}/api/juego/pokemon`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                entrenadorId: usuario._id,
+                pokemonId: idPokemon,
+                nuevosDatos: {
+                    especie: pokeData.name,
+                    imagen: nuevaImagen,
+                    tipos: pokeData.types.map(t => t.type.name)
+                }
+            })
+        });
+
+        if (res.ok) {
+            await cargarGestorEquipo();
+            alert(`✨ ¡Evolucionado a ${pokeData.name}!`);
+        } else {
+            throw new Error("Error guardando la evolución.");
+        }
+    } catch (error) {
+        alert("❌ Error: " + error.message);
+    } finally {
+        document.body.style.cursor = 'default';
+    }
+};
+
 window.guardarEdicionInline = async function(event, id, especieOriginal) {
     event.preventDefault();
     const form = event.target;
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-    
     const btn = form.querySelector('button[type="submit"]');
-    const txt = btn.innerText;
-    btn.innerText = "Guardando...";
-    btn.disabled = true;
+    const txt = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true;
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
     try {
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon', {
+        const res = await fetch(`${API_BASE}/api/juego/pokemon`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 entrenadorId: usuario._id,
                 pokemonId: id,
                 nuevosDatos: {
-                    mote: form.mote.value,
-                    nivel: form.nivel.value,
-                    objeto: form.objeto.value,
+                    mote: form.mote.value, nivel: form.nivel.value, objeto: form.objeto.value,
                     naturaleza: form.naturaleza.value,
                     ataques: [form.atq0.value, form.atq1.value, form.atq2.value, form.atq3.value]
                 }
@@ -880,65 +630,59 @@ window.guardarEdicionInline = async function(event, id, especieOriginal) {
         if(res.ok) cargarGestorEquipo();
         else alert("Error al guardar");
     } catch(e) { console.error(e); }
-    finally {
-        btn.innerText = txt;
-        btn.disabled = false;
-    }
+    finally { btn.innerText = txt; btn.disabled = false; }
 };
 
-// MOVER POKEMON
 window.moverPokemon = async function(pokeId, nuevoEstado) {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     try {
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/pokemon/mover', {
+        const res = await fetch(`${API_BASE}/api/juego/pokemon/mover`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ entrenadorId: usuario._id, pokemonId: pokeId, nuevoEstado: nuevoEstado })
         });
         if (res.ok) cargarGestorEquipo();
-        else { const d = await res.json(); alert("⚠️ " + d.mensaje); }
-    } catch (e) { alert("Error de conexión."); }
+        else alert("Error movimiento");
+    } catch (e) { alert("Error de conexión"); }
 };
 
-/* ========================================================= */
-/* 6. COMBATES Y FEED (combates.html / sala_grupo.html)           */
-/* ========================================================= */
-async function cargarHistorialCompleto() {
-    const container = document.getElementById('timeline-content');
-    if (!container) return;
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+/* ========================================================================== */
+/* 6. COMBATES Y MODALES                                                     */
+/* ========================================================================== */
+function initFormularioCombate() {
+    const formCombate = document.getElementById('form-combate');
+    if (!formCombate) return;
 
-    try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
-        const combates = await res.json();
+    const newForm = formCombate.cloneNode(true);
+    formCombate.parentNode.replaceChild(newForm, formCombate);
 
-        if (combates.length === 0) {
-            container.innerHTML = `<div class="glass-panel p-5 text-center"><h4 class="text-muted">Sin actividad</h4></div>`;
-            return;
-        }
+    newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const p1 = document.getElementById('select-p1').value;
+        const p2 = document.getElementById('select-p2').value;
+        if (p1 === p2) return alert("¡Un jugador no puede luchar contra sí mismo!");
 
-        container.innerHTML = combates.map(c => {
-            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-            const esGanador1 = c.ganador === c.entrenador1;
-            const esGanador2 = c.ganador === c.entrenador2;
-            const generarIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="small text-muted">Sin datos</span>' : imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+        const btn = newForm.querySelector('button[type="submit"]');
+        const txt = btn.innerText; btn.innerText = "Registrando..."; btn.disabled = true;
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
-            return `
-            <div class="battle-item fade-up"><div class="battle-dot"></div>
-                <div class="battle-card-full p-2">
-                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
-                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
-                    </div>
-                    <div class="combat-layout">
-                        <div class="combat-side"><span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span><div class="combat-team-grid">${generarIconos(c.equipo1Snapshot)}</div></div>
-                        <div class="vs-badge">VS</div>
-                        <div class="combat-side"><span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span><div class="combat-team-grid">${generarIconos(c.equipo2Snapshot)}</div></div>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch (e) { container.innerHTML = '<p class="text-danger">Error cargando historial.</p>'; }
+        try {
+            const res = await fetch(`${API_BASE}/api/juego/combate`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    sala: usuario.sala, entrenador1: p1, entrenador2: p2, 
+                    ganador: document.getElementById('select-winner').value 
+                })
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('combatModal')).hide();
+                cargarDashboard();
+                alert("✅ Registrado");
+            } else { alert("Error registro"); }
+        } catch(e) { alert("Error conexión"); }
+        finally { btn.innerText = txt; btn.disabled = false; }
+    });
 }
 
 async function cargarFeedCombates(salaNombre) {
@@ -946,479 +690,185 @@ async function cargarFeedCombates(salaNombre) {
     if (!container) return;
 
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${salaNombre}?limite=3`);
+        const res = await fetch(`${API_BASE}/api/juego/combates/${salaNombre}?limite=3`);
         const combates = await res.json();
 
         if (combates.length === 0) {
-            container.innerHTML = '<small class="text-muted d-block text-center py-2">Sin actividad reciente</small>';
+            container.innerHTML = '<small class="text-white-50 d-block text-center py-4 fst-italic">Sin actividad reciente</small>';
             return;
         }
 
         container.innerHTML = combates.map(c => {
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
-            
-            // Datos seguros
             const equipo1 = c.equipo1Snapshot || [];
             const equipo2 = c.equipo2Snapshot || [];
+            const hora = new Date(c.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            // Generador de iconos (Mostramos hasta 6)
-            const generarIconosMini = (imgs) => {
-                if (!imgs || imgs.length === 0) return '<span class="text-muted" style="font-size:0.6rem">- Sin equipo -</span>';
-                return imgs.slice(0,6).map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
-            };
+            const genIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="text-white-50" style="font-size:0.6rem">-</span>' : imgs.slice(0,3).map(url => `<img src="${url}" style="width:18px;height:18px;object-fit:contain;" onerror="this.style.display='none'">`).join('');
 
             return `
-            <div class="glass-panel mb-3 p-2 border border-secondary border-opacity-25 fade-in">
-                
-                <div class="combat-layout vertical">
-                    
-                    <div class="combat-side">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="small fw-bold ${esGanador1 ? 'text-warning' : 'text-muted'}">${c.entrenador1}</span>
-                            ${esGanador1 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
-                        </div>
-                        <div class="combat-team-grid">
-                            ${generarIconosMini(equipo1)}
-                        </div>
-                    </div>
-
-                    <div class="vs-badge-vertical">VS</div>
-
-                    <div class="combat-side">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="small fw-bold ${esGanador2 ? 'text-warning' : 'text-muted'}">${c.entrenador2}</span>
-                            ${esGanador2 ? '<i class="bi bi-trophy-fill text-warning" style="font-size:0.7rem"></i>' : ''}
-                        </div>
-                        <div class="combat-team-grid">
-                            ${generarIconosMini(equipo2)}
-                        </div>
-                    </div>
-
+            <div class="mb-3 pb-3 border-bottom border-white-10 fade-in-up">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-white-10 text-white-50" style="font-size: 0.6rem;">${hora}</span>
+                    <button class="btn btn-link p-0 text-info" style="font-size: 0.8rem;" onclick="window.verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')"><i class="bi bi-eye-fill"></i></button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-25 rounded p-2">
+                    <div class="text-center" style="width: 45%;"><div class="small fw-bold text-truncate ${esGanador1 ? 'text-warning' : 'text-white-50'}">${c.entrenador1}</div><div class="d-flex justify-content-center mt-1">${genIconos(equipo1)}</div></div>
+                    <div class="text-muted small fw-bold">VS</div>
+                    <div class="text-center" style="width: 45%;"><div class="small fw-bold text-truncate ${esGanador2 ? 'text-warning' : 'text-white-50'}">${c.entrenador2}</div><div class="d-flex justify-content-center mt-1">${genIconos(equipo2)}</div></div>
                 </div>
             </div>`;
         }).join('');
-
-    } catch (e) { 
-        console.error("Error cargando feed:", e);
-        container.innerHTML = '<small class="text-danger">Error de conexión</small>';
-    }
+    } catch(e) { console.error(e); }
 }
 
-const formCombate = document.getElementById('form-combate');
-if (formCombate) {
-    const newForm = formCombate.cloneNode(true);
-    formCombate.parentNode.replaceChild(newForm, formCombate);
-    newForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-        const p1 = document.getElementById('select-p1').value;
-        const p2 = document.getElementById('select-p2').value;
-        const ganador = document.getElementById('select-winner').value;
+window.verDetallesCombate = function(p1Name, p2Name) {
+    // Usamos caché de jugadores (o la de sala si venimos del dashboard)
+    const lista = window.CACHE_JUGADORES_COMBAT || window.CACHE_JUGADORES_SALA || [];
+    const p1 = lista.find(j => j.nombre === p1Name);
+    const p2 = lista.find(j => j.nombre === p2Name);
 
-        if (p1 === p2) return alert("¡Un jugador no puede luchar contra sí mismo!");
-
-        const btn = newForm.querySelector('button[type="submit"]');
-        btn.innerText = "Registrando..."; btn.disabled = true;
-
-        try {
-            const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/combate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ sala: usuario.sala, entrenador1: p1, entrenador2: p2, ganador: ganador })
-            });
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('combatModal')).hide();
-                cargarDashboard();
-                alert("✅ Combate registrado");
+    const genHTML = (jugador) => {
+        if (!jugador) return '<div class="text-white-50 small py-4">Datos no disponibles</div>';
+        const eq = jugador.pokemons.filter(p => p.estado === 'equipo');
+        let html = '';
+        for(let i=0; i<6; i++) {
+            const p = eq[i];
+            if(p) {
+                const urlBackup = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${normalizarNombrePokemon(p.especie)}.png`;
+                html += `<div class="poke-vs-card"><img src="${p.imagen}" class="poke-vs-sprite" onerror="this.onerror=null; this.src='${urlBackup}';"><span class="poke-vs-name text-truncate" style="max-width:100%">${p.mote || p.especie}</span></div>`;
             } else {
-                alert("Error al registrar");
+                html += `<div class="poke-vs-card opacity-25" style="border-style: dashed; border-color: rgba(255,255,255,0.2);"><div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.1);"></div></div>`;
             }
-        } catch (error) { alert("Error de conexión"); }
-        finally { btn.innerText = "Guardar Resultado"; btn.disabled = false; }
+        }
+        return html;
+    };
+
+    const modalEl = document.getElementById('battleDetailsModal');
+    if(modalEl) {
+        document.getElementById('modal-p1-name').innerText = p1Name;
+        document.getElementById('modal-p1-team').innerHTML = genHTML(p1);
+        document.getElementById('modal-p2-name').innerText = p2Name;
+        document.getElementById('modal-p2-team').innerHTML = genHTML(p2);
+        (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).show();
+    }
+};
+
+/* ========================================================================== */
+/* 7. EXPORTAR Y CACHÉS                                                      */
+/* ========================================================================== */
+let DB_MOVIMIENTOS_CACHE = {};
+async function inicializarDiccionarioMovimientos() {
+    if(document.getElementById('datalist-moves')) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/datos/movimientos`);
+        if(!res.ok) return;
+        const movs = await res.json();
+        movs.forEach(m => DB_MOVIMIENTOS_CACHE[m.nombreEsp] = m.nombreIng);
+        
+        const dl = document.createElement('datalist'); dl.id = 'datalist-moves';
+        Object.keys(DB_MOVIMIENTOS_CACHE).sort().forEach(m => {
+            const op = document.createElement('option'); op.value = m; dl.appendChild(op);
+        });
+        document.body.appendChild(dl);
+    } catch(e) { console.error("Error cache movimientos", e); }
+}
+
+function inicializarDatalists() {
+    if(document.getElementById('datalist-items')) return;
+    const DB_OBJETOS = { "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash" };
+    const dl = document.createElement('datalist'); dl.id = 'datalist-items';
+    Object.keys(DB_OBJETOS).sort().forEach(o => {
+        const op = document.createElement('option'); op.value = o; dl.appendChild(op);
     });
+    document.body.appendChild(dl);
 }
 
-/* ========================================================= */
-/* 7. FUNCIONES AUXILIARES                                   */
-/* ========================================================= */
-/* FUNCIÓN PARA CAMBIAR MEDALLAS */
-async function cambiarMedallas(idJugador, accion) {
+// Helpers para Typing
+function initTypingEffect(el) {
+    const msgs = ["Begin your Pokémon journey", "Group with friends", "Track your battles", "Analyze your stats", "Become a Pokémon Master!"];
+    let msgIdx = 0, charIdx = 0;
+    function type() {
+        if (charIdx <= msgs[msgIdx].length) { el.textContent = msgs[msgIdx].substring(0, charIdx++); setTimeout(type, 80); } 
+        else { setTimeout(erase, 1500); }
+    }
+    function erase() {
+        if (charIdx >= 0) { el.textContent = msgs[msgIdx].substring(0, charIdx--); setTimeout(erase, 50); } 
+        else { msgIdx = (msgIdx + 1) % msgs.length; setTimeout(type, 300); }
+    }
+    type();
+}
+
+// Helpers Vidas/Medallas/Wins
+async function cambiarMedallas(id, c) { callUpdate(id, c, 'medallas'); }
+async function cambiarVictorias(id, c) { callUpdate(id, c, 'victorias'); } // Nota: La ruta en backend debe ser /jugador/victorias
+async function cambiarVidas(id, c) { callUpdate(id, c, 'vidas'); } // Esta es calculada auto, pero por si acaso
+
+async function callUpdate(id, accion, tipo) {
     try {
-        // Bloqueo visual temporal (opcional)
-        document.body.style.cursor = 'wait';
-
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/medallas', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: idJugador, accion: accion })
+        const ruta = tipo === 'medallas' ? 'medallas' : (tipo === 'victorias' ? 'victorias' : 'vidas'); // Ajustar según rutas backend
+        // Como estandarizamos a /api/juego/jugador/medallas o /jugador/victorias
+        const res = await fetch(`${API_BASE}/api/juego/jugador/${ruta}`, {
+            method: 'PUT', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ id, accion })
         });
+        if(res.ok) cargarDashboard();
+    } catch(e) { console.error(e); }
+}
 
-        if (res.ok) {
-            // Si sale bien, recargamos el dashboard para ver el cambio
-            await cargarDashboard();
-        } else {
-            console.error("Error al actualizar medallas");
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        document.body.style.cursor = 'default';
+function toggleTeamView(id, btn) {
+    const el = document.getElementById(`team-view-${id}`);
+    if(el) {
+        const hidden = el.style.display === 'none' || !el.style.display;
+        el.style.display = hidden ? 'block' : 'none';
+        hidden ? btn.classList.add('active') : btn.classList.remove('active');
     }
 }
-async function cambiarVidas(id, c) {
-    try { const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/vidas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entrenadorId: id, cambio: c }) }); if (res.ok) cargarDashboard(); } catch (e) { console.error(e); }
-}
-/* FUNCIÓN PARA CAMBIAR VICTORIAS (WINS) */
-async function cambiarVictorias(idJugador, accion) {
-    try {
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/victoria', { // Ajusta a tu URL si estás en prod
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: idJugador, accion: accion })
-        });
 
-        if (res.ok) {
-            await cargarDashboard(); // Recargamos para ver el cambio
-        } else {
-            console.error("Error al actualizar victorias");
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
 async function borrarSala() {
     const u = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     const s = JSON.parse(localStorage.getItem('sala_info'));
-    if (!confirm(`⚠️ ¿Borrar sala "${s.nombre}"?`)) return;
+    if(!confirm(`¿Borrar sala ${s.nombre}?`)) return;
     try {
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/juego/sala', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombreSala: s.nombre, hostNombre: u.nombre }) });
-        if (res.ok) {
-            let h = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-            localStorage.setItem('pokelocke_history', JSON.stringify(h.filter(x => x.sala !== s.nombre)));
+        const res = await fetch(`${API_BASE}/api/juego/sala`, {
+            method: 'DELETE', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({nombreSala: s.nombre, hostNombre: u.nombre})
+        });
+        if(res.ok) {
+            let h = JSON.parse(localStorage.getItem('pokelocke_history')||'[]');
+            localStorage.setItem('pokelocke_history', JSON.stringify(h.filter(x=>x.sala!==s.nombre)));
             localStorage.removeItem('usuario_pokelocke');
             window.location.href = 'index.html';
         }
-    } catch (e) { alert("Error conexión"); }
-}
-
-function guardarPartidaEnHistorial(datosEntrenador, datosSala) {
-    let historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-    const nuevaSesion = { sala: datosSala.nombre, host: datosSala.host, maxJugadores: datosSala.maxJugadores, reglas: datosSala.reglas, descripcion: datosSala.descripcion, miNombre: datosEntrenador.nombre, miId: datosEntrenador._id, fechaAcceso: new Date().toISOString() };
-    historial = historial.filter(s => s.sala !== datosSala.nombre);
-    historial.unshift(nuevaSesion);
-    localStorage.setItem('pokelocke_history', JSON.stringify(historial));
+    } catch(e) { console.error(e); }
 }
 
 function cargarMisGrupos() {
     const grid = document.getElementById('groups-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    const historial = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
-    if (historial.length === 0) { document.getElementById('empty-state').classList.remove('d-none'); return; }
+    if(!grid) return;
+    const h = JSON.parse(localStorage.getItem('pokelocke_history')||'[]');
+    if(h.length===0) { document.getElementById('empty-state').classList.remove('d-none'); return; }
     document.getElementById('empty-state').classList.add('d-none');
-
-    historial.forEach((s, i) => {
-        const color = ['primary', 'success', 'danger', 'warning', 'info', 'indigo'][s.sala.length % 6];
-        grid.innerHTML += `<div class="col-md-6 col-lg-4 fade-up"><div class="card h-100 shadow-sm group-card border-0"><div class="card-body position-relative"><div class="d-flex justify-content-between align-items-center mb-3"><div class="rounded-circle bg-${color} bg-gradient d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-size: 1.5rem; font-weight: bold;">${s.sala.charAt(0).toUpperCase()}</div><span class="badge text-dark border"><i class="bi bi-person"></i> ${s.miNombre}</span></div><h4 class="card-title fw-bold text-dark mb-1">${s.sala}</h4><p class="text-muted small mb-4">Host: ${s.host}</p><div class="d-grid"><button onclick="reanudarPartida(${i})" class="btn btn-outline-${color} fw-bold stretched-link">Entrar <i class="bi bi-box-arrow-in-right ms-2"></i></button></div></div><div class="card-footer bg-transparent border-0 text-muted" style="font-size: 0.75rem;">Último acceso: ${new Date(s.fechaAcceso).toLocaleDateString()}</div></div></div>`;
-    });
+    grid.innerHTML = h.map((s,i) => {
+        const c = ['primary','success','danger','warning','info','indigo'][s.sala.length%6];
+        return `<div class="col-md-6 col-lg-4 fade-up"><div class="card h-100 shadow-sm group-card border-0"><div class="card-body position-relative"><div class="d-flex justify-content-between align-items-center mb-3"><div class="rounded-circle bg-${c} bg-gradient d-flex align-items-center justify-content-center shadow-sm" style="width:50px;height:50px;font-size:1.5rem;font-weight:bold;">${s.sala.charAt(0).toUpperCase()}</div><span class="badge text-dark border"><i class="bi bi-person"></i> ${s.miNombre}</span></div><h4 class="card-title fw-bold text-dark mb-1">${s.sala}</h4><p class="text-muted small mb-4">Host: ${s.host}</p><div class="d-grid"><button onclick="reanudarPartida(${i})" class="btn btn-outline-${c} fw-bold stretched-link">Entrar <i class="bi bi-box-arrow-in-right ms-2"></i></button></div></div></div></div>`;
+    }).join('');
 }
 
-window.reanudarPartida = function(index) {
-    const s = JSON.parse(localStorage.getItem('pokelocke_history'))[index];
-    if (s) {
-        localStorage.setItem('usuario_pokelocke', JSON.stringify({ _id: s.miId, nombre: s.miNombre, sala: s.sala }));
-        localStorage.setItem('sala_info', JSON.stringify({ nombre: s.sala, host: s.host, maxJugadores: s.maxJugadores, reglas: s.reglas, descripcion: s.descripcion }));
-        window.location.href = 'sala_grupo.html';
-    }
-};
-
-/* ========================================================= */
-/* LOGIC: EXPORTAR A SHOWDOWN (Con Traductor)                */
-/* ========================================================= */
-async function exportarShowdown() {
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) return;
-    const usuario = JSON.parse(usuarioRaw);
-
-    try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        const data = await res.json();
-        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
-
-        if (equipo.length === 0) return alert("Equipo vacío");
-
-        // Diccionario Naturalezas (Ya lo tenías)
-        const natMap = { "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid", "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy", "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty", "Floja": "Lax", "Osada": "Bold" };
-
-        let txt = "";
-
-        equipo.forEach(p => {
-            // 1. TRADUCCIÓN DE OBJETO
-            // Buscamos en DB_OBJETOS. Si no está, usamos el texto original.
-            // .trim() quita espacios accidentales.
-            const objEspanol = (p.objeto || "").trim();
-            const objIngles = DB_OBJETOS[objEspanol] || objEspanol; 
-
-            // Construir línea 1: Mote (Especie) @ Objeto
-            let linea1 = "";
-            if (p.mote && p.mote !== p.especie) {
-                linea1 = `${p.mote} (${p.especie})`; // Showdown asume que la especie está en inglés por defecto si viene de API, si no, habría que traducir especie también, pero la API suele dar nombres universales o ingleses en 'species.name'.
-            } else {
-                linea1 = p.especie;
-            }
-            if (objIngles) linea1 += ` @ ${objIngles}`;
-            
-            txt += `${linea1}\n`;
-            txt += `Level: ${p.nivel}\n`;
-            
-            if (p.naturaleza && natMap[p.naturaleza]) {
-                txt += `${natMap[p.naturaleza]} Nature\n`;
-            }
-
-            // 2. TRADUCCIÓN DE ATAQUES
-            if (p.ataques) {
-                p.ataques.forEach(move => {
-                    if (move && move.trim() !== "") {
-                        const moveEsp = move.trim();
-                        // Buscamos traducción, si no existe, dejamos el original
-                        // Antes: const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
-                        // Ahora:
-                        const moveEng = DB_MOVIMIENTOS_CACHE[moveEsp] || moveEsp;
-                        txt += `- ${moveEng}\n`;
-                    }
-                });
-            }
-            txt += "\n";
-        });
-
-        await navigator.clipboard.writeText(txt);
-        alert("✅ Copiado al portapapeles (Traducido al Inglés)");
-
-    } catch (e) { 
-        console.error(e);
-        alert("Error exportando: " + e.message); 
+window.reanudarPartida = function(i) {
+    const s = JSON.parse(localStorage.getItem('pokelocke_history'))[i];
+    if(s) {
+        localStorage.setItem('usuario_pokelocke', JSON.stringify({_id:s.miId, nombre:s.miNombre, sala:s.sala}));
+        localStorage.setItem('sala_info', JSON.stringify({nombre:s.sala, host:s.host}));
+        window.location.href = 'sala.html';
     }
 }
 
-const ponerCargador = (id, msg) => { const el = document.getElementById(id); if (el) el.innerHTML = `<div class="loading-state"><div class="spinner-border text-primary"></div><p>${msg}</p></div>`; };
-
-// AUTO-INIT
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('my-dashboard-panel')) cargarDashboard();
-    if (document.getElementById('active-team-grid')) cargarGestorEquipo();
-    if (document.getElementById('timeline-content')) cargarHistorialCompleto();
-    if (document.getElementById('groups-grid')) cargarMisGrupos();
-});
-
-/* ========================================================= */
-/* CACHE LOCAL DE MOVIMIENTOS (Desde Base de Datos)          */
-/* ========================================================= */
-let DB_MOVIMIENTOS_CACHE = {}; // Se llenará al cargar la página
-
-async function inicializarDiccionarioMovimientos() {
-    // Si ya tenemos el datalist, no recargamos
-    if(document.getElementById('datalist-moves')) return;
-
-    try {
-        console.log("📥 Descargando diccionario de movimientos...");
-        const res = await fetch('https://pokelocke-8kjm.onrender.com/api/datos/movimientos');
-        
-        if (!res.ok) throw new Error("Error fetching moves");
-        
-        const movimientos = await res.json();
-        
-        // 1. Llenar el Caché (Objeto rápido para traducción)
-        // Convertimos el array [{nombreEsp, nombreIng}] en objeto {"Lanzallamas": "Flamethrower"}
-        movimientos.forEach(m => {
-            DB_MOVIMIENTOS_CACHE[m.nombreEsp] = m.nombreIng;
-        });
-
-        // 2. Crear el <datalist> para Autocompletado
-        const listMoves = document.createElement('datalist');
-        listMoves.id = 'datalist-moves';
-        
-        // Ordenamos alfabéticamente para que salga bonito
-        const nombresOrdenados = Object.keys(DB_MOVIMIENTOS_CACHE).sort();
-        
-        nombresOrdenados.forEach(nombreEsp => {
-            const opt = document.createElement('option');
-            opt.value = nombreEsp;
-            listMoves.appendChild(opt);
-        });
-        
-        document.body.appendChild(listMoves);
-        console.log(`✅ Diccionario cargado: ${nombresOrdenados.length} movimientos.`);
-
-    } catch (error) {
-        console.error("Error cargando movimientos:", error);
-    }
+function guardarPartidaEnHistorial(ent, sala) {
+    let h = JSON.parse(localStorage.getItem('pokelocke_history')||'[]');
+    const sesion = { sala: sala.nombre, host: sala.host, miNombre: ent.nombre, miId: ent._id, fechaAcceso: new Date() };
+    h = h.filter(s => s.sala !== sala.nombre);
+    h.unshift(sesion);
+    localStorage.setItem('pokelocke_history', JSON.stringify(h));
 }
-
-// Ejecutar lo antes posible
-document.addEventListener('DOMContentLoaded', inicializarDiccionarioMovimientos);
-
-const DB_OBJETOS = {
-    "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash"
-};
-
-// Función auxiliar para inyectar las sugerencias en el HTML
-function inicializarDatalists() {
-    // Si ya existen, no hacemos nada
-    if(document.getElementById('datalist-moves')) return;
-
-    const body = document.body;
-
-    // 1. Lista de Movimientos
-    const listMoves = document.createElement('datalist');
-    listMoves.id = 'datalist-moves';
-    Object.keys(DB_MOVIMIENTOS).sort().forEach(mov => {
-        const opt = document.createElement('option');
-        opt.value = mov;
-        listMoves.appendChild(opt);
-    });
-    body.appendChild(listMoves);
-
-    // 2. Lista de Objetos
-    const listItems = document.createElement('datalist');
-    listItems.id = 'datalist-items';
-    Object.keys(DB_OBJETOS).sort().forEach(obj => {
-        const opt = document.createElement('option');
-        opt.value = obj;
-        listItems.appendChild(opt);
-    });
-    body.appendChild(listItems);
-}
-
-// Ejecutar al inicio
-document.addEventListener('DOMContentLoaded', inicializarDatalists);
-
-/* FUNCIÓN PARA ABRIR/CERRAR EQUIPO RIVAL */
-function toggleTeamView(idJugador, btnElement) {
-    const container = document.getElementById(`team-view-${idJugador}`);
-    
-    if (container) {
-        // Toggle de visibilidad
-        const isHidden = container.style.display === 'none' || container.style.display === '';
-        
-        if (isHidden) {
-            container.style.display = 'block';
-            btnElement.classList.add('active'); // Rota la flecha
-        } else {
-            container.style.display = 'none';
-            btnElement.classList.remove('active'); // Restaura la flecha
-        }
-    }
-}
-
-/* ========================================================= */
-/* INICIALIZADOR AUTOMÁTICO (FINAL DEL ARCHIVO)              */
-/* ========================================================= */
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // Si estamos en el Dashboard
-    if (document.getElementById('my-dashboard-panel')) {
-        cargarDashboard();
-    }
-    
-    // Si estamos en el Gestor de Equipo (equipo.html)
-    if (document.getElementById('active-team-grid')) {
-        cargarGestorEquipo(); // Carga los pokemons existentes
-        iniciarCaptura();     // <--- AÑADE ESTO: Activa el botón de capturar
-    }
-    
-    // Si estamos en Combates
-    if (document.getElementById('timeline-content')) {
-        cargarHistorialCompleto();
-    }
-    
-    // Si estamos en Grupos
-    if (document.getElementById('groups-grid')) {
-        cargarMisGrupos();
-    }
-});
-
-/* ========================================================= */
-/* LÓGICA DE EVOLUCIÓN                                       */
-/* ========================================================= */
-window.evolucionarPokemon = async function(idPokemon, especieActual) {
-    // 1. Preguntar al usuario (Sistema Asistido)
-    const nuevoNombreInput = prompt(`¿A qué evoluciona tu ${especieActual}?`, "");
-    
-    if (!nuevoNombreInput || nuevoNombreInput.trim() === "") return; // Cancelado
-
-    // 2. Normalizar el nombre (usando nuestra función robusta)
-    const nombreApi = normalizarNombrePokemon(nuevoNombreInput);
-    
-    // Feedback visual (cursor de espera)
-    document.body.style.cursor = 'wait';
-
-    try {
-        // 3. Buscar los datos de la NUEVA forma en la API
-        const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
-        
-        if (!pokeRes.ok) {
-            throw new Error(`No encuentro a "${nuevoNombreInput}". Revisa el nombre.`);
-        }
-        
-        const pokeData = await pokeRes.json();
-        
-        // 4. Obtener la nueva imagen y tipos
-        // Priorizamos los iconos de Gen 8/7, si no, el sprite base
-        const nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || 
-                            pokeData.sprites.versions['generation-vii'].icons.front_default || 
-                            pokeData.sprites.front_default;
-                            
-        const nuevosTipos = pokeData.types.map(t => t.type.name);
-
-        // 5. Preparar actualización para el Backend
-        // NOTA: Solo enviamos lo que cambia. El backend (Mongoose) mantendrá lo demás si usamos la ruta adecuada.
-        // Pero nuestra ruta 'PUT /pokemon' espera 'nuevosDatos' completo o parcial.
-        // Vamos a recuperar los datos actuales del DOM o localStorage para no perder nada, 
-        // aunque la estrategia más segura es enviar solo lo que cambia si el backend lo soporta.
-        // Como tu backend usa findByIdAndUpdate, podemos enviar solo los campos a cambiar.
-
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-        const API_URL = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; // Usa localhost si estás en pruebas
-
-        const res = await fetch(API_URL, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                entrenadorId: usuario._id,
-                pokemonId: idPokemon,
-                nuevosDatos: {
-                    especie: pokeData.name, // Nombre oficial (ej: charmeleon)
-                    imagen: nuevaImagen,
-                    tipos: nuevosTipos
-                    // Mote, Nivel, Objeto, etc. NO los enviamos para que se mantengan los viejos
-                    // OJO: Asegúrate de que tu Backend hace un "merge" de datos.
-                    // Si tu backend REEMPLAZA todo el objeto 'nuevosDatos', perderíamos el mote.
-                    // Revisemos la estrategia segura:
-                }
-            })
-        });
-        
-        /* NOTA DE SEGURIDAD: 
-           Si tu ruta PUT en el backend hace: `Object.assign(pokemon, nuevosDatos)`, funcionará perfecto.
-           Si hace `pokemon = newDatos`, borrará lo demás.
-           
-           Dado que no puedo ver tu backend actual de PUT ahora mismo, vamos a asumir la estrategia segura:
-           La mayoría de implementaciones PUT hacen un merge. Si notas que se borra el mote, avísame.
-        */
-
-        if (res.ok) {
-            await cargarGestorEquipo(); // Recargar la vista
-            alert(`✨ ¡Felicidades! Tu Pokémon ha evolucionado a ${pokeData.name}.`);
-        } else {
-            throw new Error("Error guardando la evolución.");
-        }
-
-    } catch (error) {
-        console.error(error);
-        alert("❌ Error: " + error.message);
-    } finally {
-        document.body.style.cursor = 'default';
-    }
-};
