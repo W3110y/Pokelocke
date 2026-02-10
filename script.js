@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormulariosAcceso();
 
     // C. Dashboard (Sala)
-    if (window.location.pathname.includes('sala.html')) {
+    if (window.location.pathname.includes('sala_grupo.html')) {
         cargarDashboard();
     }
 
@@ -202,7 +202,7 @@ function initFormulariosAcceso() {
                         localStorage.setItem('sala_info', JSON.stringify(data.salaInfo));
                         guardarPartidaEnHistorial(data.entrenador, data.salaInfo);
                     }
-                    window.location.href = 'sala.html';
+                    window.location.href = 'sala_grupo.html';
                 } else {
                     throw new Error(data.mensaje);
                 }
@@ -861,7 +861,7 @@ window.reanudarPartida = function(i) {
     if(s) {
         localStorage.setItem('usuario_pokelocke', JSON.stringify({_id:s.miId, nombre:s.miNombre, sala:s.sala}));
         localStorage.setItem('sala_info', JSON.stringify({nombre:s.sala, host:s.host}));
-        window.location.href = 'sala.html';
+        window.location.href = 'sala_grupo.html';
     }
 }
 
