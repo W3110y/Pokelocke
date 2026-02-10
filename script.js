@@ -846,13 +846,51 @@ async function borrarSala() {
 
 function cargarMisGrupos() {
     const grid = document.getElementById('groups-grid');
-    if(!grid) return;
-    const h = JSON.parse(localStorage.getItem('pokelocke_history')||'[]');
-    if(h.length===0) { document.getElementById('empty-state').classList.remove('d-none'); return; }
+    if (!grid) return;
+    
+    const h = JSON.parse(localStorage.getItem('pokelocke_history') || '[]');
+    
+    if (h.length === 0) { 
+        document.getElementById('empty-state').classList.remove('d-none'); 
+        return; 
+    }
+    
     document.getElementById('empty-state').classList.add('d-none');
-    grid.innerHTML = h.map((s,i) => {
-        const c = ['primary','success','danger','warning','info','indigo'][s.sala.length%6];
-        return `<div class="col-md-6 col-lg-4 fade-up"><div class="card h-100 shadow-sm group-card border-0"><div class="card-body position-relative"><div class="d-flex justify-content-between align-items-center mb-3"><div class="rounded-circle bg-${c} bg-gradient d-flex align-items-center justify-content-center shadow-sm" style="width:50px;height:50px;font-size:1.5rem;font-weight:bold;">${s.sala.charAt(0).toUpperCase()}</div><span class="badge text-dark border"><i class="bi bi-person"></i> ${s.miNombre}</span></div><h4 class="card-title fw-bold text-dark mb-1">${s.sala}</h4><p class="text-muted small mb-4">Host: ${s.host}</p><div class="d-grid"><button onclick="reanudarPartida(${i})" class="btn btn-outline-${c} fw-bold stretched-link">Entrar <i class="bi bi-box-arrow-in-right ms-2"></i></button></div></div></div></div>`;
+    
+    grid.innerHTML = h.map((s, i) => {
+        // Seleccionamos un color cíclico basado en la longitud del nombre
+        const c = ['primary', 'success', 'danger', 'warning', 'info', 'indigo'][s.sala.length % 6];
+        
+        return `
+        <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${i * 0.1}s">
+            <div class="card h-100 shadow-sm group-card border-0">
+                <div class="card-body position-relative p-4">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-${c} bg-gradient d-flex align-items-center justify-content-center shadow-sm" 
+                             style="width: 50px; height: 50px; font-size: 1.5rem; font-weight: bold; color: white;">
+                            ${s.sala.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="badge bg-white text-white border">
+                            <i class="bi bi-person-fill"></i> ${s.miNombre}
+                        </span>
+                    </div>
+                    
+                    <h4 class="card-title fw-bold text-white mb-1">${s.sala}</h4>
+                    <p class="text-white-50 small mb-4">Host: <span class="text-info">${s.host}</span></p>
+                    
+                    <div class="d-grid">
+                        <button onclick="reanudarPartida(${i})" class="btn btn-outline-${c} fw-bold stretched-link">
+                            Entrar <i class="bi bi-box-arrow-in-right ms-2"></i>
+                        </button>
+                    </div>
+                    
+                </div>
+                <div class="card-footer bg-transparent border-top border-white-10 text-white-50 text-end" style="font-size: 0.7rem;">
+                    Acceso: ${new Date(s.fechaAcceso).toLocaleDateString()}
+                </div>
+            </div>
+        </div>`;
     }).join('');
 }
 
