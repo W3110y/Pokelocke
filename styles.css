@@ -109,7 +109,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
     position: fixed; top: 0; left: 0; width: 100%;
     padding: 20px 30px;
     display: flex; justify-content: space-between; align-items: center;
-    z-index: 1050; pointer-events: none; /* Permite clicks a través */
+    z-index: 1050; pointer-events: auto; /* Permite clicks a través */
 }
 
 .nav-btn {
@@ -118,7 +118,6 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
     border: 1px solid rgba(255,255,255,0.2); color: white;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem; text-decoration: none; transition: all 0.3s;
-    pointer-events: auto; /* Permite interacción */
 }
 .nav-btn:hover { background: var(--primary-color); transform: scale(1.1); box-shadow: 0 0 15px var(--primary-color); }
 
