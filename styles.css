@@ -197,28 +197,23 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
 
 /* Barra de Equipo (Dashboard Main) */
 .party-bar-btn {
-    display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
+    display: flex; justify-content: space-between; align-items: center;
     background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50px; padding: 10px 20px; transition: all 0.3s ease;
-    text-decoration: none; max-width: 600px; margin: 0 auto;
+    cursor: pointer; text-decoration: none; width: 100%; max-width: 600px; margin: 0 auto;
 }
 .party-bar-btn:hover {
-    background: rgba(255, 255, 255, 0.05); border-color: var(--primary-color);
-    transform: translateY(-2px);
+    background: rgba(99, 102, 241, 0.2); border-color: var(--primary-color);
+    transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
-.party-slot { 
-    width: 60px; 
-    height: 50px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
-
+.party-slot { width: 60px; height: 50px; display: flex; align-items: center; justify-content: center; }
 .party-icon {
-    width: 100%; height: 100%; object-fit: contain; 
-    image-rendering: pixelated; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-    transition: transform 0.2s;
+    width: 100%; height: 100%; object-fit: contain; object-position: center;
+    image-rendering: pixelated; filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
+    will-change: transform;
 }
+.empty-shadow { width: 40px; height: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; }
+
 /* Animación de Salto (Compartida) */
 @keyframes pokemon-bounce {
     0%, 100% { transform: translateY(0); }
