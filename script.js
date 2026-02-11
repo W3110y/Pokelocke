@@ -929,7 +929,7 @@ async function exportarShowdown() {
         const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
 
         if (equipo.length === 0) return alert("Equipo vacío");
-
+        const DB_OBJETOS = { "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash" };
         // Diccionario Naturalezas (Ya lo tenías)
         const natMap = { "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid", "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy", "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty", "Floja": "Lax", "Osada": "Bold" };
 
