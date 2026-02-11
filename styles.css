@@ -142,7 +142,6 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
 /* Responsive */
 @media (max-width: 1200px) {
     .dashboard-container { grid-template-columns: 1fr 300px; }
-    .sidebar-left { display: none; } /* Ocultar lista miembros en tablets pequeñas si quieres, o moverla */
 }
 @media (max-width: 992px) {
     .dashboard-container { 
