@@ -111,7 +111,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
     display: flex; justify-content: space-between; align-items: center;
     z-index: 1050; pointer-events: none; /* Permite clicks a través */
 }
-.minimal-header .nav-btn { pointer-events: auto; }
+.minimal-header .btn .nav-btn { pointer-events: auto; }
 
 .nav-btn {
     width: 45px; height: 45px; border-radius: 50%;
