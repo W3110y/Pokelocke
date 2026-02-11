@@ -111,7 +111,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
     display: flex; justify-content: space-between; align-items: center;
     z-index: 1050; pointer-events: none; /* Permite clicks a través */
 }
-.minimal-header .btn .nav-btn { pointer-events: auto; }
+.minimal-header .nav-btn { pointer-events: auto; }
 
 .nav-btn {
     width: 45px; height: 45px; border-radius: 50%;
@@ -188,6 +188,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: var(--text-main) !
     padding: 15px; border-radius: 50px; width: 100%;
     box-shadow: 0 0 20px rgba(255, 203, 5, 0.3);
     transition: 0.3s;
+    pointer-events: auto;
 }
 .btn-start:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 203, 5, 0.6); }
 
