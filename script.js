@@ -747,8 +747,12 @@ function initFormularioCombate() {
         e.preventDefault();
         const p1 = document.getElementById('select-p1').value;
         const p2 = document.getElementById('select-p2').value;
+        const ganador = document.getElementById('select-winner').value;
         if (p1 === p2) return alert("¡Un jugador no puede luchar contra sí mismo!");
 
+        if (ganador !== p1 && ganador !== p2) {
+            return alert(`⛔ Error Lógico: El ganador (${ganador}) no participa en este combate entre ${p1} y ${p2}.`);
+        }
         const btn = newForm.querySelector('button[type="submit"]');
         const txt = btn.innerText; btn.innerText = "Registrando..."; btn.disabled = true;
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
