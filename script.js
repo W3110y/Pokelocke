@@ -753,6 +753,9 @@ function initFormularioCombate() {
         if (ganador !== p1 && ganador !== p2) {
             return alert(`⛔ Error Lógico: El ganador (${ganador}) no participa en este combate entre ${p1} y ${p2}.`);
         }
+        if(p1.equipo.length === 0 || p2.equipo.length === 0) {
+            return alert("⛔ Error: Ambos jugadores deben tener al menos un Pokémon en su equipo para registrar el combate.");
+        }
         const btn = newForm.querySelector('button[type="submit"]');
         const txt = btn.innerText; btn.innerText = "Registrando..."; btn.disabled = true;
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
