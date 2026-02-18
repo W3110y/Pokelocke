@@ -753,9 +753,25 @@ function initFormularioCombate() {
         if (ganador !== p1 && ganador !== p2) {
             return alert(`⛔ Error Lógico: El ganador (${ganador}) no participa en este combate entre ${p1} y ${p2}.`);
         }
-        if(p1.equipo.length === 0 || p2.equipo.length === 0) {
-            return alert("⛔ Error: Ambos jugadores deben tener al menos un Pokémon en su equipo para registrar el combate.");
+        // VALIDACIÓN 3: Ambos jugadores deben tener equipo configurado
+        // Usamos la caché que cargamos al abrir el dashboard
+        const jugadoresCache = window.CACHE_JUGADORES_SALA || [];
+        
+        const dataP1 = jugadoresCache.find(j => j.nombre === p1);
+        const dataP2 = jugadoresCache.find(j => j.nombre === p2);
+
+        // Contamos cuántos Pokémon tienen en estado "equipo"
+        const equipoP1 = dataP1 ? dataP1.pokemons.filter(p => p.estado === 'equipo').length : 0;
+        const equipoP2 = dataP2 ? dataP2.pokemons.filter(p => p.estado === 'equipo').length : 0;
+
+        if (equipoP1 === 0) {
+            return alert(`⛔ Acción denegada: El entrenador ${p1} no tiene ningún Pokémon en su equipo activo. Debe configurar su equipo en el PC primero.`);
         }
+        
+        if (equipoP2 === 0) {
+            return alert(`⛔ Acción denegada: El entrenador ${p2} no tiene ningún Pokémon en su equipo activo. Debe configurar su equipo en el PC primero.`);
+        }
+        
         const btn = newForm.querySelector('button[type="submit"]');
         const txt = btn.innerText; btn.innerText = "Registrando..."; btn.disabled = true;
         const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
