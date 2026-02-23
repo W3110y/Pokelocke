@@ -827,36 +827,52 @@ async function cargarHistorialCompleto() {
             const colorP1 = esGanador1 ? 'text-warning' : 'text-white';
             const colorP2 = esGanador2 ? 'text-warning' : 'text-white';
 
+            // GENERADOR DE ICONOS (Solo para la vista de lista - Estáticos y pequeños)
+            const generarIconosMini = (imgs) => {
+                if (!imgs || imgs.length === 0) return '<span class="small text-white-50" style="font-size:0.6rem">-</span>';
+                // Usamos URLs guardadas en el snapshot
+                return imgs.map(url => `
+                    <img src="${url}" style="width:24px; height:24px; object-fit:contain; image-rendering:pixelated;" onerror="this.style.display='none'">
+                `).join('');
+            };
+
             return `
-            <div class="glass-panel p-3 mb-3 d-flex align-items-center justify-content-between gap-3 fade-in-up" 
+            <div class="glass-panel p-3 mb-3 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 fade-in-up" 
                  style="animation-delay: ${i * 0.05}s; border: 1px solid rgba(255,255,255,0.05);">
                 
-                <div class="d-flex flex-column align-items-center justify-content-center text-white-50 pe-3 border-end border-white-10" style="min-width: 80px;">
-                    <span class="small fw-bold">${fechaStr}</span>
+                <div class="d-flex flex-row flex-md-column align-items-center justify-content-center text-white-50 pe-md-3 border-end-md border-white-10" style="min-width: 80px;">
+                    <span class="small fw-bold me-2 me-md-0">${fechaStr}</span>
                     <span class="small" style="font-size: 0.7rem;">${horaStr}</span>
                 </div>
                 
-                <div class="flex-grow-1 d-flex align-items-center justify-content-center gap-2 gap-md-4">
-                    <span class="fw-bold fs-5 ${colorP1} text-end text-truncate" style="width: 40%;">
-                        ${esGanador1 ? '<i class="bi bi-trophy-fill me-1" style="font-size: 0.8rem;"></i>' : ''} ${c.entrenador1}
-                    </span>
+                <div class="flex-grow-1 w-100 d-flex align-items-center justify-content-between px-2 px-md-4">
                     
-                    <span class="badge bg-white-10 text-muted">VS</span>
+                    <div class="text-center" style="width: 40%;">
+                        <div class="fw-bold fs-6 ${colorP1} text-truncate mb-1">
+                            ${esGanador1 ? '<i class="bi bi-trophy-fill me-1" style="font-size: 0.8rem;"></i>' : ''} ${c.entrenador1}
+                        </div>
+                        <div class="d-flex justify-content-center flex-wrap gap-1 bg-black bg-opacity-25 rounded-pill px-2 py-1 mx-auto" style="max-width: fit-content;">
+                            ${generarIconosMini(c.equipo1Snapshot)}
+                        </div>
+                    </div>
                     
-                    <span class="fw-bold fs-5 ${colorP2} text-start text-truncate" style="width: 40%;">
-                        ${c.entrenador2} ${esGanador2 ? '<i class="bi bi-trophy-fill ms-1" style="font-size: 0.8rem;"></i>' : ''}
-                    </span>
+                    <span class="badge bg-white-10 text-muted mx-2">VS</span>
+                    
+                    <div class="text-center" style="width: 40%;">
+                        <div class="fw-bold fs-6 ${colorP2} text-truncate mb-1">
+                            ${c.entrenador2} ${esGanador2 ? '<i class="bi bi-trophy-fill ms-1" style="font-size: 0.8rem;"></i>' : ''}
+                        </div>
+                        <div class="d-flex justify-content-center flex-wrap gap-1 bg-black bg-opacity-25 rounded-pill px-2 py-1 mx-auto" style="max-width: fit-content;">
+                            ${generarIconosMini(c.equipo2Snapshot)}
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
-                    <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
-                    <span class="text-warning fw-bold">${c.ganador}</span>
-                </div>
-
-                <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
-                        style="width: 38px; height: 38px;" 
+                <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-3 mt-md-0" 
+                        style="width: 40px; height: 40px;" 
                         onclick="window.verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')" 
-                        title="Ver Equipos al Detalle">
+                        title="Ver Análisis Completo">
                     <i class="bi bi-eye-fill"></i>
                 </button>
 
@@ -910,34 +926,61 @@ async function cargarFeedCombates(salaNombre) {
 
 // Funcion no usada actualmente
 window.verDetallesCombate = function(p1Name, p2Name) {
-    // Usamos caché de jugadores (o la de sala si venimos del dashboard)
-    const lista = window.CACHE_JUGADORES_COMBAT || window.CACHE_JUGADORES_SALA || [];
-    const p1 = lista.find(j => j.nombre === p1Name);
-    const p2 = lista.find(j => j.nombre === p2Name);
+    // Leemos la caché de jugadores cargada previamente
+    const listaJugadores = window.CACHE_JUGADORES_COMBAT || window.CACHE_JUGADORES_SALA || [];
+    
+    const p1 = listaJugadores.find(j => j.nombre === p1Name);
+    const p2 = listaJugadores.find(j => j.nombre === p2Name);
 
-    const genHTML = (jugador) => {
-        if (!jugador) return '<div class="text-white-50 small py-4">Datos no disponibles</div>';
-        const eq = jugador.pokemons.filter(p => p.estado === 'equipo');
+    // FUNCIÓN INTERNA QUE CONSTRUYE EL HTML CON TUS CLASES CSS
+    const generarHTMLEquipoVS = (jugador) => {
+        if (!jugador) return '<div class="text-white-50 small py-4 col-12 text-center">Datos no disponibles</div>';
+        
+        const equipo = jugador.pokemons.filter(p => p.estado === 'equipo');
         let html = '';
+        
+        // El team-vs-grid es de 6 huecos (3x2). Los llenamos todos.
         for(let i=0; i<6; i++) {
-            const p = eq[i];
-            if(p) {
-                const urlBackup = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${normalizarNombrePokemon(p.especie)}.png`;
-                html += `<div class="poke-vs-card"><img src="${p.imagen}" class="poke-vs-sprite" onerror="this.onerror=null; this.src='${urlBackup}';"><span class="poke-vs-name text-truncate" style="max-width:100%">${p.mote || p.especie}</span></div>`;
+            const poke = equipo[i];
+            if(poke) {
+                // Preparamos URL de respaldo por si falla la DB
+                const urlBackup = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${normalizarNombrePokemon(poke.especie)}.png`;
+                
+                // APLICANDO TUS CLASES: poke-vs-card, poke-vs-sprite, poke-vs-name
+                html += `
+                <div class="poke-vs-card">
+                    <img src="${poke.imagen}" 
+                         class="poke-vs-sprite" 
+                         onerror="this.onerror=null; this.src='${urlBackup}';"
+                         alt="${poke.especie}">
+                    <span class="poke-vs-name text-truncate" style="max-width: 100%;">${poke.mote || poke.especie}</span>
+                </div>`;
             } else {
-                html += `<div class="poke-vs-card opacity-25" style="border-style: dashed; border-color: rgba(255,255,255,0.2);"><div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.1);"></div></div>`;
+                // Hueco vacío estilizado
+                html += `
+                <div class="poke-vs-card opacity-25" style="border-style: dashed; border-color: rgba(255,255,255,0.2);">
+                    <div style="width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1);"></div>
+                </div>`;
             }
         }
         return html;
     };
 
+    // INYECTAR EN EL DOM DEL MODAL
     const modalEl = document.getElementById('battleDetailsModal');
     if(modalEl) {
         document.getElementById('modal-p1-name').innerText = p1Name;
-        document.getElementById('modal-p1-team').innerHTML = genHTML(p1);
+        // Inyectamos en el div que tiene la clase "team-vs-grid"
+        document.getElementById('modal-p1-team').innerHTML = generarHTMLEquipoVS(p1); 
+        
         document.getElementById('modal-p2-name').innerText = p2Name;
-        document.getElementById('modal-p2-team').innerHTML = genHTML(p2);
-        (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).show();
+        document.getElementById('modal-p2-team').innerHTML = generarHTMLEquipoVS(p2);
+        
+        // Abrir el modal con Bootstrap
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    } else {
+        console.error("Falta el código HTML del modal 'battleDetailsModal' en la página.");
     }
 };
 
