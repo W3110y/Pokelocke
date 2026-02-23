@@ -818,7 +818,9 @@ async function cargarHistorialCompleto() {
         }
 
         container.innerHTML = combates.map((c, i) => {
-            const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            const fechaObj = new Date(c.fecha);
+            const fechaStr = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const horaStr = fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
             // Determinar colores de los nombres según quién ganó
