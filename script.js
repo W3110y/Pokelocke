@@ -802,35 +802,68 @@ async function cargarHistorialCompleto() {
 
     try {
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
+        const resSala = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        if (!resCombates.ok || !resSala.ok) throw new Error("Error de conexión");
         const combates = await res.json();
+        const dataSala = await resSala.json();
+        window.CACHE_JUGADORES_COMBAT = dataSala.jugadores;
 
         if (combates.length === 0) {
-            container.innerHTML = `<div class="glass-panel p-5 text-center"><h4 class="text-muted">Sin actividad</h4></div>`;
+            container.innerHTML = `
+                <div class="text-center py-5 text-white-50">
+                    <i class="bi bi-wind display-1 opacity-25"></i>
+                    <p class="mt-3">Aún no se ha derramado sangre en la arena.</p>
+                </div>`;
             return;
         }
 
-        container.innerHTML = combates.map(c => {
+        container.innerHTML = combates.map((c, i) => {
             const fecha = new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
-            const generarIconos = (imgs) => (!imgs || imgs.length === 0) ? '<span class="small text-muted">Sin datos</span>' : imgs.map(url => `<img src="${url}" class="combat-poke-icon">`).join('');
+            // Determinar colores de los nombres según quién ganó
+            const colorP1 = esGanador1 ? 'text-warning' : 'text-white';
+            const colorP2 = esGanador2 ? 'text-warning' : 'text-white';
 
             return `
-            <div class="battle-item fade-up"><div class="battle-dot"></div>
-                <div class="battle-card-full p-2">
-                    <div class="d-flex justify-content-between border-bottom border-white-10 pb-1 mb-2">
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-white-10">${fecha}</span>
-                        <span class="text-warning small fw-bold">🏆 ${c.ganador}</span>
-                    </div>
-                    <div class="combat-layout">
-                        <div class="combat-side"><span class="fw-bold ${esGanador1 ? 'text-warning' : 'text-white'}">${c.entrenador1}</span><div class="combat-team-grid">${generarIconos(c.equipo1Snapshot)}</div></div>
-                        <div class="vs-badge">VS</div>
-                        <div class="combat-side"><span class="fw-bold ${esGanador2 ? 'text-warning' : 'text-white'}">${c.entrenador2}</span><div class="combat-team-grid">${generarIconos(c.equipo2Snapshot)}</div></div>
-                    </div>
+            <div class="glass-panel p-3 mb-3 d-flex align-items-center justify-content-between gap-3 fade-in-up" 
+                 style="animation-delay: ${i * 0.05}s; border: 1px solid rgba(255,255,255,0.05);">
+                
+                <div class="d-flex flex-column align-items-center justify-content-center text-white-50 pe-3 border-end border-white-10" style="min-width: 80px;">
+                    <span class="small fw-bold">${fechaStr}</span>
+                    <span class="small" style="font-size: 0.7rem;">${horaStr}</span>
                 </div>
+                
+                <div class="flex-grow-1 d-flex align-items-center justify-content-center gap-2 gap-md-4">
+                    <span class="fw-bold fs-5 ${colorP1} text-end text-truncate" style="width: 40%;">
+                        ${esGanador1 ? '<i class="bi bi-trophy-fill me-1" style="font-size: 0.8rem;"></i>' : ''} ${c.entrenador1}
+                    </span>
+                    
+                    <span class="badge bg-white-10 text-muted">VS</span>
+                    
+                    <span class="fw-bold fs-5 ${colorP2} text-start text-truncate" style="width: 40%;">
+                        ${c.entrenador2} ${esGanador2 ? '<i class="bi bi-trophy-fill ms-1" style="font-size: 0.8rem;"></i>' : ''}
+                    </span>
+                </div>
+
+                <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
+                    <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
+                    <span class="text-warning fw-bold">${c.ganador}</span>
+                </div>
+
+                <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
+                        style="width: 38px; height: 38px;" 
+                        onclick="window.verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')" 
+                        title="Ver Equipos al Detalle">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
+
             </div>`;
         }).join('');
-    } catch (e) { container.innerHTML = '<p class="text-danger">Error cargando historial.</p>'; }
+    } catch (e) { 
+        container.innerHTML = '<p class="text-danger text-center py-4">Error cargando historial.</p>'; 
+        console.error(e);
+    }
 }
 
 async function cargarFeedCombates(salaNombre) {
