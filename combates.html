@@ -36,15 +36,16 @@
     <!-- ============================================= -->
     <!-- MAIN CONTENT                                  -->
     <!-- ============================================= -->
-    <section>
-        <main class="flex-grow-1 d-flex justify-content-center p-3" style="padding-top: 100px !important;">
+    <section class="flex-grow-1 d-flex justify-content-center p-3" style="padding-top: 100px !important;">
         <div class="container" style="max-width: 900px;">
+            
             <div class="glass-panel p-4 fade-in-up delay-1">
                 <div class="text-center mb-4 border-bottom border-white-10 pb-3">
                     <h1 class="fw-bold display-6 text-white"><i class="bi bi-swords text-warning me-2"></i>Registros de la Arena</h1>
                     <p class="text-muted small m-0">Cronología oficial de enfrentamientos</p>
                 </div>
 
+                <!-- Aquí se inyectarán los combates -->
                 <div id="timeline-content" class="d-flex flex-column gap-3">
                     <div class="text-center py-5">
                         <div class="spinner-border text-primary" role="status"></div>
@@ -53,46 +54,6 @@
                 </div>
             </div>
 
-        </div>
-        </main>
-
-        <div class="modal fade" id="battleDetailsModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content glass-modal">
-                    <div class="modal-header border-bottom border-white-10">
-                        <h5 class="modal-title fw-bold text-white"><i class="bi bi-eye me-2"></i>Análisis de Equipos</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-4">
-                        <div class="row g-4 align-items-center">
-                            <div class="col-md-5">
-                                <div class="team-vs-container">
-                                    <h5 id="modal-p1-name" class="text-info fw-bold mb-3 text-truncate">Entrenador 1</h5>
-                                    <div id="modal-p1-team" class="team-vs-grid">
-                                        </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-2 text-center">
-                                <h1 class="display-4 fw-bold fst-italic text-white-50" style="text-shadow: 0 0 20px rgba(255,255,255,0.2);">VS</h1>
-                            </div>
-
-                            <div class="col-md-5">
-                                <div class="team-vs-container">
-                                    <h5 id="modal-p2-name" class="text-warning fw-bold mb-3 text-truncate">Entrenador 2</h5>
-                                    <div id="modal-p2-team" class="team-vs-grid">
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center mt-4 text-muted" style="font-size: 0.65rem;">
-                            * Se muestran los equipos actuales registrados en la base de datos.
-                        </div>
-
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 

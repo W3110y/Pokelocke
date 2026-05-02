@@ -827,54 +827,34 @@ async function cargarHistorialCompleto() {
             const colorP1 = esGanador1 ? 'text-warning' : 'text-white';
             const colorP2 = esGanador2 ? 'text-warning' : 'text-white';
 
-            // GENERADOR DE ICONOS (Solo para la vista de lista - Estáticos y pequeños)
-            const generarIconosMini = (imgs) => {
-                if (!imgs || imgs.length === 0) return '<span class="small text-white-50" style="font-size:0.6rem">-</span>';
-                // Usamos URLs guardadas en el snapshot
-                return imgs.map(url => `
-                    <img src="${url}" style="width:24px; height:24px; object-fit:contain; image-rendering:pixelated;" onerror="this.style.display='none'">
-                `).join('');
-            };
-
             return `
-            <div class="glass-panel p-3 mb-3 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 fade-in-up" 
+            <div class="glass-panel p-3 mb-2 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 fade-in-up" 
                  style="animation-delay: ${i * 0.05}s; border: 1px solid rgba(255,255,255,0.05);">
                 
+                <!-- FECHA -->
                 <div class="d-flex flex-row flex-md-column align-items-center justify-content-center text-white-50 pe-md-3 border-end-md border-white-10" style="min-width: 80px;">
                     <span class="small fw-bold me-2 me-md-0">${fechaStr}</span>
                     <span class="small" style="font-size: 0.7rem;">${horaStr}</span>
                 </div>
                 
-                <div class="flex-grow-1 w-100 d-flex align-items-center justify-content-between px-2 px-md-4">
-                    
-                    <div class="text-center" style="width: 40%;">
-                        <div class="fw-bold fs-6 ${colorP1} text-truncate mb-1">
-                            ${esGanador1 ? '<i class="bi bi-trophy-fill me-1" style="font-size: 0.8rem;"></i>' : ''} ${c.entrenador1}
-                        </div>
-                        <div class="d-flex justify-content-center flex-wrap gap-1 bg-black bg-opacity-25 rounded-pill px-2 py-1 mx-auto" style="max-width: fit-content;">
-                            ${generarIconosMini(c.equipo1Snapshot)}
-                        </div>
+                <!-- ENFRENTAMIENTO SIMPLE -->
+                <div class="flex-grow-1 w-100 d-flex align-items-center justify-content-center px-2 px-md-4">
+                    <div class="fw-bold fs-5 ${colorP1} text-end text-truncate" style="width: 40%;">
+                        ${esGanador1 ? '<i class="bi bi-trophy-fill me-1" style="font-size: 0.8rem;"></i>' : ''} ${c.entrenador1}
                     </div>
                     
-                    <span class="badge bg-white-10 text-muted mx-2">VS</span>
+                    <span class="badge bg-white-10 text-muted mx-3">VS</span>
                     
-                    <div class="text-center" style="width: 40%;">
-                        <div class="fw-bold fs-6 ${colorP2} text-truncate mb-1">
-                            ${c.entrenador2} ${esGanador2 ? '<i class="bi bi-trophy-fill ms-1" style="font-size: 0.8rem;"></i>' : ''}
-                        </div>
-                        <div class="d-flex justify-content-center flex-wrap gap-1 bg-black bg-opacity-25 rounded-pill px-2 py-1 mx-auto" style="max-width: fit-content;">
-                            ${generarIconosMini(c.equipo2Snapshot)}
-                        </div>
+                    <div class="fw-bold fs-5 ${colorP2} text-start text-truncate" style="width: 40%;">
+                        ${c.entrenador2} ${esGanador2 ? '<i class="bi bi-trophy-fill ms-1" style="font-size: 0.8rem;"></i>' : ''}
                     </div>
-
                 </div>
 
-                <button class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-3 mt-md-0" 
-                        style="width: 40px; height: 40px;" 
-                        onclick="window.verDetallesCombate('${c.entrenador1}', '${c.entrenador2}')" 
-                        title="Ver Análisis Completo">
-                    <i class="bi bi-eye-fill"></i>
-                </button>
+                <!-- GANADOR BADGE (Visible en pantallas medianas o grandes) -->
+                <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
+                    <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
+                    <span class="text-warning fw-bold">${c.ganador}</span>
+                </div>
 
             </div>`;
         }).join('');
