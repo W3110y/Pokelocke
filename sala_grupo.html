@@ -178,13 +178,18 @@
             </div>
             
             <div class="modal-body text-center p-4">
-                
+    
                 <!-- Contenedor Visual de la Ruleta -->
                 <div class="position-relative mx-auto mb-4" style="width: 250px; height: 250px;">
                     <!-- El Puntero -->
                     <div class="roulette-pointer"></div>
-                    <!-- La Rueda (El fondo se genera en JS) -->
+                    <!-- La Rueda -->
                     <div id="roulette-wheel" class="roulette-wheel"></div>
+                </div>
+
+                <!-- NUEVO: Contenedor para la Leyenda Dinámica -->
+                <div id="roulette-legend" class="d-flex flex-wrap justify-content-center gap-2 mb-4 px-2">
+                    <!-- JS inyectará los colores aquí -->
                 </div>
 
                 <!-- Resultado y Botón de Girar -->
@@ -199,7 +204,7 @@
                 <!-- Panel de Configuración (Restringido al Host) -->
                 <div id="roulette-config-panel" class="mt-4 pt-3 border-top border-white-10 d-none text-start">
                     <h6 class="text-white-50 small text-uppercase mb-2"><i class="bi bi-gear-fill me-1"></i>Configuración (Solo Host)</h6>
-                    <textarea id="roulette-items-input" class="form-control bg-dark text-white border-secondary mb-2" rows="3" placeholder="Poción, Muerte, Captura Extra, Nada... (Separado por comas)"></textarea>
+                    <textarea id="roulette-items-input" class="form-control bg-dark text-white border-secondary mb-2" rows="3" placeholder="Poción, Muerte... (Separado por comas)"></textarea>
                     <button onclick="guardarConfigRuleta()" class="btn btn-sm btn-outline-info w-100">
                         Actualizar Opciones
                     </button>

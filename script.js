@@ -1315,23 +1315,41 @@ window.guardarConfigRuleta = function() {
 
 function dibujarRuleta() {
     const wheel = document.getElementById('roulette-wheel');
+    const legendContainer = document.getElementById('roulette-legend'); // Capturamos el nuevo contenedor
+    
     const total = opcionesRuleta.length;
     const gradosPorItem = 360 / total;
+    
     let gradientStr = '';
+    let legendHTML = ''; // Aquí guardaremos el HTML de la leyenda
 
-    // Paleta de colores para los trozos de la ruleta
-    const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
+    // Paleta de colores vibrantes para la ruleta
+    const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
 
     for (let i = 0; i < total; i++) {
+        // 1. Asignar un color asegurando que no nos salimos del array (usando módulo %)
         const color = colores[i % colores.length];
+        
+        // 2. Calcular los grados para el CSS de la rueda
         const inicio = i * gradosPorItem;
         const fin = (i + 1) * gradosPorItem;
-        // Construimos el string del gradiente cónico
         gradientStr += `${color} ${inicio}deg ${fin}deg${i < total - 1 ? ', ' : ''}`;
+
+        // 3. CONSTRUIR LA LEYENDA (Puntito de color + Nombre de la opción)
+        legendHTML += `
+        <div class="d-flex align-items-center gap-1 bg-black bg-opacity-25 px-2 py-1 rounded-pill border border-white-10">
+            <span style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px ${color};"></span>
+            <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 100px;" title="${opcionesRuleta[i]}">
+                ${opcionesRuleta[i]}
+            </span>
+        </div>`;
     }
 
-    // Asignamos el fondo dinámico a la rueda
+    // Aplicar los cambios al navegador
     wheel.style.background = `conic-gradient(${gradientStr})`;
+    if (legendContainer) {
+        legendContainer.innerHTML = legendHTML;
+    }
 }
 
 window.girarRuleta = function() {
