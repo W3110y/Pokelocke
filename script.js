@@ -1247,3 +1247,123 @@ function guardarPartidaEnHistorial(ent, sala) {
     h.unshift(sesion);
     localStorage.setItem('pokelocke_history', JSON.stringify(h));
 }
+
+/* ========================================================================== */
+/* LÓGICA DE LA RULETA (POP-UP)                                               */
+/* ========================================================================== */
+
+// Opciones por defecto si el Host aún no ha configurado nada
+let opcionesRuleta = ["Poción", "Revivir", "Captura Extra", "Pierdes un turno", "Nada", "Baya"];
+let rotacionActual = 0;
+
+window.abrirRuleta = function() {
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
+    
+    // 1. VALIDACIÓN DE PERMISOS: ¿Es el creador de la sala?
+    const esHost = (usuario.nombre === salaInfo.host);
+    const panelConfig = document.getElementById('roulette-config-panel');
+
+    if (esHost) {
+        // Mostrar panel
+        panelConfig.classList.remove('d-none');
+        
+        // Cargar configuración guardada si existe (ligada al nombre de la sala)
+        const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
+        if (configGuardada) {
+            opcionesRuleta = JSON.parse(configGuardada);
+        }
+        
+        // Rellenar el textarea
+        document.getElementById('roulette-items-input').value = opcionesRuleta.join(', ');
+    } else {
+        // Ocultar panel a los jugadores normales
+        panelConfig.classList.add('d-none');
+        
+        // Intentar leer la config local (útil si están probando en el mismo PC, 
+        // en red multijugador real verán la de por defecto salvo que tengan backend)
+        const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
+        if (configGuardada) opcionesRuleta = JSON.parse(configGuardada);
+    }
+
+    // 2. Dibujar y abrir modal
+    dibujarRuleta();
+    document.getElementById('roulette-result').innerText = "¿Qué depara el destino?";
+    
+    const modalEl = document.getElementById('rouletteModal');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+};
+
+window.guardarConfigRuleta = function() {
+    const inputVal = document.getElementById('roulette-items-input').value;
+    if (!inputVal.trim()) return alert("No puedes dejar la ruleta vacía.");
+
+    // Convertir el texto separado por comas en un array limpio
+    opcionesRuleta = inputVal.split(',')
+                             .map(item => item.trim())
+                             .filter(item => item.length > 0);
+    
+    const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
+    
+    // Guardar localmente
+    localStorage.setItem(`ruleta_${salaInfo.nombre}`, JSON.stringify(opcionesRuleta));
+    
+    dibujarRuleta();
+    alert("✅ Ruleta actualizada correctamente.");
+};
+
+function dibujarRuleta() {
+    const wheel = document.getElementById('roulette-wheel');
+    const total = opcionesRuleta.length;
+    const gradosPorItem = 360 / total;
+    let gradientStr = '';
+
+    // Paleta de colores para los trozos de la ruleta
+    const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
+
+    for (let i = 0; i < total; i++) {
+        const color = colores[i % colores.length];
+        const inicio = i * gradosPorItem;
+        const fin = (i + 1) * gradosPorItem;
+        // Construimos el string del gradiente cónico
+        gradientStr += `${color} ${inicio}deg ${fin}deg${i < total - 1 ? ', ' : ''}`;
+    }
+
+    // Asignamos el fondo dinámico a la rueda
+    wheel.style.background = `conic-gradient(${gradientStr})`;
+}
+
+window.girarRuleta = function() {
+    const btn = document.getElementById('btn-spin-roulette');
+    const resultText = document.getElementById('roulette-result');
+    
+    btn.disabled = true;
+    resultText.innerText = "Girando...";
+
+    const wheel = document.getElementById('roulette-wheel');
+    const total = opcionesRuleta.length;
+    const gradosPorItem = 360 / total;
+
+    // Calculamos vueltas aleatorias (entre 5 y 10 vueltas completas) para dar emoción
+    const vueltasExtra = Math.floor(Math.random() * 5) + 5;
+    
+    // Elegimos un trozo ganador al azar (índice del array)
+    const indiceGanador = Math.floor(Math.random() * total);
+
+    // Calculamos el ángulo para que el puntero (que está arriba en 0 grados) caiga justo en el centro de ese trozo
+    const offsetCentro = gradosPorItem / 2;
+    const rotacionFinal = (360 - (indiceGanador * gradosPorItem)) - offsetCentro;
+
+    // Actualizamos la rotación global (sumamos a la rotación actual para que no dé tirones si giras varias veces)
+    // Reseteamos visualmente al múltiplo más cercano para evitar números infinitos, pero manteniendo la inercia
+    rotacionActual = rotacionActual + (vueltasExtra * 360) + rotacionFinal - (rotacionActual % 360);
+
+    wheel.style.transform = `rotate(${rotacionActual}deg)`;
+
+    // Esperar a que acabe la animación de CSS (4 segundos) para mostrar el texto
+    setTimeout(() => {
+        resultText.innerHTML = `🎉 <span class="text-warning">${opcionesRuleta[indiceGanador]}</span> 🎉`;
+        btn.disabled = false;
+    }, 4000);
+};

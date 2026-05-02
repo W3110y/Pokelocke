@@ -27,7 +27,20 @@
         
         <div class="position-absolute start-50 translate-middle-x mt-2 text-center" style="pointer-events: none;">
             <h5 class="text-white-50 m-0 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 2px;">Centro de Mando</h5>
-            <h2 id="view-party-name" class="text-white fw-bold m-0" style="text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);">Cargando...</h2>
+            
+            <!-- Contenedor Flex para alinear Título y Botón Horizontalmente -->
+            <div class="d-flex align-items-center justify-content-center gap-3 mt-1">
+                
+                <h2 id="view-party-name" class="text-white fw-bold m-0" style="text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);">
+                    Cargando...
+                </h2>
+                
+                <!-- Botón Ruleta (pointer-events: auto es CRÍTICO para que sea clickable) -->
+                <button onclick="abrirRuleta()" class="btn btn-sm btn-outline-warning rounded-pill d-flex align-items-center gap-2 px-3 shadow-sm" style="pointer-events: auto; backdrop-filter: blur(5px);" title="Abrir Ruleta">
+                    <i class="bi bi-arrow-repeat fs-6"></i> <span class="fw-bold small">Ruleta</span>
+                </button>
+
+            </div>
         </div>
     </header>
 
@@ -151,6 +164,51 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- MODAL DE LA RULETA                            -->
+    <!-- ============================================= -->
+    <div class="modal fade" id="rouletteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-bottom border-white-10">
+                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-vinyl-fill me-2"></i>Ruleta del Destino</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body text-center p-4">
+                
+                <!-- Contenedor Visual de la Ruleta -->
+                <div class="position-relative mx-auto mb-4" style="width: 250px; height: 250px;">
+                    <!-- El Puntero -->
+                    <div class="roulette-pointer"></div>
+                    <!-- La Rueda (El fondo se genera en JS) -->
+                    <div id="roulette-wheel" class="roulette-wheel"></div>
+                </div>
+
+                <!-- Resultado y Botón de Girar -->
+                <h4 id="roulette-result" class="text-white fw-bold mb-4" style="min-height: 35px; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+                    ¿Qué depara el destino?
+                </h4>
+                
+                <button id="btn-spin-roulette" class="btn btn-start w-100 mb-3" onclick="girarRuleta()">
+                    GIRAR RULETA
+                </button>
+
+                <!-- Panel de Configuración (Restringido al Host) -->
+                <div id="roulette-config-panel" class="mt-4 pt-3 border-top border-white-10 d-none text-start">
+                    <h6 class="text-white-50 small text-uppercase mb-2"><i class="bi bi-gear-fill me-1"></i>Configuración (Solo Host)</h6>
+                    <textarea id="roulette-items-input" class="form-control bg-dark text-white border-secondary mb-2" rows="3" placeholder="Poción, Muerte, Captura Extra, Nada... (Separado por comas)"></textarea>
+                    <button onclick="guardarConfigRuleta()" class="btn btn-sm btn-outline-info w-100">
+                        Actualizar Opciones
+                    </button>
+                    <small class="text-muted d-block mt-2" style="font-size: 0.65rem;">* Se separan por comas (,)</small>
+                </div>
+
+            </div>
+        </div>
+    </div>
     </div>
 
     
