@@ -459,123 +459,130 @@ function renderizarInfoSala(sala) {
 /* ========================================================================== */
 /* 5. GESTIÓN DE EQUIPO (PC / CAPTURA / EVOLUCIÓN)                           */
 /* ========================================================================== */
-async function cargarGestorEquipo() {
-    const activeGrid = document.getElementById('active-team-grid');
-    if (!activeGrid) return; 
+// 1. FUNCIÓN PRINCIPAL PARA PINTAR LAS TARJETAS
+function renderizarTracker(pokemons) {
+    const contEquipo = document.getElementById('tracker-equipo');
+    const contCaja = document.getElementById('tracker-caja');
+    const contCementerio = document.getElementById('tracker-cementerio');
 
+    if (!contEquipo || !contCaja || !contCementerio) return;
+
+    // Limpiamos los contenedores
+    contEquipo.innerHTML = '';
+    contCaja.innerHTML = '';
+    contCementerio.innerHTML = '';
+
+    if (!pokemons || pokemons.length === 0) {
+        contEquipo.innerHTML = '<div class="col-12 text-center text-white-50 py-4">No has registrado ningún Pokémon aún.</div>';
+        return;
+    }
+
+    // Dibujamos cada Pokémon como una tarjeta simple
+    pokemons.forEach(poke => {
+        const estado = poke.estado || 'caja'; // Por defecto a caja si hay error
+        const urlBackup = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.especie.toLowerCase()}.png`;
+
+        const cardHTML = `
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center position-relative h-100 d-flex flex-column justify-content-between" style="border: 1px solid rgba(255,255,255,0.05);">
+                
+                <!-- Botón de Eliminar (Papelera) -->
+                <button onclick="eliminarPokemonTracker('${poke._id}')" class="btn btn-link text-danger p-0 position-absolute top-0 end-0 m-2" title="Borrar registro">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
+
+                <!-- Sprite e Info -->
+                <div class="mt-2 mb-2">
+                    <img src="${poke.imagen}" onerror="this.onerror=null; this.src='${urlBackup}';" style="height: 70px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                </div>
+                
+                <div class="mb-2">
+                    <div class="fw-bold text-truncate text-white" style="font-size: 0.9rem;">${poke.mote || poke.especie}</div>
+                    <div class="small text-warning fw-bold" style="font-size: 0.75rem;">Nv. ${poke.nivel}</div>
+                </div>
+
+                <!-- Selector de Estado -->
+                <select class="form-select form-select-sm bg-dark text-white border-secondary mt-auto" 
+                        onchange="cambiarEstadoTracker('${poke._id}', this.value)" 
+                        style="font-size: 0.75rem;">
+                    <option value="equipo" ${estado === 'equipo' ? 'selected' : ''}>En Equipo</option>
+                    <option value="caja" ${estado === 'caja' ? 'selected' : ''}>En PC</option>
+                    <option value="cementerio" ${estado === 'cementerio' ? 'selected' : ''}>Muerto</option>
+                </select>
+
+            </div>
+        </div>`;
+
+        // Distribuir según el estado actual
+        if (estado === 'equipo') contEquipo.innerHTML += cardHTML;
+        else if (estado === 'caja') contCaja.innerHTML += cardHTML;
+        else if (estado === 'cementerio') contCementerio.innerHTML += cardHTML;
+    });
+
+    // Mensajes de vacío si alguna sección no tiene nada
+    if(contEquipo.innerHTML === '') contEquipo.innerHTML = '<div class="col-12 text-center text-white-50 small">Vacío</div>';
+    if(contCaja.innerHTML === '') contCaja.innerHTML = '<div class="col-12 text-center text-white-50 small">Vacío</div>';
+    if(contCementerio.innerHTML === '') contCementerio.innerHTML = '<div class="col-12 text-center text-white-50 small">Nadie ha caído aún</div>';
+}
+
+// 2. FUNCIÓN PARA CAMBIAR EL ESTADO EN LA NUBE
+async function cambiarEstadoTracker(pokeId, nuevoEstado) {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     
-    // Estados de Carga
-    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando...</p></div></div>';
+    try {
+        // Asumiendo que tu endpoint PUT permite actualizar el estado
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/pokemon/${pokeId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                sala: usuario.sala, 
+                nombreJugador: usuario.nombre,
+                estado: nuevoEstado 
+            })
+        });
+
+        if (res.ok) {
+            // Recargar la lista de la sala y volver a pintar
+            const dataRes = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+            const salaData = await dataRes.json();
+            const misDatos = salaData.jugadores.find(j => j.nombre === usuario.nombre);
+            renderizarTracker(misDatos.pokemons);
+        } else {
+            alert("Error al actualizar el estado.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error de conexión.");
+    }
+}
+
+// 3. FUNCIÓN PARA BORRAR SI TE EQUIVOCAS AL CAPTURAR
+async function eliminarPokemonTracker(pokeId) {
+    if(!confirm("¿Borrar este Pokémon definitivamente del registro?")) return;
+    
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        if (!res.ok) throw new Error("Error servidor");
-        const data = await res.json();
-        
-        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-        if (!miPerfil) return;
-        
-        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
-        const caja = miPerfil.pokemons.filter(p => p.estado === 'caja');
-        const cementerio = miPerfil.pokemons.filter(p => p.estado === 'cementerio');
-
-        document.getElementById('team-counter').innerText = `${equipo.length}/6`;
-
-        // --- EQUIPO ACTIVO ---
-        let htmlEquipo = '';
-        const naturalezas = ["Firme", "Alegre", "Modesta", "Miedosa", "Audaz", "Placida", "Serena", "Grosera", "Cauta", "Agitada", "Rara", "Fuerte", "Docil"];
-
-        equipo.forEach((p) => {
-            const atq = p.ataques && p.ataques.length === 4 ? p.ataques : ["", "", "", ""];
-            const optNat = naturalezas.map(n => `<option value="${n}" ${p.naturaleza === n ? 'selected' : ''}>${n}</option>`).join('');
-            const collapseId = `collapseEdit-${p._id}`;
-
-            htmlEquipo += `
-            <div class="col-12 col-md-6 col-lg-4 fade-in">
-                <div class="manage-card border-warning p-0 overflow-hidden">
-                    <div class="p-3 text-center position-relative">
-                        <img src="${p.imagen}" style="width:70px; height:70px; object-fit:contain;" class="mb-2">
-                        <h6 class="fw-bold text-white mb-0">${p.mote}</h6>
-                        <small class="text-muted">${p.especie} - Lvl.${p.nivel}</small>
-                        <div class="mt-2 d-flex gap-2 justify-content-center">
-                            <span class="badge bg-dark border border-secondary text-secondary">${p.naturaleza || 'Neutro'}</span>
-                            ${p.objeto ? `<span class="badge bg-dark border border-secondary text-info">📦 ${p.objeto}</span>` : ''}
-                        </div>
-                    </div>
-                    <button class="btn-toggle-edit" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}"><i class="bi bi-chevron-down"></i> Editar</button>
-                    <div class="collapse" id="${collapseId}">
-                        <div class="edit-collapse-panel text-start">
-                            <form onsubmit="guardarEdicionInline(event, '${p._id}', '${p.especie}')">
-                                <div class="row g-1 mb-2">
-                                    <div class="col-8"><label class="mini-form-label">Mote</label><input type="text" name="mote" class="mini-input" value="${p.mote}"></div>
-                                    <div class="col-4"><label class="mini-form-label">Nivel</label><input type="number" name="nivel" class="mini-input" value="${p.nivel}" min="1" max="100"></div>
-                                </div>
-                                <div class="row g-1 mb-2">
-                                    <div class="col-6"><label class="mini-form-label">Objeto</label><input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" list="datalist-items" autocomplete="off"></div>
-                                    <div class="col-6"><label class="mini-form-label">Naturaleza</label><select name="naturaleza" class="mini-input bg-dark">${optNat}</select></div>
-                                </div>
-                                <label class="mini-form-label text-warning">Movimientos</label>
-                                <div class="d-grid gap-1 mb-3">
-                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-" list="datalist-moves">
-                                </div>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-sm btn-success py-1">💾 Guardar</button>
-                                    <div class="d-flex gap-1 mt-2 pt-2 border-top border-white-10">
-                                        <button type="button" onclick="evolucionarPokemon('${p._id}', '${p.especie}')" class="btn btn-sm btn-outline-warning flex-fill py-0" title="Evolucionar"><i class="bi bi-stars"></i> Evo</button>
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill py-0">Al PC</button>
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-0">Falleció</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        // Enviar la petición DELETE
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/pokemon/${pokeId}`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                sala: usuario.sala, 
+                nombreJugador: usuario.nombre 
+            })
         });
-        
-        // Rellenar huecos vacíos
-        for(let i = equipo.length; i < 6; i++) {
-            htmlEquipo += `<div class="col-12 col-md-6 col-lg-4"><div class="slot-empty"><div class="text-center opacity-50"><i class="bi bi-plus-circle display-6"></i><div class="mt-2 small">Vacío</div></div></div></div>`;
+
+        if (res.ok) {
+            const dataRes = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+            const salaData = await dataRes.json();
+            const misDatos = salaData.jugadores.find(j => j.nombre === usuario.nombre);
+            renderizarTracker(misDatos.pokemons);
+        } else {
+            alert("Error al borrar el Pokémon.");
         }
-        activeGrid.innerHTML = htmlEquipo;
-
-        // --- CAJA PC ---
-        const pcGrid = document.getElementById('pc-box-grid');
-        pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>' : caja.map(p => `
-            <div class="col-6 col-md-3 col-lg-2 fade-in">
-                <div class="manage-card">
-                    <div class="text-center mb-2">
-                        <img src="${p.imagen}" style="width:50px; height:50px; object-fit:contain; opacity:0.8;">
-                        <div class="fw-bold small mt-1 text-truncate text-muted">${p.mote}</div>
-                        <small class="d-block text-secondary" style="font-size:0.6rem">Lvl. ${p.nivel}</small>
-                    </div>
-                    <div class="w-100 d-grid gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success py-0" style="font-size:0.75rem"><i class="bi bi-arrow-up-circle"></i> Equipo</button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-secondary py-0 border-0" style="font-size:0.75rem"><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-            </div>`).join('');
-
-        // --- CEMENTERIO ---
-        const graveGrid = document.getElementById('graveyard-grid');
-        graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
-            <div class="col-4 col-md-3 col-lg-2">
-                <div class="manage-card bg-danger bg-opacity-10 border-danger">
-                    <div class="text-center mb-1" style="filter: grayscale(100%);">
-                        <img src="${p.imagen}" style="width:40px; height:40px; object-fit:contain;">
-                        <div class="small mt-1 text-truncate text-danger text-decoration-line-through">${p.mote}</div>
-                    </div>
-                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-link text-muted py-0 w-100" style="font-size:0.6rem; text-decoration:none;">Revivir</button>
-                </div>
-            </div>`).join('');
-
-    } catch(e) { 
-        console.error(e); 
-        activeGrid.innerHTML = `<div class="col-12 text-center text-danger">Error de conexión</div>`;
+    } catch (e) {
+        console.error(e);
     }
 }
 
