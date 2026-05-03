@@ -1238,44 +1238,39 @@ function guardarPartidaEnHistorial(ent, sala) {
 }
 
 /* ========================================================================== */
-/* LÓGICA DE LA RULETA (POP-UP)                                               */
+/* LÓGICA DE LA RULETA CON PROBABILIDADES                                     */
 /* ========================================================================== */
 
-// Opciones por defecto si el Host aún no ha configurado nada
-let opcionesRuleta = ["Poción", "Revivir", "Captura Extra", "Pierdes un turno", "Nada", "Baya"];
+// Ahora es un array de objetos (nombre y peso)
+let opcionesRuleta = [
+    { nombre: "Poción", peso: 30 },
+    { nombre: "Nada", peso: 40 },
+    { nombre: "Captura Extra", peso: 20 },
+    { nombre: "Fallo Crítico", peso: 10 }
+];
 let rotacionActual = 0;
 
 window.abrirRuleta = function() {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
     
-    // 1. VALIDACIÓN DE PERMISOS: ¿Es el creador de la sala?
     const esHost = (usuario.nombre === salaInfo.host);
     const panelConfig = document.getElementById('roulette-config-panel');
 
-    if (esHost) {
-        // Mostrar panel
-        panelConfig.classList.remove('d-none');
-        
-        // Cargar configuración guardada si existe (ligada al nombre de la sala)
-        const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
-        if (configGuardada) {
-            opcionesRuleta = JSON.parse(configGuardada);
-        }
-        
-        // Rellenar el textarea
-        document.getElementById('roulette-items-input').value = opcionesRuleta.join(', ');
-    } else {
-        // Ocultar panel a los jugadores normales
-        panelConfig.classList.add('d-none');
-        
-        // Intentar leer la config local (útil si están probando en el mismo PC, 
-        // en red multijugador real verán la de por defecto salvo que tengan backend)
-        const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
-        if (configGuardada) opcionesRuleta = JSON.parse(configGuardada);
+    // Cargar configuración guardada si existe
+    const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
+    if (configGuardada) {
+        opcionesRuleta = JSON.parse(configGuardada);
     }
 
-    // 2. Dibujar y abrir modal
+    if (esHost) {
+        panelConfig.classList.remove('d-none');
+        // Traducimos el array de objetos de vuelta a texto para que el Host lo edite
+        document.getElementById('roulette-items-input').value = opcionesRuleta.map(o => `${o.nombre}: ${o.peso}`).join(', ');
+    } else {
+        panelConfig.classList.add('d-none');
+    }
+
     dibujarRuleta();
     document.getElementById('roulette-result').innerText = "¿Qué depara el destino?";
     
@@ -1288,57 +1283,65 @@ window.guardarConfigRuleta = function() {
     const inputVal = document.getElementById('roulette-items-input').value;
     if (!inputVal.trim()) return alert("No puedes dejar la ruleta vacía.");
 
-    // Convertir el texto separado por comas en un array limpio
-    opcionesRuleta = inputVal.split(',')
-                             .map(item => item.trim())
-                             .filter(item => item.length > 0);
+    // PARSER ROBUSTO: Convierte "Poción: 40, Nada: 60" en un array de objetos.
+    opcionesRuleta = inputVal.split(',').map(item => {
+        let partes = item.split(':');
+        let nombreObj = partes[0].trim();
+        // Si no le ponen número, le damos un peso de 10 por defecto para que no se rompa
+        let pesoObj = partes.length > 1 ? parseFloat(partes[1].trim()) : 10; 
+        if (isNaN(pesoObj) || pesoObj <= 0) pesoObj = 10;
+        
+        return { nombre: nombreObj, peso: pesoObj };
+    }).filter(item => item.nombre.length > 0);
     
     const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
-    
-    // Guardar localmente
     localStorage.setItem(`ruleta_${salaInfo.nombre}`, JSON.stringify(opcionesRuleta));
     
     dibujarRuleta();
-    alert("✅ Ruleta actualizada correctamente.");
+    alert("✅ Probabilidades actualizadas.");
 };
 
 function dibujarRuleta() {
     const wheel = document.getElementById('roulette-wheel');
-    const legendContainer = document.getElementById('roulette-legend'); // Capturamos el nuevo contenedor
+    const legendContainer = document.getElementById('roulette-legend');
     
-    const total = opcionesRuleta.length;
-    const gradosPorItem = 360 / total;
+    // 1. Calculamos el total de pesos (para saber el 100%)
+    const totalPeso = opcionesRuleta.reduce((acc, item) => acc + item.peso, 0);
     
     let gradientStr = '';
-    let legendHTML = ''; // Aquí guardaremos el HTML de la leyenda
+    let legendHTML = '';
+    let gradosAcumulados = 0;
 
-    // Paleta de colores vibrantes para la ruleta
     const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
 
-    for (let i = 0; i < total; i++) {
-        // 1. Asignar un color asegurando que no nos salimos del array (usando módulo %)
+    for (let i = 0; i < opcionesRuleta.length; i++) {
+        const item = opcionesRuleta[i];
         const color = colores[i % colores.length];
         
-        // 2. Calcular los grados para el CSS de la rueda
-        const inicio = i * gradosPorItem;
-        const fin = (i + 1) * gradosPorItem;
-        gradientStr += `${color} ${inicio}deg ${fin}deg${i < total - 1 ? ', ' : ''}`;
+        // 2. Calculamos la proporción de grados de este ítem
+        const proporcion = item.peso / totalPeso;
+        const gradosItem = proporcion * 360;
+        
+        const inicio = gradosAcumulados;
+        const fin = inicio + gradosItem;
+        
+        gradientStr += `${color} ${inicio}deg ${fin}deg${i < opcionesRuleta.length - 1 ? ', ' : ''}`;
+        gradosAcumulados = fin;
 
-        // 3. CONSTRUIR LA LEYENDA (Puntito de color + Nombre de la opción)
+        // 3. Calculamos el porcentaje real para mostrar en la leyenda
+        const porcentajeVisual = Math.round(proporcion * 100);
+
         legendHTML += `
         <div class="d-flex align-items-center gap-1 bg-black bg-opacity-25 px-2 py-1 rounded-pill border border-white-10">
             <span style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px ${color};"></span>
-            <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 100px;" title="${opcionesRuleta[i]}">
-                ${opcionesRuleta[i]}
+            <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 120px;" title="${item.nombre}">
+                ${item.nombre} <b class="text-white">(${porcentajeVisual}%)</b>
             </span>
         </div>`;
     }
 
-    // Aplicar los cambios al navegador
     wheel.style.background = `conic-gradient(${gradientStr})`;
-    if (legendContainer) {
-        legendContainer.innerHTML = legendHTML;
-    }
+    if (legendContainer) legendContainer.innerHTML = legendHTML;
 }
 
 window.girarRuleta = function() {
@@ -1349,28 +1352,41 @@ window.girarRuleta = function() {
     resultText.innerText = "Girando...";
 
     const wheel = document.getElementById('roulette-wheel');
-    const total = opcionesRuleta.length;
-    const gradosPorItem = 360 / total;
+    const totalPeso = opcionesRuleta.reduce((acc, item) => acc + item.peso, 0);
 
-    // Calculamos vueltas aleatorias (entre 5 y 10 vueltas completas) para dar emoción
+    // 1. SELECCIÓN ALEATORIA PONDERADA (Weighted Random)
+    const rand = Math.random() * totalPeso;
+    let acumulado = 0;
+    let indiceGanador = 0;
+    let gradosAcumuladosAntesDelGanador = 0;
+
+    for (let i = 0; i < opcionesRuleta.length; i++) {
+        acumulado += opcionesRuleta[i].peso;
+        if (rand <= acumulado) {
+            indiceGanador = i;
+            break;
+        }
+        // Acumulamos los grados de las porciones anteriores para saber dónde empieza el trozo ganador
+        gradosAcumuladosAntesDelGanador += (opcionesRuleta[i].peso / totalPeso) * 360;
+    }
+
+    const ganador = opcionesRuleta[indiceGanador];
+
+    // 2. CÁLCULO DE ÁNGULO DE PARADA
+    const gradosGanador = (ganador.peso / totalPeso) * 360;
+    const offsetCentro = gradosGanador / 2;
+    // Buscamos el grado exacto del medio de la porción ganadora
+    const anguloCentroGanador = gradosAcumuladosAntesDelGanador + offsetCentro;
+
     const vueltasExtra = Math.floor(Math.random() * 5) + 5;
-    
-    // Elegimos un trozo ganador al azar (índice del array)
-    const indiceGanador = Math.floor(Math.random() * total);
+    // A 360 le restamos el ángulo porque la rotación CSS va en sentido horario, pero los grados los pintamos desde arriba
+    const rotacionFinal = 360 - anguloCentroGanador;
 
-    // Calculamos el ángulo para que el puntero (que está arriba en 0 grados) caiga justo en el centro de ese trozo
-    const offsetCentro = gradosPorItem / 2;
-    const rotacionFinal = (360 - (indiceGanador * gradosPorItem)) - offsetCentro;
-
-    // Actualizamos la rotación global (sumamos a la rotación actual para que no dé tirones si giras varias veces)
-    // Reseteamos visualmente al múltiplo más cercano para evitar números infinitos, pero manteniendo la inercia
     rotacionActual = rotacionActual + (vueltasExtra * 360) + rotacionFinal - (rotacionActual % 360);
-
     wheel.style.transform = `rotate(${rotacionActual}deg)`;
 
-    // Esperar a que acabe la animación de CSS (4 segundos) para mostrar el texto
     setTimeout(() => {
-        resultText.innerHTML = `🎉 <span class="text-warning">${opcionesRuleta[indiceGanador]}</span> 🎉`;
+        resultText.innerHTML = `🎉 <span class="text-warning">${ganador.nombre}</span> 🎉`;
         btn.disabled = false;
     }, 4000);
 };
