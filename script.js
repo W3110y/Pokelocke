@@ -1238,14 +1238,13 @@ function guardarPartidaEnHistorial(ent, sala) {
 }
 
 /* ========================================================================== */
-/* LÓGICA DE LA RULETA CON PROBABILIDADES                                     */
+/* LÓGICA DE LA RULETA (LIMITADA AL 100%)                                     */
 /* ========================================================================== */
 
-// Ahora es un array de objetos (nombre y peso)
+// Valores por defecto que suman exactamente 100
 let opcionesRuleta = [
-    { nombre: "Poción", peso: 30 },
-    { nombre: "Nada", peso: 40 },
-    { nombre: "Captura Extra", peso: 20 },
+    { nombre: "Poción", peso: 40 },
+    { nombre: "Nada", peso: 50 },
     { nombre: "Fallo Crítico", peso: 10 }
 ];
 let rotacionActual = 0;
@@ -1257,22 +1256,31 @@ window.abrirRuleta = function() {
     const esHost = (usuario.nombre === salaInfo.host);
     const panelConfig = document.getElementById('roulette-config-panel');
 
-    // Cargar configuración guardada si existe
+    // 1. SISTEMA ANTI-ERRORES: Cargar y validar la configuración guardada
     const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
     if (configGuardada) {
-        opcionesRuleta = JSON.parse(configGuardada);
+        try {
+            let parsed = JSON.parse(configGuardada);
+            // Si detectamos el formato antiguo (solo texto), lo ignoramos para no romper la ruleta
+            if (parsed.length > 0 && typeof parsed[0] === 'string') {
+                console.warn("Se detectó formato antiguo de ruleta. Usando valores por defecto.");
+            } else {
+                opcionesRuleta = parsed;
+            }
+        } catch (e) {
+            console.error("Error leyendo configuración de la ruleta.");
+        }
     }
 
     if (esHost) {
         panelConfig.classList.remove('d-none');
-        // Traducimos el array de objetos de vuelta a texto para que el Host lo edite
         document.getElementById('roulette-items-input').value = opcionesRuleta.map(o => `${o.nombre}: ${o.peso}`).join(', ');
     } else {
         panelConfig.classList.add('d-none');
     }
 
     dibujarRuleta();
-    document.getElementById('roulette-result').innerText = "¿Qué depara el destino?";
+    document.getElementById('roulette-result').innerHTML = "¿Qué depara el destino?";
     
     const modalEl = document.getElementById('rouletteModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -1283,34 +1291,42 @@ window.guardarConfigRuleta = function() {
     const inputVal = document.getElementById('roulette-items-input').value;
     if (!inputVal.trim()) return alert("No puedes dejar la ruleta vacía.");
 
-    // PARSER ROBUSTO: Convierte "Poción: 40, Nada: 60" en un array de objetos.
-    opcionesRuleta = inputVal.split(',').map(item => {
+    let sumaTotal = 0;
+    
+    // Parsear el texto ingresado
+    let nuevasOpciones = inputVal.split(',').map(item => {
         let partes = item.split(':');
         let nombreObj = partes[0].trim();
-        // Si no le ponen número, le damos un peso de 10 por defecto para que no se rompa
-        let pesoObj = partes.length > 1 ? parseFloat(partes[1].trim()) : 10; 
-        if (isNaN(pesoObj) || pesoObj <= 0) pesoObj = 10;
+        let pesoObj = partes.length > 1 ? parseFloat(partes[1].trim()) : 0; 
+        
+        if (isNaN(pesoObj) || pesoObj <= 0) pesoObj = 0;
+        
+        sumaTotal += pesoObj;
         
         return { nombre: nombreObj, peso: pesoObj };
     }).filter(item => item.nombre.length > 0);
     
+    // 2. VALIDACIÓN ESTRICTA DEL 100%
+    if (sumaTotal !== 100) {
+        return alert(`⛔ Error: La suma de los porcentajes debe ser exactamente 100%. \n\nActualmente suma: ${sumaTotal}%. \nPor favor, ajusta los valores.`);
+    }
+
+    // Si todo es correcto, guardamos
+    opcionesRuleta = nuevasOpciones;
     const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
     localStorage.setItem(`ruleta_${salaInfo.nombre}`, JSON.stringify(opcionesRuleta));
     
     dibujarRuleta();
-    alert("✅ Probabilidades actualizadas.");
+    alert("✅ Probabilidades actualizadas correctamente.");
 };
 
 function dibujarRuleta() {
     const wheel = document.getElementById('roulette-wheel');
     const legendContainer = document.getElementById('roulette-legend');
     
-    // 1. Calculamos el total de pesos (para saber el 100%)
-    const totalPeso = opcionesRuleta.reduce((acc, item) => acc + item.peso, 0);
-    
     let gradientStr = '';
     let legendHTML = '';
-    let gradosAcumulados = 0;
+    let porcentajeAcumulado = 0;
 
     const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
 
@@ -1318,24 +1334,18 @@ function dibujarRuleta() {
         const item = opcionesRuleta[i];
         const color = colores[i % colores.length];
         
-        // 2. Calculamos la proporción de grados de este ítem
-        const proporcion = item.peso / totalPeso;
-        const gradosItem = proporcion * 360;
+        const inicio = porcentajeAcumulado;
+        const fin = inicio + item.peso;
         
-        const inicio = gradosAcumulados;
-        const fin = inicio + gradosItem;
-        
-        gradientStr += `${color} ${inicio}deg ${fin}deg${i < opcionesRuleta.length - 1 ? ', ' : ''}`;
-        gradosAcumulados = fin;
-
-        // 3. Calculamos el porcentaje real para mostrar en la leyenda
-        const porcentajeVisual = Math.round(proporcion * 100);
+        // Creamos el dibujo CSS usando porcentajes directos (0% a 40%, etc)
+        gradientStr += `${color} ${inicio}% ${fin}%${i < opcionesRuleta.length - 1 ? ', ' : ''}`;
+        porcentajeAcumulado = fin;
 
         legendHTML += `
         <div class="d-flex align-items-center gap-1 bg-black bg-opacity-25 px-2 py-1 rounded-pill border border-white-10">
             <span style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px ${color};"></span>
             <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 120px;" title="${item.nombre}">
-                ${item.nombre} <b class="text-white">(${porcentajeVisual}%)</b>
+                ${item.nombre} <b class="text-white">(${item.peso}%)</b>
             </span>
         </div>`;
     }
@@ -1352,13 +1362,12 @@ window.girarRuleta = function() {
     resultText.innerText = "Girando...";
 
     const wheel = document.getElementById('roulette-wheel');
-    const totalPeso = opcionesRuleta.reduce((acc, item) => acc + item.peso, 0);
 
-    // 1. SELECCIÓN ALEATORIA PONDERADA (Weighted Random)
-    const rand = Math.random() * totalPeso;
+    // Selección aleatoria basada en un total exacto de 100
+    const rand = Math.random() * 100;
     let acumulado = 0;
     let indiceGanador = 0;
-    let gradosAcumuladosAntesDelGanador = 0;
+    let porcentajeAcumuladoAntes = 0;
 
     for (let i = 0; i < opcionesRuleta.length; i++) {
         acumulado += opcionesRuleta[i].peso;
@@ -1366,20 +1375,18 @@ window.girarRuleta = function() {
             indiceGanador = i;
             break;
         }
-        // Acumulamos los grados de las porciones anteriores para saber dónde empieza el trozo ganador
-        gradosAcumuladosAntesDelGanador += (opcionesRuleta[i].peso / totalPeso) * 360;
+        porcentajeAcumuladoAntes += opcionesRuleta[i].peso;
     }
 
     const ganador = opcionesRuleta[indiceGanador];
 
-    // 2. CÁLCULO DE ÁNGULO DE PARADA
-    const gradosGanador = (ganador.peso / totalPeso) * 360;
+    // Calculamos el ángulo en el que se debe detener
+    const gradosGanador = (ganador.peso / 100) * 360;
     const offsetCentro = gradosGanador / 2;
-    // Buscamos el grado exacto del medio de la porción ganadora
-    const anguloCentroGanador = gradosAcumuladosAntesDelGanador + offsetCentro;
-
+    const gradosAntes = (porcentajeAcumuladoAntes / 100) * 360;
+    
+    const anguloCentroGanador = gradosAntes + offsetCentro;
     const vueltasExtra = Math.floor(Math.random() * 5) + 5;
-    // A 360 le restamos el ángulo porque la rotación CSS va en sentido horario, pero los grados los pintamos desde arriba
     const rotacionFinal = 360 - anguloCentroGanador;
 
     rotacionActual = rotacionActual + (vueltasExtra * 360) + rotacionFinal - (rotacionActual % 360);
