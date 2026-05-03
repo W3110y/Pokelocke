@@ -809,7 +809,7 @@ async function cargarHistorialCompleto() {
 
     try {
         // Solo pedimos la lista de combates
-        const resCombates = await fetch(`${API_BASE}/api/juego/combates/${usuario.sala}`);
+        const resCombates = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
 
         if (!resCombates.ok) throw new Error("Error de conexión al obtener combates");
 
