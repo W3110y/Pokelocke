@@ -795,18 +795,25 @@ function initFormularioCombate() {
     });
 }
 
+/* ========================================================================== */
+/* HISTORIAL DE COMBATES COMPLETO (Vista Simple)                              */
+/* ========================================================================== */
 async function cargarHistorialCompleto() {
     const container = document.getElementById('timeline-content');
     if (!container) return;
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    
+    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
+    if (!usuarioRaw) return window.location.href = 'join.html';
+    
+    const usuario = JSON.parse(usuarioRaw);
 
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/combates/${usuario.sala}`);
-        const resSala = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        if (!resCombates.ok || !resSala.ok) throw new Error("Error de conexión");
-        const combates = await res.json();
-        const dataSala = await resSala.json();
-        window.CACHE_JUGADORES_COMBAT = dataSala.jugadores;
+        // Solo pedimos la lista de combates
+        const resCombates = await fetch(`${API_BASE}/api/juego/combates/${usuario.sala}`);
+
+        if (!resCombates.ok) throw new Error("Error de conexión al obtener combates");
+
+        const combates = await resCombates.json();
 
         if (combates.length === 0) {
             container.innerHTML = `
@@ -821,9 +828,10 @@ async function cargarHistorialCompleto() {
             const fechaObj = new Date(c.fecha);
             const fechaStr = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
             const horaStr = fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
             const esGanador1 = c.ganador === c.entrenador1;
             const esGanador2 = c.ganador === c.entrenador2;
-            // Determinar colores de los nombres según quién ganó
+
             const colorP1 = esGanador1 ? 'text-warning' : 'text-white';
             const colorP2 = esGanador2 ? 'text-warning' : 'text-white';
 
@@ -850,7 +858,7 @@ async function cargarHistorialCompleto() {
                     </div>
                 </div>
 
-                <!-- GANADOR BADGE (Visible en pantallas medianas o grandes) -->
+                <!-- GANADOR BADGE -->
                 <div class="text-end px-3 d-none d-md-block" style="min-width: 140px;">
                     <span class="d-block small text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ganador</span>
                     <span class="text-warning fw-bold">${c.ganador}</span>
@@ -858,9 +866,10 @@ async function cargarHistorialCompleto() {
 
             </div>`;
         }).join('');
+
     } catch (e) { 
         container.innerHTML = '<p class="text-danger text-center py-4">Error cargando historial.</p>'; 
-        console.error(e);
+        console.error("Error al cargar combates:", e);
     }
 }
 
