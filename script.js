@@ -1250,82 +1250,72 @@ window.abrirRuleta = async function() {
     const resultText = document.getElementById('roulette-result');
     const btnSpin = document.getElementById('btn-spin-roulette');
 
-    // Bloqueamos la ruleta mientras carga los datos de la nube
     resultText.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sincronizando ruleta...';
     btnSpin.disabled = true;
 
-    // Abrimos el modal inmediatamente para que el usuario vea que está cargando
     const modalEl = document.getElementById('rouletteModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
+    const API_BASE = 'https://pokelocke-8kjm.onrender.com';
 
-    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
+    // Usamos la variable dinámica
+    const API_URL = `${API_BASE}/api/juego/sala/${usuario.sala}`;
+    
     try {
-        // 1. DESCARGAMOS LA RULETA DE LA BASE DE DATOS (Saltándonos la caché)
         const res = await fetch(API_URL, {
             method: 'GET',
-            cache: 'no-store', // Obliga a descargar siempre la versión más reciente
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
+            cache: 'no-store', 
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
         });
+        
         if (!res.ok) throw new Error("Error al conectar con la sala");
         
         const salaData = await res.json();
-        // --- EL CHIVATO DEFINITIVO ---
-        console.log("📦 Datos que me acaba de enviar el servidor:", salaData);
-        // -----------------------------
         
-        // 1. CHIVATOS PARA LA CONSOLA (Para ver qué está fallando)
-        console.log("👉 Mis datos locales:", usuario);
-        console.log("👉 Datos de la sala en la nube:", salaData);
+        // ¡LA CLAVE ESTABA AQUÍ! Apuntamos a la caja interna "sala"
+        const infoSala = salaData.sala; 
 
-        // 2. COMPROBACIÓN ANTI-ERRORES (Quitamos espacios invisibles y forzamos minúsculas para comparar)
+        // 1. COMPROBACIÓN DE HOST (Ahora buscando en infoSala)
         let esHost = false;
-
-        if (salaData.host && usuario.nombre) {
+        if (infoSala && infoSala.host && usuario.nombre) {
             const miNombre = String(usuario.nombre).trim().toLowerCase();
-            const nombreDelHost = String(salaData.host).trim().toLowerCase();
-            
-            console.log(`Comparando: "${miNombre}" === "${nombreDelHost}"`);
+            const nombreDelHost = String(infoSala.host).trim().toLowerCase();
             
             if (miNombre === nombreDelHost) {
                 esHost = true;
             }
         } 
         
-        // PLAN B: Si la base de datos no guardó el campo "host", asumimos que el host es el primer jugador que entró a la sala
+        // Plan B por si el host falla
         if (!esHost && salaData.jugadores && salaData.jugadores.length > 0) {
             const primerJugador = String(salaData.jugadores[0].nombre).trim().toLowerCase();
             const miNombre = String(usuario.nombre).trim().toLowerCase();
-            
-            if (miNombre === primerJugador) {
-                console.log("Reconocido como Host por ser el primer jugador de la sala.");
-                esHost = true;
-            }
+            if (miNombre === primerJugador) esHost = true;
         }
 
-        // Asignamos las opciones de la base de datos a la variable global
-        opcionesRuleta = salaData.ruleta || [];
+        // 2. RECUPERAR LA RULETA (Buscando en infoSala)
+        opcionesRuleta = infoSala.ruleta || [];
 
-        // Si la base de datos devolvió una ruleta vacía por algún error, ponemos un salvavidas
-        if (opcionesRuleta.length === 0) {
-            opcionesRuleta = [{ nombre: "Sin configurar", peso: 100 }];
+        // Salvavidas por si de verdad la sala es nueva y está vacía
+        if (!opcionesRuleta || opcionesRuleta.length === 0) {
+            opcionesRuleta = [
+                { nombre: "Poción", peso: 40 },
+                { nombre: "Nada", peso: 50 },
+                { nombre: "Fallo Crítico", peso: 10 }
+            ];
         }
 
-        // 2. CONFIGURAMOS LOS PERMISOS DE HOST
+        // 3. MOSTRAR PANEL SI ERES HOST
         if (esHost) {
             panelConfig.classList.remove('d-none');
-            // Autorellenar el cuadro de texto del Host
             document.getElementById('roulette-items-input').value = opcionesRuleta.map(o => `${o.nombre}: ${o.peso}`).join(', ');
         } else {
             panelConfig.classList.add('d-none');
         }
 
-        // Dibujamos y desbloqueamos
+        // 4. DIBUJAR Y DESBLOQUEAR
         dibujarRuleta();
-        // Le damos formato de letrero con márgenes para separarlo de la leyenda
+        
         resultText.innerHTML = `
         <div class="mt-4 mb-3 py-2 px-3 bg-dark bg-opacity-50 border border-secondary rounded text-white-50 text-center">
             <i class="bi bi-question-circle me-2"></i> ¿Qué depara el destino?
@@ -1334,7 +1324,6 @@ window.abrirRuleta = async function() {
 
     } catch (error) {
         console.error("Detalle del error:", error);
-        // Ahora el error real se imprimirá en la pantalla de la ruleta
         resultText.innerHTML = `<span class="text-danger" style="font-size: 0.9rem;">
             <b>Fallo de conexión:</b> ${error.message}
         </span>`;
