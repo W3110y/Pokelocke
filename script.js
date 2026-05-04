@@ -1290,8 +1290,12 @@ window.abrirRuleta = async function() {
         btnSpin.disabled = false;
 
     } catch (error) {
-        console.error(error);
-        resultText.innerHTML = '<span class="text-danger">Error de sincronización</span>';
+        console.error("Detalle del error:", error);
+        // Ahora el error real se imprimirá en la pantalla de la ruleta
+        resultText.innerHTML = `<span class="text-danger" style="font-size: 0.9rem;">
+            <b>Fallo de conexión:</b> ${error.message}
+        </span>`;
+        btnSpin.disabled = false;
     }
 };
 
