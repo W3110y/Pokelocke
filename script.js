@@ -1273,6 +1273,9 @@ window.abrirRuleta = async function() {
         if (!res.ok) throw new Error("Error al conectar con la sala");
         
         const salaData = await res.json();
+        // --- EL CHIVATO DEFINITIVO ---
+        console.log("📦 Datos que me acaba de enviar el servidor:", salaData);
+        // -----------------------------
         
         // 1. CHIVATOS PARA LA CONSOLA (Para ver qué está fallando)
         console.log("👉 Mis datos locales:", usuario);
