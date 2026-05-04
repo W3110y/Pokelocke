@@ -1261,8 +1261,15 @@ window.abrirRuleta = async function() {
 
     const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
     try {
-        // 1. DESCARGAMOS LA RULETA OFICIAL DE LA BASE DE DATOS
-        const res = await fetch(API_URL);
+        // 1. DESCARGAMOS LA RULETA DE LA BASE DE DATOS (Saltándonos la caché)
+        const res = await fetch(API_URL, {
+            method: 'GET',
+            cache: 'no-store', // Obliga a descargar siempre la versión más reciente
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         if (!res.ok) throw new Error("Error al conectar con la sala");
         
         const salaData = await res.json();
@@ -1315,7 +1322,11 @@ window.abrirRuleta = async function() {
 
         // Dibujamos y desbloqueamos
         dibujarRuleta();
-        resultText.innerHTML = "¿Qué depara el destino?";
+        // Le damos formato de letrero con márgenes para separarlo de la leyenda
+        resultText.innerHTML = `
+        <div class="mt-4 mb-3 py-2 px-3 bg-dark bg-opacity-50 border border-secondary rounded text-white-50 text-center">
+            <i class="bi bi-question-circle me-2"></i> ¿Qué depara el destino?
+        </div>`;
         btnSpin.disabled = false;
 
     } catch (error) {
@@ -1441,7 +1452,11 @@ window.girarRuleta = function() {
     const resultText = document.getElementById('roulette-result');
     
     btn.disabled = true;
-    resultText.innerText = "Girando...";
+    // Formato de "Cargando" mientras da vueltas
+    resultText.innerHTML = `
+    <div class="mt-4 mb-3 py-2 px-3 bg-dark border border-info rounded text-info text-center shadow-sm">
+        <span class="spinner-border spinner-border-sm me-2"></span> El destino está decidiendo...
+    </div>`;
 
     const wheel = document.getElementById('roulette-wheel');
 
@@ -1475,7 +1490,13 @@ window.girarRuleta = function() {
     wheel.style.transform = `rotate(${rotacionActual}deg)`;
 
     setTimeout(() => {
-        resultText.innerHTML = `🎉 <span class="text-warning">${ganador.nombre}</span> 🎉`;
+        // Formato épico para el premio final con brillos y separación
+        resultText.innerHTML = `
+        <div class="mt-4 mb-3 py-3 px-4 bg-black border border-warning rounded text-center" style="box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);">
+            <h4 class="m-0 text-white">
+                🎉 <span class="text-warning fw-bold text-uppercase">${ganador.nombre}</span> 🎉
+            </h4>
+        </div>`;
         btn.disabled = false;
     }, 4000);
 };
