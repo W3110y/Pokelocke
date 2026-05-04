@@ -1259,9 +1259,10 @@ window.abrirRuleta = async function() {
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`;
     try {
         // 1. DESCARGAMOS LA RULETA OFICIAL DE LA BASE DE DATOS
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const res = await fetch(API_URL);
         if (!res.ok) throw new Error("Error al conectar con la sala");
         
         const salaData = await res.json();
@@ -1329,9 +1330,10 @@ window.guardarConfigRuleta = async function() {
     btnGuardar.innerText = "Subiendo a la nube...";
     btnGuardar.disabled = true;
 
+    const API_URL = `https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}/ruleta`;
     try {
         // 3. SUBIMOS LA NUEVA CONFIGURACIÓN A LA BASE DE DATOS
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}/ruleta`, {
+        const res = await fetch(API_URL, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nuevaRuleta: nuevasOpciones })
