@@ -1391,30 +1391,49 @@ function dibujarRuleta() {
     let legendHTML = '';
     let porcentajeAcumulado = 0;
 
-    const colores = ['#ec4899', '#6366f1', '#ffcb05', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
-
     for (let i = 0; i < opcionesRuleta.length; i++) {
         const item = opcionesRuleta[i];
-        const color = colores[i % colores.length];
+        
+        // 1. ALGORITMO DE COLORES INFINITOS (Proporción Áurea)
+        // Multiplicar el índice por 137.5 grados en el círculo cromático (HSL)
+        // garantiza que los colores contiguos siempre sean visualmente muy distintos.
+        const hue = Math.floor((i * 137.508) % 360);
+        const color = `hsl(${hue}, 75%, 55%)`; 
         
         const inicio = porcentajeAcumulado;
         const fin = inicio + item.peso;
         
-        // Creamos el dibujo CSS usando porcentajes directos (0% a 40%, etc)
+        // Dibujamos el trozo en la ruleta
         gradientStr += `${color} ${inicio}% ${fin}%${i < opcionesRuleta.length - 1 ? ', ' : ''}`;
         porcentajeAcumulado = fin;
 
+        // 2. LEYENDA ADAPTABLE (Sistema de Cuadrícula sin recortes)
         legendHTML += `
-        <div class="d-flex align-items-center gap-1 bg-black bg-opacity-25 px-2 py-1 rounded-pill border border-white-10">
-            <span style="width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px ${color};"></span>
-            <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 120px;" title="${item.nombre}">
-                ${item.nombre} <b class="text-white">(${item.peso}%)</b>
-            </span>
+        <div class="col-12 col-sm-6">
+            <div class="d-flex align-items-center gap-2 bg-black bg-opacity-25 px-2 py-2 rounded border border-white-10 h-100">
+                <div style="min-width: 12px; height: 12px; background-color: ${color}; border-radius: 50%; box-shadow: 0 0 5px ${color};"></div>
+                <div class="d-flex justify-content-between align-items-center w-100" style="font-size: 0.8rem;">
+                    
+                    <!-- Texto largo multilínea -->
+                    <span class="text-white-50 text-start" style="word-wrap: break-word; white-space: normal; line-height: 1.2; padding-right: 8px;">
+                        ${item.nombre}
+                    </span>
+                    
+                    <!-- Probabilidad siempre visible -->
+                    <span class="badge bg-dark text-white border border-secondary p-1">${item.peso}%</span>
+                </div>
+            </div>
         </div>`;
     }
 
+    // Aplicar a la rueda
     wheel.style.background = `conic-gradient(${gradientStr})`;
-    if (legendContainer) legendContainer.innerHTML = legendHTML;
+    
+    // Aplicar a la leyenda convirtiéndola en una cuadrícula (Grid) responsive
+    if (legendContainer) {
+        legendContainer.className = "row g-2 mt-3 text-start";
+        legendContainer.innerHTML = legendHTML;
+    }
 }
 
 window.girarRuleta = function() {
