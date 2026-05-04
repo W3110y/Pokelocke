@@ -162,7 +162,7 @@ function initFormulariosAcceso() {
                     localStorage.setItem('usuario_pokelocke', JSON.stringify(data.entrenador));
                     localStorage.setItem('sala_info', JSON.stringify(data.sala)); 
                     guardarPartidaEnHistorial(data.entrenador, data.sala);
-                    window.location.href = 'sala.html';
+                    window.location.href = 'sala_grupo.html';
                 } else {
                     alert("❌ Error: " + (data.mensaje || "Error desconocido"));
                     btn.disabled = false;

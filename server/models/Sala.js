@@ -11,10 +11,10 @@ const SalaSchema = new mongoose.Schema({
     descripcion: { type: String },                          // "party-description"
     fechaCreacion: { type: Date, default: Date.now },           // "created-at"
     ruleta: {
-    type: [{
-        nombre: String,
-        peso: Number
-    }],
+        type: [{
+            nombre: String,
+            peso: Number
+        }],
     // Le ponemos una ruleta por defecto para que las salas no estén vacías al crearse
     default: [
         { nombre: "Poción", peso: 40 },
