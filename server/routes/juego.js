@@ -371,4 +371,28 @@ router.get('/combates/:sala', async (req, res) => {
     }
 });
 
+// Ruta para actualizar la configuración de la ruleta de una sala
+router.put('/sala/:nombre/ruleta', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+        const { nuevaRuleta } = req.body;
+
+        // Busca la sala y actualiza su campo ruleta
+        const salaActualizada = await Sala.findOneAndUpdate(
+            { nombre: nombre },
+            { $set: { ruleta: nuevaRuleta } },
+            { new: true } // Devuelve la sala actualizada
+        );
+
+        if (!salaActualizada) {
+            return res.status(404).json({ mensaje: 'Sala no encontrada' });
+        }
+
+        res.json({ mensaje: 'Ruleta actualizada correctamente', ruleta: salaActualizada.ruleta });
+    } catch (error) {
+        console.error("Error al actualizar ruleta:", error);
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+});
+
 module.exports = router;

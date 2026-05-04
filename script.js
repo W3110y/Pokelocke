@@ -1238,62 +1238,69 @@ function guardarPartidaEnHistorial(ent, sala) {
 }
 
 /* ========================================================================== */
-/* LÓGICA DE LA RULETA (LIMITADA AL 100%)                                     */
+/* LÓGICA DE LA RULETA (CONECTADA A LA NUBE)                                  */
 /* ========================================================================== */
 
-// Valores por defecto que suman exactamente 100
-let opcionesRuleta = [
-    { nombre: "Poción", peso: 40 },
-    { nombre: "Nada", peso: 50 },
-    { nombre: "Fallo Crítico", peso: 10 }
-];
+let opcionesRuleta = []; // Empezará vacía y se llenará desde la base de datos
 let rotacionActual = 0;
 
-window.abrirRuleta = function() {
+window.abrirRuleta = async function() {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-    const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
-    
-    const esHost = (usuario.nombre === salaInfo.host);
     const panelConfig = document.getElementById('roulette-config-panel');
+    const resultText = document.getElementById('roulette-result');
+    const btnSpin = document.getElementById('btn-spin-roulette');
 
-    // 1. SISTEMA ANTI-ERRORES: Cargar y validar la configuración guardada
-    const configGuardada = localStorage.getItem(`ruleta_${salaInfo.nombre}`);
-    if (configGuardada) {
-        try {
-            let parsed = JSON.parse(configGuardada);
-            // Si detectamos el formato antiguo (solo texto), lo ignoramos para no romper la ruleta
-            if (parsed.length > 0 && typeof parsed[0] === 'string') {
-                console.warn("Se detectó formato antiguo de ruleta. Usando valores por defecto.");
-            } else {
-                opcionesRuleta = parsed;
-            }
-        } catch (e) {
-            console.error("Error leyendo configuración de la ruleta.");
-        }
-    }
+    // Bloqueamos la ruleta mientras carga los datos de la nube
+    resultText.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sincronizando ruleta...';
+    btnSpin.disabled = true;
 
-    if (esHost) {
-        panelConfig.classList.remove('d-none');
-        document.getElementById('roulette-items-input').value = opcionesRuleta.map(o => `${o.nombre}: ${o.peso}`).join(', ');
-    } else {
-        panelConfig.classList.add('d-none');
-    }
-
-    dibujarRuleta();
-    document.getElementById('roulette-result').innerHTML = "¿Qué depara el destino?";
-    
+    // Abrimos el modal inmediatamente para que el usuario vea que está cargando
     const modalEl = document.getElementById('rouletteModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
+
+    try {
+        // 1. DESCARGAMOS LA RULETA OFICIAL DE LA BASE DE DATOS
+        const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
+        if (!res.ok) throw new Error("Error al conectar con la sala");
+        
+        const salaData = await res.json();
+        const esHost = (salaData.host && usuario.nombre === salaData.host);
+
+        // Asignamos las opciones de la base de datos a la variable global
+        opcionesRuleta = salaData.ruleta || [];
+
+        // Si la base de datos devolvió una ruleta vacía por algún error, ponemos un salvavidas
+        if (opcionesRuleta.length === 0) {
+            opcionesRuleta = [{ nombre: "Sin configurar", peso: 100 }];
+        }
+
+        // 2. CONFIGURAMOS LOS PERMISOS DE HOST
+        if (esHost) {
+            panelConfig.classList.remove('d-none');
+            // Autorellenar el cuadro de texto del Host
+            document.getElementById('roulette-items-input').value = opcionesRuleta.map(o => `${o.nombre}: ${o.peso}`).join(', ');
+        } else {
+            panelConfig.classList.add('d-none');
+        }
+
+        // Dibujamos y desbloqueamos
+        dibujarRuleta();
+        resultText.innerHTML = "¿Qué depara el destino?";
+        btnSpin.disabled = false;
+
+    } catch (error) {
+        console.error(error);
+        resultText.innerHTML = '<span class="text-danger">Error de sincronización</span>';
+    }
 };
 
-window.guardarConfigRuleta = function() {
+window.guardarConfigRuleta = async function() {
     const inputVal = document.getElementById('roulette-items-input').value;
     if (!inputVal.trim()) return alert("No puedes dejar la ruleta vacía.");
 
     let sumaTotal = 0;
     
-    // Parsear el texto ingresado
     let nuevasOpciones = inputVal.split(',').map(item => {
         let partes = item.split(':');
         let nombreObj = partes[0].trim();
@@ -1306,18 +1313,40 @@ window.guardarConfigRuleta = function() {
         return { nombre: nombreObj, peso: pesoObj };
     }).filter(item => item.nombre.length > 0);
     
-    // 2. VALIDACIÓN ESTRICTA DEL 100%
     if (sumaTotal !== 100) {
         return alert(`⛔ Error: La suma de los porcentajes debe ser exactamente 100%. \n\nActualmente suma: ${sumaTotal}%. \nPor favor, ajusta los valores.`);
     }
 
-    // Si todo es correcto, guardamos
-    opcionesRuleta = nuevasOpciones;
-    const salaInfo = JSON.parse(localStorage.getItem('sala_info'));
-    localStorage.setItem(`ruleta_${salaInfo.nombre}`, JSON.stringify(opcionesRuleta));
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    const btnGuardar = document.querySelector('#roulette-config-panel button');
+    const txtOriginal = btnGuardar.innerText;
     
-    dibujarRuleta();
-    alert("✅ Probabilidades actualizadas correctamente.");
+    // Cambiamos el texto del botón mientras sube los datos
+    btnGuardar.innerText = "Subiendo a la nube...";
+    btnGuardar.disabled = true;
+
+    try {
+        // 3. SUBIMOS LA NUEVA CONFIGURACIÓN A LA BASE DE DATOS
+        const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}/ruleta`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nuevaRuleta: nuevasOpciones })
+        });
+
+        if (!res.ok) throw new Error("Error al guardar en el servidor");
+
+        // Si fue un éxito, actualizamos la variable local y redibujamos
+        opcionesRuleta = nuevasOpciones;
+        dibujarRuleta();
+        alert("✅ Ruleta actualizada en el servidor. Todos los jugadores verán estos cambios.");
+
+    } catch (error) {
+        console.error(error);
+        alert("❌ Error de conexión al intentar guardar la ruleta.");
+    } finally {
+        btnGuardar.innerText = txtOriginal;
+        btnGuardar.disabled = false;
+    }
 };
 
 function dibujarRuleta() {
