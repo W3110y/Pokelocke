@@ -1266,7 +1266,35 @@ window.abrirRuleta = async function() {
         if (!res.ok) throw new Error("Error al conectar con la sala");
         
         const salaData = await res.json();
-        const esHost = (salaData.host && usuario.nombre === salaData.host);
+        
+        // 1. CHIVATOS PARA LA CONSOLA (Para ver qué está fallando)
+        console.log("👉 Mis datos locales:", usuario);
+        console.log("👉 Datos de la sala en la nube:", salaData);
+
+        // 2. COMPROBACIÓN ANTI-ERRORES (Quitamos espacios invisibles y forzamos minúsculas para comparar)
+        let esHost = false;
+
+        if (salaData.host && usuario.nombre) {
+            const miNombre = String(usuario.nombre).trim().toLowerCase();
+            const nombreDelHost = String(salaData.host).trim().toLowerCase();
+            
+            console.log(`Comparando: "${miNombre}" === "${nombreDelHost}"`);
+            
+            if (miNombre === nombreDelHost) {
+                esHost = true;
+            }
+        } 
+        
+        // PLAN B: Si la base de datos no guardó el campo "host", asumimos que el host es el primer jugador que entró a la sala
+        if (!esHost && salaData.jugadores && salaData.jugadores.length > 0) {
+            const primerJugador = String(salaData.jugadores[0].nombre).trim().toLowerCase();
+            const miNombre = String(usuario.nombre).trim().toLowerCase();
+            
+            if (miNombre === primerJugador) {
+                console.log("Reconocido como Host por ser el primer jugador de la sala.");
+                esHost = true;
+            }
+        }
 
         // Asignamos las opciones de la base de datos a la variable global
         opcionesRuleta = salaData.ruleta || [];
