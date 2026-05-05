@@ -463,6 +463,7 @@ async function cargarGestorEquipo() {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div></div></div>';
     
+    const API_BASE = 'https://pokelocke-8kjm.onrender.com';
     try {
         const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
         if (!res.ok) throw new Error("Error del servidor");
