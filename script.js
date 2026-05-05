@@ -461,15 +461,12 @@ async function cargarGestorEquipo() {
     if (!activeGrid) return; 
 
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-    
-    // Estado de carga
-    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Sincronizando Pokémon...</p></div></div>';
+    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div></div></div>';
     
     try {
         const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
         if (!res.ok) throw new Error("Error del servidor");
         const data = await res.json();
-        
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
         if (!miPerfil) return;
         
@@ -480,75 +477,65 @@ async function cargarGestorEquipo() {
         const counter = document.getElementById('team-counter');
         if (counter) counter.innerText = `${equipo.length}/6`;
 
-        // --- EQUIPO ACTIVO (Miniaturizado: 6 columnas en PC, 2 en Móvil) ---
+        // --- EQUIPO ACTIVO (ULTRA COMPACTO: col-md-2 asegura 6 por fila) ---
         let htmlEquipo = '';
         equipo.forEach((p) => {
             htmlEquipo += `
-            <div class="col-6 col-md-4 col-lg-2 fade-in">
-                <div class="manage-card border-success p-2 text-center d-flex flex-column align-items-center justify-content-between h-100">
-                    <div>
-                        <img src="${p.imagen}" style="width:55px; height:55px; object-fit:contain;" class="mb-1 drop-shadow">
-                        <div class="fw-bold text-white text-capitalize text-truncate" style="font-size: 0.85rem; max-width: 100px;" title="${p.especie}">${p.especie}</div>
-                        <div class="mt-1 d-flex flex-wrap justify-content-center gap-1">
-                            ${(p.tipos || []).map(t => `<span class="badge bg-secondary opacity-75" style="font-size: 0.6rem; padding: 0.2em 0.4em;">${t}</span>`).join('')}
-                        </div>
+            <div class="col-4 col-md-2 px-1 fade-in">
+                <div class="manage-card border-success p-1 text-center h-100 d-flex flex-column">
+                    <img src="${p.imagen}" style="width:40px; height:40px; object-fit:contain;" class="mx-auto drop-shadow mb-1">
+                    <div class="fw-bold text-white text-capitalize text-truncate" style="font-size: 0.7rem;" title="${p.especie}">${p.especie}</div>
+                    <div class="d-flex justify-content-center gap-1 mt-1 mb-2">
+                        ${(p.tipos || []).map(t => `<span class="badge bg-secondary" style="font-size: 0.5rem; padding: 0.2em;">${t.substring(0,3).toUpperCase()}</span>`).join('')}
                     </div>
-                    <div class="w-100 mt-3 d-flex flex-column gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary py-0" style="font-size: 0.7rem;">Al PC</button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger py-0" style="font-size: 0.7rem;">Falleció</button>
+                    <div class="d-flex gap-1 mt-auto">
+                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill p-0" title="Al PC"><i class="bi bi-pc-display"></i></button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill p-0" title="Murió"><i class="bi bi-skull"></i></button>
                     </div>
                 </div>
             </div>`;
         });
         
-        // Rellenar huecos vacíos del equipo
         for(let i = equipo.length; i < 6; i++) {
             htmlEquipo += `
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="slot-empty h-100 d-flex flex-column align-items-center justify-content-center border-dashed border-secondary rounded opacity-50 p-2" style="min-height: 140px;">
-                    <i class="bi bi-plus-circle fs-3"></i>
-                    <div class="mt-1" style="font-size: 0.7rem;">Vacío</div>
+            <div class="col-4 col-md-2 px-1">
+                <div class="slot-empty h-100 d-flex flex-column align-items-center justify-content-center border-dashed border-secondary rounded opacity-50 p-1" style="min-height: 100px;">
+                    <i class="bi bi-plus fs-5"></i>
                 </div>
             </div>`;
         }
         activeGrid.innerHTML = htmlEquipo;
 
-        // --- CAJA PC (Aún más pequeña: 3 en Móvil) ---
+        // --- CAJA PC (Aún más comprimida) ---
         const pcGrid = document.getElementById('pc-box-grid');
         if (pcGrid) {
-            pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">El PC está vacío</div>' : caja.map(p => `
-            <div class="col-4 col-md-3 col-lg-2 fade-in">
-                <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100 d-flex flex-column justify-content-between">
-                    <div>
-                        <img src="${p.imagen}" class="mx-auto" style="width:45px; height:45px; object-fit:contain;">
-                        <span class="fw-bold text-white text-capitalize d-block text-truncate mt-1" style="font-size: 0.75rem;" title="${p.especie}">${p.especie}</span>
-                    </div>
-                    <div class="mt-2 d-flex flex-column gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success w-100 py-0" style="font-size: 0.7rem;" title="Subir al Equipo"><i class="bi bi-arrow-up"></i></button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100 py-0" style="font-size: 0.7rem;" title="Enviar al Cementerio"><i class="bi bi-trash"></i></button>
+            pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-2 small">Vacío</div>' : caja.map(p => `
+            <div class="col-3 col-md-2 px-1 fade-in">
+                <div class="manage-card p-1 text-center border-primary bg-black bg-opacity-25 h-100 d-flex flex-column">
+                    <img src="${p.imagen}" class="mx-auto" style="width:35px; height:35px; object-fit:contain;">
+                    <span class="fw-bold text-white text-capitalize text-truncate mt-1" style="font-size: 0.65rem;">${p.especie}</span>
+                    <div class="mt-auto d-flex gap-1 pt-1">
+                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success flex-fill p-0"><i class="bi bi-arrow-up"></i></button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill p-0"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
             </div>`).join('');
         }
 
-        // --- CEMENTERIO (Igual de pequeño) ---
+        // --- CEMENTERIO ---
         const graveGrid = document.getElementById('graveyard-grid');
         if (graveGrid) {
-            graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-4 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
-            <div class="col-4 col-md-3 col-lg-2">
-                <div class="manage-card p-2 text-center bg-danger bg-opacity-10 border-danger h-100 d-flex flex-column justify-content-between" style="filter: grayscale(80%);">
-                    <div>
-                        <img src="${p.imagen}" class="mx-auto opacity-75" style="width:40px; height:40px; object-fit:contain;">
-                        <span class="fw-bold text-danger text-capitalize text-decoration-line-through d-block text-truncate mt-1" style="font-size: 0.75rem;" title="${p.especie}">${p.especie}</span>
-                    </div>
-                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-secondary mt-2 py-0 w-100" style="font-size: 0.7rem;" title="Revivir">Revivir</button>
+            graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
+            <div class="col-3 col-md-2 px-1">
+                <div class="manage-card p-1 text-center bg-danger bg-opacity-10 border-danger h-100 d-flex flex-column" style="filter: grayscale(80%);">
+                    <img src="${p.imagen}" class="mx-auto opacity-75" style="width:30px; height:30px; object-fit:contain;">
+                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-secondary mt-auto p-0" style="font-size: 0.6rem;">Revivir</button>
                 </div>
             </div>`).join('');
         }
 
     } catch(e) { 
-        console.error(e); 
-        activeGrid.innerHTML = `<div class="col-12 text-center text-danger py-4">Error al cargar tu equipo. Revisa tu conexión.</div>`;
+        activeGrid.innerHTML = `<div class="col-12 text-center text-danger py-4">Error de conexión.</div>`;
     }
 }
 
@@ -1358,117 +1345,97 @@ function calcularMultiplicadorDefensivo(tipoAtaque, tiposDefensor) {
 window.abrirAnalizadorSinergias = async function() {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     
-    // Abrir Modal con estado de carga
     const modalEl = document.getElementById('analisisModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-    document.getElementById('analisis-debilidades').innerHTML = '<span class="spinner-border spinner-border-sm text-info"></span> Analizando...';
-    document.getElementById('analisis-resistencias').innerHTML = '';
-    document.getElementById('analisis-sugerencias').innerHTML = '';
+    document.getElementById('analisis-debilidades').innerHTML = '<span class="spinner-border spinner-border-sm text-info"></span>';
     modal.show();
 
     try {
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
         const data = await res.json();
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-        
         const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
         const pc = miPerfil.pokemons.filter(p => p.estado === 'caja' || p.estado === 'pc');
 
-        if (equipo.length === 0) {
-            document.getElementById('analisis-debilidades').innerHTML = "No tienes ningún Pokémon en el equipo para analizar.";
-            return;
-        }
+        if (equipo.length === 0) return document.getElementById('analisis-debilidades').innerHTML = "Equipo vacío.";
 
-        // 1. EVALUAR EL EQUIPO CONTRA LOS 18 TIPOS
+        // --- 1. EVALUAR DEFENSA ---
         let reporte = [];
-
         TODOS_LOS_TIPOS.forEach(tipoAtaque => {
-            let debiles = 0;
-            let resistentes = 0;
-            let inmunes = 0;
-
+            let debiles = 0, resistentes = 0, inmunes = 0;
             equipo.forEach(poke => {
-                if (!poke.tipos || poke.tipos.length === 0) return;
+                if (!poke.tipos) return;
                 const mult = calcularMultiplicadorDefensivo(tipoAtaque, poke.tipos);
-                
                 if (mult >= 2) debiles++;
                 else if (mult === 0) inmunes++;
                 else if (mult <= 0.5) resistentes++;
             });
-
-            reporte.push({
-                tipo: tipoAtaque,
-                debiles: debiles,
-                cubiertoPor: resistentes + inmunes,
-                balance: (resistentes + inmunes) - debiles // Número positivo = bien cubierto. Negativo = peligro.
-            });
+            reporte.push({ tipo: tipoAtaque, debiles, cubiertoPor: resistentes + inmunes });
         });
 
-        // 2. EXTRAER DEBILIDADES CRÍTICAS (Ataques que matan a más de 2 y nadie resiste)
         const amenazasGrave = reporte.filter(r => r.debiles >= 2 && r.cubiertoPor === 0);
         const amenazasMedias = reporte.filter(r => r.debiles >= 2 && r.cubiertoPor > 0);
         
         let htmlDebilidades = '';
         if (amenazasGrave.length === 0 && amenazasMedias.length === 0) {
-            htmlDebilidades = '<div class="alert alert-success py-2 border-success bg-transparent"><i class="bi bi-check-circle me-2"></i> Tu equipo no tiene debilidades superpuestas graves. ¡Está muy bien balanceado!</div>';
+            htmlDebilidades = '<div class="alert alert-success py-1 bg-transparent border-success"><i class="bi bi-check-circle me-1"></i> Sin debilidades superpuestas graves.</div>';
         } else {
-            amenazasGrave.forEach(a => {
-                htmlDebilidades += `<div class="mb-1 text-danger"><i class="bi bi-x-circle-fill me-2"></i> <b>Cuidado con el tipo ${a.tipo.toUpperCase()}:</b> Tienes ${a.debiles} Pokémon débiles y <b>NINGUNO</b> que lo resista.</div>`;
-            });
-            amenazasMedias.forEach(a => {
-                htmlDebilidades += `<div class="mb-1 text-warning"><i class="bi bi-exclamation-triangle me-2"></i> <b>Atento al tipo ${a.tipo.toUpperCase()}:</b> Tienes ${a.debiles} Pokémon débiles, aunque tienes ${a.cubiertoPor} para defenderte.</div>`;
-            });
+            amenazasGrave.forEach(a => htmlDebilidades += `<div class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Peligro Crítico ante <b>${a.tipo.toUpperCase()}</b> (0 defensas).</div>`);
+            amenazasMedias.forEach(a => htmlDebilidades += `<div class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Vulnerabilidad a <b>${a.tipo.toUpperCase()}</b>.</div>`);
         }
         document.getElementById('analisis-debilidades').innerHTML = htmlDebilidades;
 
-        // 3. EXTRAER MEJORES RESISTENCIAS
         const mejoresDefensas = reporte.filter(r => r.cubiertoPor >= 3).sort((a,b) => b.cubiertoPor - a.cubiertoPor);
-        let htmlResistencias = '';
-        if (mejoresDefensas.length > 0) {
-            htmlResistencias = 'Tienes una excelente defensa natural contra ataques de tipo: ';
-            htmlResistencias += mejoresDefensas.map(d => `<span class="badge bg-secondary border border-success text-success">${d.tipo.toUpperCase()}</span>`).join(' ');
-        } else {
-            htmlResistencias = 'Tu equipo tiene una cobertura decente, pero no destaca por ser una "muralla" contra ningún tipo en concreto.';
-        }
-        document.getElementById('analisis-resistencias').innerHTML = htmlResistencias;
+        document.getElementById('analisis-resistencias').innerHTML = mejoresDefensas.length > 0 
+            ? 'Fuerte contra: ' + mejoresDefensas.map(d => `<span class="badge bg-secondary border border-success text-success">${d.tipo.toUpperCase()}</span>`).join(' ')
+            : 'Cobertura decente, sin muros defensivos claros.';
 
-        // 4. GENERAR SUGERENCIAS BUSCANDO EN EL PC
-        let htmlSugerencias = '';
+        // --- 2. EVALUAR OFENSIVA (NUEVO) ---
+        // Asumimos que los Pokémon usan ataques de su mismo tipo (STAB)
+        let tiposQueGolpeamos = new Set();
+        equipo.forEach(p => { if(p.tipos) p.tipos.forEach(t => tiposQueGolpeamos.add(t)); });
         
+        let rivalesSinCobertura = [];
+        TODOS_LOS_TIPOS.forEach(tipoDefensor => {
+            const debilidades = TABLA_TIPOS[tipoDefensor].debil;
+            // ¿Tenemos en nuestro equipo algún tipo de los que duelen al rival?
+            const tenemosCobertura = debilidades.some(d => tiposQueGolpeamos.has(d));
+            if (!tenemosCobertura) rivalesSinCobertura.push(tipoDefensor);
+        });
+
+        let htmlOfensiva = '';
+        if (rivalesSinCobertura.length === 0) {
+            htmlOfensiva = '<div class="alert alert-success py-1 bg-transparent border-success"><i class="bi bi-check-circle me-1"></i> Tienes movimientos STAB súper efectivos para cualquier rival.</div>';
+        } else {
+            htmlOfensiva = `<div class="text-white-50">Con los tipos actuales de tu equipo, <b>no puedes hacer daño Súper Efectivo</b> (por STAB) a los siguientes tipos:<br>
+            <div class="mt-2">${rivalesSinCobertura.map(t => `<span class="badge border border-danger text-danger bg-transparent me-1">${t.toUpperCase()}</span>`).join('')}</div></div>`;
+        }
+        document.getElementById('analisis-ofensiva').innerHTML = htmlOfensiva;
+
+        // --- 3. SUGERENCIAS DEL PC ---
+        let htmlSugerencias = '';
         if (amenazasGrave.length > 0 && pc.length > 0) {
-            // Buscamos Pokémon en el PC que resistan a nuestra mayor amenaza
             const peorAmenaza = amenazasGrave[0].tipo; 
-            
-            const salvadores = pc.filter(pokeCaja => {
-                if (!pokeCaja.tipos || pokeCaja.tipos.length === 0) return false;
-                const mult = calcularMultiplicadorDefensivo(peorAmenaza, pokeCaja.tipos);
-                return mult <= 0.5; // Si resiste o es inmune, nos sirve
-            });
+            const salvadores = pc.filter(pokeCaja => pokeCaja.tipos && calcularMultiplicadorDefensivo(peorAmenaza, pokeCaja.tipos) <= 0.5);
 
             if (salvadores.length > 0) {
-                htmlSugerencias = `<div class="col-12 text-white-50 small mb-2">Encontramos en tu PC a estos Pokémon que resisten al tipo <b>${peorAmenaza.toUpperCase()}</b>:</div>`;
-                salvadores.slice(0, 4).forEach(salvador => {
+                htmlSugerencias = `<div class="col-12 text-white-50 small mb-2">Para frenar al tipo <b>${peorAmenaza.toUpperCase()}</b>, saca a:</div>`;
+                salvadores.slice(0, 4).forEach(s => {
                     htmlSugerencias += `
-                    <div class="col-6 col-md-3">
-                        <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100">
-                            <img src="${salvador.imagen}" class="mx-auto" style="width:40px; height:40px; object-fit:contain;">
-                            <span class="fw-bold text-info text-capitalize d-block mt-1" style="font-size: 0.8rem;">${salvador.especie}</span>
-                        </div>
-                    </div>`;
+                    <div class="col-3"><div class="manage-card p-1 text-center bg-black bg-opacity-25 h-100">
+                        <img src="${s.imagen}" class="mx-auto" style="width:30px; height:30px; object-fit:contain;">
+                        <span class="fw-bold text-info text-truncate d-block" style="font-size: 0.65rem;">${s.especie}</span>
+                    </div></div>`;
                 });
             } else {
-                htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Revisamos tu PC, pero actualmente no tienes ningún Pokémon que resista el tipo ${peorAmenaza.toUpperCase()}. Intenta capturar Pokémon de tipo Planta, Agua o Fuego según corresponda.</div>`;
+                htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Tu PC no tiene a nadie que resista el tipo ${peorAmenaza.toUpperCase()}.</div>`;
             }
-        } else if (amenazasGrave.length === 0) {
-            htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Tu equipo principal ya está bien equilibrado. No necesitas hacer cambios urgentes desde tu PC.</div>`;
-        } else if (pc.length === 0) {
-            htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Tu PC está vacío. Sal a capturar más Pokémon para tener opciones de reemplazo.</div>`;
+        } else {
+            htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Sin recomendaciones urgentes.</div>`;
         }
-
         document.getElementById('analisis-sugerencias').innerHTML = htmlSugerencias;
 
     } catch (error) {
-        console.error("Error en análisis:", error);
-        document.getElementById('analisis-debilidades').innerHTML = '<span class="text-danger">Error de conexión al analizar el equipo.</span>';
+        document.getElementById('analisis-debilidades').innerHTML = '<span class="text-danger">Error de análisis.</span>';
     }
 };
