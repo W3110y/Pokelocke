@@ -4,19 +4,17 @@ const mongoose = require('mongoose');
 const PokemonSchema = new mongoose.Schema({
     especie: { type: String, required: true }, // "bulbasaur"
     mote: String,
-    nivel: { type: Number, default: 5 },
+    nivel: { type: Number, default: 1 }, // Lo bajamos a 1 por defecto, ya que ahora no influye
     estado: { 
         type: String, 
         enum: ['equipo', 'caja', 'cementerio'], 
         default: 'equipo' 
     },
-    imagen: String, // Opcional: URL de la imagen si decides guardarla
-    fechaCaptura: Date,
-
-    // --- NUEVOS CAMPOS ---
-    naturaleza: { type: String, default: 'Rara' }, // Ej: Firme, Modesta
-    objeto: { type: String, default: '' },          // Ej: Baya Aranja
-    ataques: { type: [String], default: ['', '', '', ''] } // Array de 4 strings
+    imagen: String, // URL de la imagen (necesaria para el Dashboard)
+    fechaCaptura: { type: Date, default: Date.now },
+    
+    // --- NUEVO CAMPO PREPARADO PARA EL FUTURO ---
+    tipos: { type: [String], default: [] } // Ej: ["fire", "flying"] - Clave para la calculadora de sinergias
 });
 
 // Esquema del Entrenador (Jugador)
@@ -24,10 +22,8 @@ const EntrenadorSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
     sala: { type: String, required: true }, // Código "Lobby"
     medallas: { type: Number, default: 0 },
-    // --- NUEVOS CAMPOS ---
     vidas: { type: Number, default: 3 }, // Por defecto 3 vidas (clásico Nuzlocke)
     victorias: { type: Number, default: 0 }, // Contador de combates ganados
-    // ---------------------
     pokemons: [PokemonSchema], // Array de pokemons
     ultimaConexion: { type: Date, default: Date.now }
 });

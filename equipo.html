@@ -49,9 +49,6 @@
                 <div class="d-flex justify-content-between align-items-end mb-3 px-2 border-bottom border-white-10 pb-2">
                     <div class="d-flex align-items-center gap-3">
                         <h4 class="fw-bold m-0 text-warning"><i class="bi bi-backpack-fill me-2"></i>Equipo Activo</h4>
-                        <button onclick="exportarShowdown()" class="btn btn-sm btn-outline-light opacity-50 hover-opacity-100 py-1" style="font-size: 0.75rem;">
-                            <i class="bi bi-clipboard-check me-1"></i> Copiar (Showdown)
-                        </button>
                     </div>
                     <span id="team-counter" class="badge bg-warning text-dark fw-bold fs-6">0/6</span>
                 </div>
@@ -72,7 +69,8 @@
                 </h5>
                 <div class="glass-panel p-4 bg-opacity-50">
                     <div id="pc-box-grid" class="row g-3">
-                        </div>
+                        <!-- Generado por JS -->
+                    </div>
                 </div>
             </div>
 
@@ -82,13 +80,15 @@
                 </h5>
                 <div class="glass-panel p-4 border-secondary bg-transparent">
                     <div id="graveyard-grid" class="row g-3">
-                        </div>
+                        <!-- Generado por JS -->
+                    </div>
                 </div>
             </div>
 
         </div>
     </main>
 
+    <!-- MODAL DE CAPTURA SIMPLIFICADO -->
     <div class="modal fade" id="captureModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-modal">
@@ -103,21 +103,10 @@
                             <input type="text" id="cap-especie" class="form-control bg-dark text-white border-secondary" placeholder="Ej: Pikachu, Rattata Alola..." required autocomplete="off">
                             <div class="form-text text-white-50 x-small mt-1"><i class="bi bi-info-circle me-1"></i>Escribe el nombre en inglés. Detectamos formas regionales automáticamente.</div>
                         </div>
-                        
-                        <div class="row g-3 mb-4">
-                            <div class="col-8">
-                                <label class="mini-form-label mb-1">Mote (Opcional)</label>
-                                <input type="text" id="cap-mote" class="form-control bg-dark text-white border-secondary" placeholder="Apodo">
-                            </div>
-                            <div class="col-4">
-                                <label class="mini-form-label mb-1">Nivel</label>
-                                <input type="number" id="cap-nivel" class="form-control bg-dark text-white border-secondary text-center fw-bold" value="5" min="1" max="100" required>
-                            </div>
-                        </div>
 
-                        <div class="d-grid">
+                        <div class="d-grid mt-2">
                             <button type="submit" class="btn btn-success fw-bold py-2 shadow-sm">
-                                <i class="bi bi-check-circle-fill me-2"></i>Registrar Captura
+                                <i class="bi bi-check-circle-fill me-2"></i>Registrar Pokémon
                             </button>
                         </div>
                     </form>

@@ -120,10 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('groups-grid')) {
         cargarMisGrupos();
     }
-
-    // G. Carga de Diccionarios (Segundo plano)
-    inicializarDiccionarioMovimientos();
-    inicializarDatalists();
 });
 
 /* ========================================================================== */
@@ -457,125 +453,100 @@ function renderizarInfoSala(sala) {
 }
 
 /* ========================================================================== */
-/* 5. GESTIÓN DE EQUIPO (PC / CAPTURA / EVOLUCIÓN)                           */
+/* 5. GESTIÓN DE EQUIPO SIMPLIFICADA (EQUIPO / PC / CEMENTERIO)               */
 /* ========================================================================== */
+
 async function cargarGestorEquipo() {
     const activeGrid = document.getElementById('active-team-grid');
     if (!activeGrid) return; 
 
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
     
-    // Estados de Carga
-    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Cargando...</p></div></div>';
+    // Estado de carga
+    activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Sincronizando Pokémon...</p></div></div>';
     
     try {
         const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        if (!res.ok) throw new Error("Error servidor");
+        if (!res.ok) throw new Error("Error del servidor");
         const data = await res.json();
         
         const miPerfil = data.jugadores.find(j => j._id === usuario._id);
         if (!miPerfil) return;
         
         const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
-        const caja = miPerfil.pokemons.filter(p => p.estado === 'caja');
+        const caja = miPerfil.pokemons.filter(p => p.estado === 'caja' || p.estado === 'pc');
         const cementerio = miPerfil.pokemons.filter(p => p.estado === 'cementerio');
 
-        document.getElementById('team-counter').innerText = `${equipo.length}/6`;
+        const counter = document.getElementById('team-counter');
+        if (counter) counter.innerText = `${equipo.length}/6`;
 
         // --- EQUIPO ACTIVO ---
         let htmlEquipo = '';
-        const naturalezas = ["Firme", "Alegre", "Modesta", "Miedosa", "Audaz", "Placida", "Serena", "Grosera", "Cauta", "Agitada", "Rara", "Fuerte", "Docil"];
-
         equipo.forEach((p) => {
-            const atq = p.ataques && p.ataques.length === 4 ? p.ataques : ["", "", "", ""];
-            const optNat = naturalezas.map(n => `<option value="${n}" ${p.naturaleza === n ? 'selected' : ''}>${n}</option>`).join('');
-            const collapseId = `collapseEdit-${p._id}`;
-
             htmlEquipo += `
             <div class="col-12 col-md-6 col-lg-4 fade-in">
-                <div class="manage-card border-warning p-0 overflow-hidden">
-                    <div class="p-3 text-center position-relative">
-                        <img src="${p.imagen}" style="width:70px; height:70px; object-fit:contain;" class="mb-2">
-                        <h6 class="fw-bold text-white mb-0">${p.mote}</h6>
-                        <small class="text-muted">${p.especie} - Lvl.${p.nivel}</small>
-                        <div class="mt-2 d-flex gap-2 justify-content-center">
-                            <span class="badge bg-dark border border-secondary text-secondary">${p.naturaleza || 'Neutro'}</span>
-                            ${p.objeto ? `<span class="badge bg-dark border border-secondary text-info">📦 ${p.objeto}</span>` : ''}
+                <div class="manage-card border-success p-3 text-center d-flex flex-column align-items-center justify-content-between h-100">
+                    <div>
+                        <img src="${p.imagen}" style="width:80px; height:80px; object-fit:contain;" class="mb-2 drop-shadow">
+                        <h5 class="fw-bold text-white text-capitalize mb-0">${p.especie}</h5>
+                        <div class="mt-2">
+                            ${(p.tipos || []).map(t => `<span class="badge bg-secondary opacity-75 mx-1">${t}</span>`).join('')}
                         </div>
                     </div>
-                    <button class="btn-toggle-edit" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}"><i class="bi bi-chevron-down"></i> Editar</button>
-                    <div class="collapse" id="${collapseId}">
-                        <div class="edit-collapse-panel text-start">
-                            <form onsubmit="guardarEdicionInline(event, '${p._id}', '${p.especie}')">
-                                <div class="row g-1 mb-2">
-                                    <div class="col-8"><label class="mini-form-label">Mote</label><input type="text" name="mote" class="mini-input" value="${p.mote}"></div>
-                                    <div class="col-4"><label class="mini-form-label">Nivel</label><input type="number" name="nivel" class="mini-input" value="${p.nivel}" min="1" max="100"></div>
-                                </div>
-                                <div class="row g-1 mb-2">
-                                    <div class="col-6"><label class="mini-form-label">Objeto</label><input type="text" name="objeto" class="mini-input" value="${p.objeto || ''}" list="datalist-items" autocomplete="off"></div>
-                                    <div class="col-6"><label class="mini-form-label">Naturaleza</label><select name="naturaleza" class="mini-input bg-dark">${optNat}</select></div>
-                                </div>
-                                <label class="mini-form-label text-warning">Movimientos</label>
-                                <div class="d-grid gap-1 mb-3">
-                                    <input type="text" name="atq0" class="mini-input" value="${atq[0]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq1" class="mini-input" value="${atq[1]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq2" class="mini-input" value="${atq[2]}" placeholder="-" list="datalist-moves">
-                                    <input type="text" name="atq3" class="mini-input" value="${atq[3]}" placeholder="-" list="datalist-moves">
-                                </div>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-sm btn-success py-1">💾 Guardar</button>
-                                    <div class="d-flex gap-1 mt-2 pt-2 border-top border-white-10">
-                                        <button type="button" onclick="evolucionarPokemon('${p._id}', '${p.especie}')" class="btn btn-sm btn-outline-warning flex-fill py-0" title="Evolucionar"><i class="bi bi-stars"></i> Evo</button>
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill py-0">Al PC</button>
-                                        <button type="button" onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-0">Falleció</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                    <div class="w-100 mt-4 d-flex gap-2">
+                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill">Al PC</button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill">Falleció</button>
                     </div>
                 </div>
             </div>`;
         });
         
-        // Rellenar huecos vacíos
+        // Rellenar huecos vacíos del equipo
         for(let i = equipo.length; i < 6; i++) {
-            htmlEquipo += `<div class="col-12 col-md-6 col-lg-4"><div class="slot-empty"><div class="text-center opacity-50"><i class="bi bi-plus-circle display-6"></i><div class="mt-2 small">Vacío</div></div></div></div>`;
+            htmlEquipo += `
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="slot-empty h-100 d-flex align-items-center justify-content-center border-dashed border-secondary rounded opacity-50 p-4">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-plus-circle display-6"></i>
+                        <div class="mt-2 small">Espacio Disponible</div>
+                    </div>
+                </div>
+            </div>`;
         }
         activeGrid.innerHTML = htmlEquipo;
 
         // --- CAJA PC ---
         const pcGrid = document.getElementById('pc-box-grid');
-        pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">La caja está vacía</div>' : caja.map(p => `
-            <div class="col-6 col-md-3 col-lg-2 fade-in">
-                <div class="manage-card">
-                    <div class="text-center mb-2">
-                        <img src="${p.imagen}" style="width:50px; height:50px; object-fit:contain; opacity:0.8;">
-                        <div class="fw-bold small mt-1 text-truncate text-muted">${p.mote}</div>
-                        <small class="d-block text-secondary" style="font-size:0.6rem">Lvl. ${p.nivel}</small>
-                    </div>
-                    <div class="w-100 d-grid gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success py-0" style="font-size:0.75rem"><i class="bi bi-arrow-up-circle"></i> Equipo</button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-secondary py-0 border-0" style="font-size:0.75rem"><i class="bi bi-trash"></i></button>
+        if (pcGrid) {
+            pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">El PC está vacío</div>' : caja.map(p => `
+            <div class="col-6 col-md-4 col-lg-3 fade-in">
+                <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100 d-flex flex-column">
+                    <img src="${p.imagen}" class="mx-auto" style="width:60px; height:60px; object-fit:contain;">
+                    <span class="fw-bold text-white text-capitalize d-block mb-2">${p.especie}</span>
+                    <div class="mt-auto d-flex gap-1">
+                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success flex-fill py-1" style="font-size: 0.75rem;"><i class="bi bi-arrow-up-circle"></i> Equipo</button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-1" style="font-size: 0.75rem;"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
             </div>`).join('');
+        }
 
         // --- CEMENTERIO ---
         const graveGrid = document.getElementById('graveyard-grid');
-        graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-2 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
-            <div class="col-4 col-md-3 col-lg-2">
-                <div class="manage-card bg-danger bg-opacity-10 border-danger">
-                    <div class="text-center mb-1" style="filter: grayscale(100%);">
-                        <img src="${p.imagen}" style="width:40px; height:40px; object-fit:contain;">
-                        <div class="small mt-1 text-truncate text-danger text-decoration-line-through">${p.mote}</div>
-                    </div>
-                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-link text-muted py-0 w-100" style="font-size:0.6rem; text-decoration:none;">Revivir</button>
+        if (graveGrid) {
+            graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-4 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="manage-card p-2 text-center bg-danger bg-opacity-10 border-danger h-100 d-flex flex-column" style="filter: grayscale(80%);">
+                    <img src="${p.imagen}" class="mx-auto mb-1 opacity-75" style="width:50px; height:50px; object-fit:contain;">
+                    <span class="fw-bold text-danger text-capitalize text-decoration-line-through d-block mb-2">${p.especie}</span>
+                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-secondary mt-auto py-1" style="font-size: 0.7rem;">Revivir al PC</button>
                 </div>
             </div>`).join('');
+        }
 
     } catch(e) { 
         console.error(e); 
-        activeGrid.innerHTML = `<div class="col-12 text-center text-danger">Error de conexión</div>`;
+        activeGrid.innerHTML = `<div class="col-12 text-center text-danger py-4">Error al cargar tu equipo. Revisa tu conexión.</div>`;
     }
 }
 
@@ -589,18 +560,23 @@ function iniciarCaptura() {
 
     newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Ahora solo necesitamos la especie, ignoramos niveles o motes
         const inputEspecie = document.getElementById('cap-especie');
-        const btnSubmit = newForm.querySelector('button[type="submit"]');
-        const rawName = inputEspecie.value;
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+        const rawName = inputEspecie.value.trim();
+        if (!rawName) return alert("Introduce el nombre del Pokémon.");
 
+        const btnSubmit = newForm.querySelector('button[type="submit"]');
         const txtOriginal = btnSubmit.innerText;
-        btnSubmit.innerText = "🔍 Buscando..."; btnSubmit.disabled = true;
+        btnSubmit.innerText = "🔍 Buscando..."; 
+        btnSubmit.disabled = true;
+
+        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
 
         try {
             const nombreApi = normalizarNombrePokemon(rawName);
             const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
-            if (!pokeRes.ok) throw new Error(`Pokémon "${rawName}" no encontrado.`);
+            if (!pokeRes.ok) throw new Error(`Pokémon "${rawName}" no encontrado en la Pokédex.`);
             
             const pokeData = await pokeRes.json();
             const imagenUrl = pokeData.sprites.versions['generation-viii'].icons.front_default || 
@@ -609,15 +585,18 @@ function iniciarCaptura() {
 
             const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
 
-            btnSubmit.innerText = "💾 Guardando...";
+            btnSubmit.innerText = "💾 Registrando...";
+            
+            // Enviamos el payload simplificado. Dejamos nivel y mote vacíos/por defecto
+            // para cumplir con la estructura que tu backend ya tiene.
             const serverRes = await fetch(`${API_BACKEND}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     entrenadorId: usuario._id,
                     especie: pokeData.name,
-                    mote: document.getElementById('cap-mote').value || pokeData.name,
-                    nivel: parseInt(document.getElementById('cap-nivel').value),
+                    mote: pokeData.name, // Mismo nombre que la especie
+                    nivel: 1, // Valor ignorado visualmente pero enviado por seguridad del backend
                     imagen: imagenUrl,
                     tipos: pokeData.types.map(t => t.type.name)
                 })
@@ -628,109 +607,44 @@ function iniciarCaptura() {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('captureModal'));
                 if(modal) modal.hide();
                 await cargarGestorEquipo(); 
-                alert("✅ Capturado!");
+                alert("✅ ¡Pokémon registrado correctamente!");
             } else {
-                throw new Error("Error al guardar");
+                throw new Error("Error al guardar en el servidor.");
             }
         } catch (error) {
             alert("❌ " + error.message);
         } finally {
-            btnSubmit.innerText = txtOriginal; btnSubmit.disabled = false;
+            btnSubmit.innerText = txtOriginal; 
+            btnSubmit.disabled = false;
         }
     });
 }
 
-window.evolucionarPokemon = async function(idPokemon, especieActual) {
-    const nuevoNombreInput = prompt(`¿A qué evoluciona tu ${especieActual}?`, "");
-    if (!nuevoNombreInput || !nuevoNombreInput.trim()) return;
-
-    const nombreApi = normalizarNombrePokemon(nuevoNombreInput);
-    document.body.style.cursor = 'wait';
-
-    try {
-        // 1. Obtener datos de la evolución
-        const pokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombreApi}`);
-        if (!pokeRes.ok) throw new Error(`No encuentro a "${nuevoNombreInput}".`);
-        
-        const pokeData = await pokeRes.json();
-        const nuevaImagen = pokeData.sprites.versions['generation-viii'].icons.front_default || 
-                            pokeData.sprites.versions['generation-vii'].icons.front_default || 
-                            pokeData.sprites.front_default;
-
-        const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-
-        const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon'; 
-        // 2. Enviar actualización parcial (Solo especie, imagen y tipos)
-        // El resto (mote, nivel, objeto) se mantiene en el servidor si la ruta es PUT parcial.
-        const res = await fetch(`${API_BACKEND}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                entrenadorId: usuario._id,
-                pokemonId: idPokemon,
-                nuevosDatos: {
-                    especie: pokeData.name,
-                    imagen: nuevaImagen,
-                    tipos: pokeData.types.map(t => t.type.name)
-                }
-            })
-        });
-
-        if (res.ok) {
-            await cargarGestorEquipo();
-            alert(`✨ ¡Evolucionado a ${pokeData.name}!`);
-        } else {
-            throw new Error("Error guardando la evolución.");
-        }
-    } catch (error) {
-        alert("❌ Error: " + error.message);
-    } finally {
-        document.body.style.cursor = 'default';
-    }
-};
-
-window.guardarEdicionInline = async function(event, id, especieOriginal) {
-    event.preventDefault();
-    const form = event.target;
-    const btn = form.querySelector('button[type="submit"]');
-    const txt = btn.innerText; btn.innerText = "Guardando..."; btn.disabled = true;
-    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-
-    const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon';
-
-    try {
-        const res = await fetch(`${API_BACKEND}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                entrenadorId: usuario._id,
-                pokemonId: id,
-                nuevosDatos: {
-                    mote: form.mote.value, nivel: form.nivel.value, objeto: form.objeto.value,
-                    naturaleza: form.naturaleza.value,
-                    ataques: [form.atq0.value, form.atq1.value, form.atq2.value, form.atq3.value]
-                }
-            })
-        });
-        if(res.ok) cargarGestorEquipo();
-        else alert("Error al guardar");
-    } catch(e) { console.error(e); }
-    finally { btn.innerText = txt; btn.disabled = false; }
-};
-
 window.moverPokemon = async function(pokeId, nuevoEstado) {
     const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
-
     const API_BACKEND = 'https://pokelocke-8kjm.onrender.com/api/juego/pokemon';
+    
+    // Bloqueamos la interfaz temporalmente
+    document.body.style.cursor = 'wait';
+    
     try {
         const res = await fetch(`${API_BACKEND}/mover`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ entrenadorId: usuario._id, pokemonId: pokeId, nuevoEstado: nuevoEstado })
         });
-        if (res.ok) cargarGestorEquipo();
-        else { const d = await res.json(); alert("⚠️ " + d.mensaje); }
-    } catch (e) { alert("Error de conexión."); }
+        
+        if (res.ok) {
+            await cargarGestorEquipo();
+        } else { 
+            const d = await res.json(); 
+            alert("⚠️ " + (d.mensaje || "Error al mover.")); 
+        }
+    } catch (e) { 
+        alert("Error de conexión al intentar mover el Pokémon."); 
+    } finally {
+        document.body.style.cursor = 'default';
+    }
 };
 
 /* ========================================================================== */
@@ -976,102 +890,6 @@ window.verDetallesCombate = function(p1Name, p2Name) {
 /* ========================================================================== */
 /* 7. EXPORTAR Y CACHÉS                                                      */
 /* ========================================================================== */
-let DB_MOVIMIENTOS_CACHE = {};
-async function inicializarDiccionarioMovimientos() {
-    if(document.getElementById('datalist-moves')) return;
-
-    const API_BASE = 'https://pokelocke-8kjm.onrender.com';
-
-    try {
-        const res = await fetch(`${API_BASE}/api/datos/movimientos`);
-        if(!res.ok) throw new Error("Error fetching moves");
-        const movs = await res.json();
-        movs.forEach(m => DB_MOVIMIENTOS_CACHE[m.nombreEsp] = m.nombreIng);
-        
-        const dl = document.createElement('datalist'); dl.id = 'datalist-moves';
-        Object.keys(DB_MOVIMIENTOS_CACHE).sort().forEach(m => {
-            const op = document.createElement('option'); op.value = m; dl.appendChild(op);
-        });
-        document.body.appendChild(dl);
-        console.log(`✅ Diccionario cargado: ${Object.keys(DB_MOVIMIENTOS_CACHE).length} movimientos.`);
-    } catch(e) { console.error("Error cache movimientos", e); }
-}
-
-function inicializarDatalists() {
-    if(document.getElementById('datalist-items')) return;
-    const DB_OBJETOS = { "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash" };
-    const dl = document.createElement('datalist'); dl.id = 'datalist-items';
-    Object.keys(DB_OBJETOS).sort().forEach(o => {
-        const op = document.createElement('option'); op.value = o; dl.appendChild(op);
-    });
-    document.body.appendChild(dl);
-}
-
-async function exportarShowdown() {
-    const usuarioRaw = localStorage.getItem('usuario_pokelocke');
-    if (!usuarioRaw) return;
-    const usuario = JSON.parse(usuarioRaw);
-
-    try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
-        const data = await res.json();
-        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
-        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
-
-        if (equipo.length === 0) return alert("Equipo vacío");
-        const DB_OBJETOS = { "Restos": "Leftovers", "Vidasfera": "Life Orb", "Pañuelo Elección": "Choice Scarf", "Gafas Elección": "Choice Specs", "Cinta Elección": "Choice Band", "Chaleco Asalto": "Assault Vest", "Casco Dentado": "Rocky Helmet", "Baya Aranja": "Oran Berry", "Baya Zidra": "Sitrus Berry", "Baya Ziuela": "Lum Berry", "Hierba Mental": "Mental Herb", "Lodo Negro": "Black Sludge", "Mineral Evol": "Eviolite", "Banda Focus": "Focus Sash" };
-        // Diccionario Naturalezas (Ya lo tenías)
-        const natMap = { "Firme": "Adamant", "Alegre": "Jolly", "Modesta": "Modest", "Miedosa": "Timid", "Audaz": "Brave", "Placida": "Relaxed", "Serena": "Calm", "Grosera": "Sassy", "Cauta": "Careful", "Agitada": "Impish", "Rara": "Quirky", "Fuerte": "Hardy", "Docil": "Docile", "Timida": "Bashful", "Ingenua": "Naive", "Picara": "Naughty", "Floja": "Lax", "Osada": "Bold" };
-
-        let txt = "";
-
-        equipo.forEach(p => {
-            // 1. TRADUCCIÓN DE OBJETO
-            // Buscamos en DB_OBJETOS. Si no está, usamos el texto original.
-            // .trim() quita espacios accidentales.
-            const objEspanol = (p.objeto || "").trim();
-            const objIngles = DB_OBJETOS[objEspanol] || objEspanol; 
-
-            // Construir línea 1: Mote (Especie) @ Objeto
-            let linea1 = "";
-            if (p.mote && p.mote !== p.especie) {
-                linea1 = `${p.mote} (${p.especie})`; // Showdown asume que la especie está en inglés por defecto si viene de API, si no, habría que traducir especie también, pero la API suele dar nombres universales o ingleses en 'species.name'.
-            } else {
-                linea1 = p.especie;
-            }
-            if (objIngles) linea1 += ` @ ${objIngles}`;
-            
-            txt += `${linea1}\n`;
-            txt += `Level: ${p.nivel}\n`;
-            
-            if (p.naturaleza && natMap[p.naturaleza]) {
-                txt += `${natMap[p.naturaleza]} Nature\n`;
-            }
-
-            // 2. TRADUCCIÓN DE ATAQUES
-            if (p.ataques) {
-                p.ataques.forEach(move => {
-                    if (move && move.trim() !== "") {
-                        const moveEsp = move.trim();
-                        // Buscamos traducción, si no existe, dejamos el original
-                        // Antes: const moveEng = DB_MOVIMIENTOS[moveEsp] || moveEsp;
-                        // Ahora:
-                        const moveEng = DB_MOVIMIENTOS_CACHE[moveEsp] || moveEsp;
-                        txt += `- ${moveEng}\n`;
-                    }
-                });
-            }
-            txt += "\n";
-        });
-
-        await navigator.clipboard.writeText(txt);
-        alert("✅ Copiado al portapapeles (Traducido al Inglés)");
-
-    } catch (e) { 
-        console.error(e);
-        alert("Error exportando: " + e.message); 
-    }
-}
 
 // Helpers para Typing
 function initTypingEffect(el) {

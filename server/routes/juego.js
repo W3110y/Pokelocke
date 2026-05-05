@@ -238,36 +238,6 @@ router.post('/pokemon', async (req, res) => {
     }
 });
 
-// EDITAR (Modificar datos internos)
-router.put('/pokemon', async (req, res) => {
-    const { entrenadorId, pokemonId, nuevosDatos } = req.body;
-
-    try {
-        const entrenador = await Entrenador.findById(entrenadorId);
-        const pokemon = entrenador.pokemons.id(pokemonId);
-        
-        if (!pokemon) return res.status(404).json({ mensaje: "Pokémon no encontrado" });
-
-        if (nuevosDatos.nivel) {
-            let nvl = parseInt(nuevosDatos.nivel);
-            if (nvl > 100) nvl = 100; if (nvl < 1) nvl = 1;
-            pokemon.nivel = nvl;
-        }
-        if (nuevosDatos.mote) pokemon.mote = nuevosDatos.mote;
-        if (nuevosDatos.especie) pokemon.especie = nuevosDatos.especie;
-        if (nuevosDatos.imagen) pokemon.imagen = nuevosDatos.imagen;
-        if (nuevosDatos.tipo) pokemon.tipo = nuevosDatos.tipo;
-        
-        // Campos avanzados
-        if (nuevosDatos.naturaleza) pokemon.naturaleza = nuevosDatos.naturaleza;
-        if (nuevosDatos.objeto !== undefined) pokemon.objeto = nuevosDatos.objeto;
-        if (nuevosDatos.ataques) pokemon.ataques = nuevosDatos.ataques;
-
-        await entrenador.save();
-        res.json({ mensaje: "Datos actualizados correctamente" });
-    } catch (error) { res.status(500).json({ mensaje: "Error al editar Pokémon" }); }
-});
-
 // MOVER (Cambiar de caja/estado)
 router.put('/pokemon/mover', async (req, res) => {
     const { entrenadorId, pokemonId, nuevoEstado } = req.body; 

@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const rutasJuego = require('./routes/juego');
-const rutasDatos = require('./routes/datos'); // <--- NUEVA LÍNEA
 
 const app = express();
 
@@ -25,7 +24,6 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Rutas
 app.use('/api/juego', rutasJuego);
-app.use('/api/datos', rutasDatos); // <--- NUEVA LÍNEA
 
 // Arranque
 const PORT = process.env.PORT || 3000;
