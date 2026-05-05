@@ -466,7 +466,7 @@ async function cargarGestorEquipo() {
     activeGrid.innerHTML = '<div class="col-12"><div class="loading-state"><div class="spinner-border text-warning"></div><p>Sincronizando Pokémon...</p></div></div>';
     
     try {
-        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const res = await fetch(`${API_BASE}/api/juego/sala/${usuario.sala}`);
         if (!res.ok) throw new Error("Error del servidor");
         const data = await res.json();
         
@@ -480,22 +480,22 @@ async function cargarGestorEquipo() {
         const counter = document.getElementById('team-counter');
         if (counter) counter.innerText = `${equipo.length}/6`;
 
-        // --- EQUIPO ACTIVO ---
+        // --- EQUIPO ACTIVO (Miniaturizado: 6 columnas en PC, 2 en Móvil) ---
         let htmlEquipo = '';
         equipo.forEach((p) => {
             htmlEquipo += `
-            <div class="col-12 col-md-6 col-lg-4 fade-in">
-                <div class="manage-card border-success p-3 text-center d-flex flex-column align-items-center justify-content-between h-100">
+            <div class="col-6 col-md-4 col-lg-2 fade-in">
+                <div class="manage-card border-success p-2 text-center d-flex flex-column align-items-center justify-content-between h-100">
                     <div>
-                        <img src="${p.imagen}" style="width:80px; height:80px; object-fit:contain;" class="mb-2 drop-shadow">
-                        <h5 class="fw-bold text-white text-capitalize mb-0">${p.especie}</h5>
-                        <div class="mt-2">
-                            ${(p.tipos || []).map(t => `<span class="badge bg-secondary opacity-75 mx-1">${t}</span>`).join('')}
+                        <img src="${p.imagen}" style="width:55px; height:55px; object-fit:contain;" class="mb-1 drop-shadow">
+                        <div class="fw-bold text-white text-capitalize text-truncate" style="font-size: 0.85rem; max-width: 100px;" title="${p.especie}">${p.especie}</div>
+                        <div class="mt-1 d-flex flex-wrap justify-content-center gap-1">
+                            ${(p.tipos || []).map(t => `<span class="badge bg-secondary opacity-75" style="font-size: 0.6rem; padding: 0.2em 0.4em;">${t}</span>`).join('')}
                         </div>
                     </div>
-                    <div class="w-100 mt-4 d-flex gap-2">
-                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary flex-fill">Al PC</button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill">Falleció</button>
+                    <div class="w-100 mt-3 d-flex flex-column gap-1">
+                        <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-primary py-0" style="font-size: 0.7rem;">Al PC</button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger py-0" style="font-size: 0.7rem;">Falleció</button>
                     </div>
                 </div>
             </div>`;
@@ -504,42 +504,44 @@ async function cargarGestorEquipo() {
         // Rellenar huecos vacíos del equipo
         for(let i = equipo.length; i < 6; i++) {
             htmlEquipo += `
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="slot-empty h-100 d-flex align-items-center justify-content-center border-dashed border-secondary rounded opacity-50 p-4">
-                    <div class="text-center text-muted">
-                        <i class="bi bi-plus-circle display-6"></i>
-                        <div class="mt-2 small">Espacio Disponible</div>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="slot-empty h-100 d-flex flex-column align-items-center justify-content-center border-dashed border-secondary rounded opacity-50 p-2" style="min-height: 140px;">
+                    <i class="bi bi-plus-circle fs-3"></i>
+                    <div class="mt-1" style="font-size: 0.7rem;">Vacío</div>
                 </div>
             </div>`;
         }
         activeGrid.innerHTML = htmlEquipo;
 
-        // --- CAJA PC ---
+        // --- CAJA PC (Aún más pequeña: 3 en Móvil) ---
         const pcGrid = document.getElementById('pc-box-grid');
         if (pcGrid) {
             pcGrid.innerHTML = caja.length === 0 ? '<div class="col-12 text-center text-muted py-4 small">El PC está vacío</div>' : caja.map(p => `
-            <div class="col-6 col-md-4 col-lg-3 fade-in">
-                <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100 d-flex flex-column">
-                    <img src="${p.imagen}" class="mx-auto" style="width:60px; height:60px; object-fit:contain;">
-                    <span class="fw-bold text-white text-capitalize d-block mb-2">${p.especie}</span>
-                    <div class="mt-auto d-flex gap-1">
-                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success flex-fill py-1" style="font-size: 0.75rem;"><i class="bi bi-arrow-up-circle"></i> Equipo</button>
-                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger flex-fill py-1" style="font-size: 0.75rem;"><i class="bi bi-trash"></i></button>
+            <div class="col-4 col-md-3 col-lg-2 fade-in">
+                <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <img src="${p.imagen}" class="mx-auto" style="width:45px; height:45px; object-fit:contain;">
+                        <span class="fw-bold text-white text-capitalize d-block text-truncate mt-1" style="font-size: 0.75rem;" title="${p.especie}">${p.especie}</span>
+                    </div>
+                    <div class="mt-2 d-flex flex-column gap-1">
+                        <button onclick="moverPokemon('${p._id}', 'equipo')" class="btn btn-sm btn-success w-100 py-0" style="font-size: 0.7rem;" title="Subir al Equipo"><i class="bi bi-arrow-up"></i></button>
+                        <button onclick="moverPokemon('${p._id}', 'cementerio')" class="btn btn-sm btn-outline-danger w-100 py-0" style="font-size: 0.7rem;" title="Enviar al Cementerio"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
             </div>`).join('');
         }
 
-        // --- CEMENTERIO ---
+        // --- CEMENTERIO (Igual de pequeño) ---
         const graveGrid = document.getElementById('graveyard-grid');
         if (graveGrid) {
             graveGrid.innerHTML = cementerio.length === 0 ? '<div class="col-12 text-center text-muted py-4 small opacity-50">Nadie ha muerto... aún.</div>' : cementerio.map(p => `
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="manage-card p-2 text-center bg-danger bg-opacity-10 border-danger h-100 d-flex flex-column" style="filter: grayscale(80%);">
-                    <img src="${p.imagen}" class="mx-auto mb-1 opacity-75" style="width:50px; height:50px; object-fit:contain;">
-                    <span class="fw-bold text-danger text-capitalize text-decoration-line-through d-block mb-2">${p.especie}</span>
-                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-secondary mt-auto py-1" style="font-size: 0.7rem;">Revivir al PC</button>
+            <div class="col-4 col-md-3 col-lg-2">
+                <div class="manage-card p-2 text-center bg-danger bg-opacity-10 border-danger h-100 d-flex flex-column justify-content-between" style="filter: grayscale(80%);">
+                    <div>
+                        <img src="${p.imagen}" class="mx-auto opacity-75" style="width:40px; height:40px; object-fit:contain;">
+                        <span class="fw-bold text-danger text-capitalize text-decoration-line-through d-block text-truncate mt-1" style="font-size: 0.75rem;" title="${p.especie}">${p.especie}</span>
+                    </div>
+                    <button onclick="moverPokemon('${p._id}', 'caja')" class="btn btn-sm btn-outline-secondary mt-2 py-0 w-100" style="font-size: 0.7rem;" title="Revivir">Revivir</button>
                 </div>
             </div>`).join('');
         }
