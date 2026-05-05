@@ -1310,3 +1310,163 @@ window.girarRuleta = function() {
         btn.disabled = false;
     }, 4000);
 };
+
+/* ========================================================================== */
+/* 8. ANALIZADOR DE SINERGIAS Y EQUILIBRIO DE EQUIPO                          */
+/* ========================================================================== */
+
+// Tabla de eficacias (Solo mostramos de qué es DÉBIL, RESISTENTE o INMUNE un tipo defensor)
+const TABLA_TIPOS = {
+    normal: { debil: ['fighting'], resiste: [], inmune: ['ghost'] },
+    fire: { debil: ['water', 'ground', 'rock'], resiste: ['fire', 'grass', 'ice', 'bug', 'steel', 'fairy'], inmune: [] },
+    water: { debil: ['electric', 'grass'], resiste: ['fire', 'water', 'ice', 'steel'], inmune: [] },
+    electric: { debil: ['ground'], resiste: ['electric', 'flying', 'steel'], inmune: [] },
+    grass: { debil: ['fire', 'ice', 'poison', 'flying', 'bug'], resiste: ['water', 'electric', 'grass', 'ground'], inmune: [] },
+    ice: { debil: ['fire', 'fighting', 'rock', 'steel'], resiste: ['ice'], inmune: [] },
+    fighting: { debil: ['flying', 'psychic', 'fairy'], resiste: ['bug', 'rock', 'dark'], inmune: [] },
+    poison: { debil: ['ground', 'psychic'], resiste: ['grass', 'fighting', 'poison', 'bug', 'fairy'], inmune: [] },
+    ground: { debil: ['water', 'grass', 'ice'], resiste: ['poison', 'rock'], inmune: ['electric'] },
+    flying: { debil: ['electric', 'ice', 'rock'], resiste: ['grass', 'fighting', 'bug'], inmune: ['ground'] },
+    psychic: { debil: ['bug', 'ghost', 'dark'], resiste: ['fighting', 'psychic'], inmune: [] },
+    bug: { debil: ['fire', 'flying', 'rock'], resiste: ['grass', 'fighting', 'ground'], inmune: [] },
+    rock: { debil: ['water', 'grass', 'fighting', 'ground', 'steel'], resiste: ['normal', 'fire', 'poison', 'flying'], inmune: [] },
+    ghost: { debil: ['ghost', 'dark'], resiste: ['poison', 'bug'], inmune: ['normal', 'fighting'] },
+    dragon: { debil: ['ice', 'dragon', 'fairy'], resiste: ['fire', 'water', 'electric', 'grass'], inmune: [] },
+    dark: { debil: ['fighting', 'bug', 'fairy'], resiste: ['ghost', 'dark'], inmune: ['psychic'] },
+    steel: { debil: ['fire', 'fighting', 'ground'], resiste: ['normal', 'grass', 'ice', 'flying', 'psychic', 'bug', 'rock', 'dragon', 'steel', 'fairy'], inmune: ['poison'] },
+    fairy: { debil: ['poison', 'steel'], resiste: ['fighting', 'bug', 'dark'], inmune: ['dragon'] }
+};
+
+const TODOS_LOS_TIPOS = Object.keys(TABLA_TIPOS);
+
+// Función matemática para calcular el daño que recibe un Pokémon basado en sus 1 o 2 tipos
+function calcularMultiplicadorDefensivo(tipoAtaque, tiposDefensor) {
+    let multiplicador = 1;
+    tiposDefensor.forEach(tipoDef => {
+        const datosDefensor = TABLA_TIPOS[tipoDef];
+        if (!datosDefensor) return;
+        
+        if (datosDefensor.inmune.includes(tipoAtaque)) multiplicador *= 0;
+        else if (datosDefensor.debil.includes(tipoAtaque)) multiplicador *= 2;
+        else if (datosDefensor.resiste.includes(tipoAtaque)) multiplicador *= 0.5;
+    });
+    return multiplicador;
+}
+
+window.abrirAnalizadorSinergias = async function() {
+    const usuario = JSON.parse(localStorage.getItem('usuario_pokelocke'));
+    
+    // Abrir Modal con estado de carga
+    const modalEl = document.getElementById('analisisModal');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    document.getElementById('analisis-debilidades').innerHTML = '<span class="spinner-border spinner-border-sm text-info"></span> Analizando...';
+    document.getElementById('analisis-resistencias').innerHTML = '';
+    document.getElementById('analisis-sugerencias').innerHTML = '';
+    modal.show();
+
+    try {
+        const res = await fetch(`https://pokelocke-8kjm.onrender.com/api/juego/sala/${usuario.sala}`);
+        const data = await res.json();
+        const miPerfil = data.jugadores.find(j => j._id === usuario._id);
+        
+        const equipo = miPerfil.pokemons.filter(p => p.estado === 'equipo');
+        const pc = miPerfil.pokemons.filter(p => p.estado === 'caja' || p.estado === 'pc');
+
+        if (equipo.length === 0) {
+            document.getElementById('analisis-debilidades').innerHTML = "No tienes ningún Pokémon en el equipo para analizar.";
+            return;
+        }
+
+        // 1. EVALUAR EL EQUIPO CONTRA LOS 18 TIPOS
+        let reporte = [];
+
+        TODOS_LOS_TIPOS.forEach(tipoAtaque => {
+            let debiles = 0;
+            let resistentes = 0;
+            let inmunes = 0;
+
+            equipo.forEach(poke => {
+                if (!poke.tipos || poke.tipos.length === 0) return;
+                const mult = calcularMultiplicadorDefensivo(tipoAtaque, poke.tipos);
+                
+                if (mult >= 2) debiles++;
+                else if (mult === 0) inmunes++;
+                else if (mult <= 0.5) resistentes++;
+            });
+
+            reporte.push({
+                tipo: tipoAtaque,
+                debiles: debiles,
+                cubiertoPor: resistentes + inmunes,
+                balance: (resistentes + inmunes) - debiles // Número positivo = bien cubierto. Negativo = peligro.
+            });
+        });
+
+        // 2. EXTRAER DEBILIDADES CRÍTICAS (Ataques que matan a más de 2 y nadie resiste)
+        const amenazasGrave = reporte.filter(r => r.debiles >= 2 && r.cubiertoPor === 0);
+        const amenazasMedias = reporte.filter(r => r.debiles >= 2 && r.cubiertoPor > 0);
+        
+        let htmlDebilidades = '';
+        if (amenazasGrave.length === 0 && amenazasMedias.length === 0) {
+            htmlDebilidades = '<div class="alert alert-success py-2 border-success bg-transparent"><i class="bi bi-check-circle me-2"></i> Tu equipo no tiene debilidades superpuestas graves. ¡Está muy bien balanceado!</div>';
+        } else {
+            amenazasGrave.forEach(a => {
+                htmlDebilidades += `<div class="mb-1 text-danger"><i class="bi bi-x-circle-fill me-2"></i> <b>Cuidado con el tipo ${a.tipo.toUpperCase()}:</b> Tienes ${a.debiles} Pokémon débiles y <b>NINGUNO</b> que lo resista.</div>`;
+            });
+            amenazasMedias.forEach(a => {
+                htmlDebilidades += `<div class="mb-1 text-warning"><i class="bi bi-exclamation-triangle me-2"></i> <b>Atento al tipo ${a.tipo.toUpperCase()}:</b> Tienes ${a.debiles} Pokémon débiles, aunque tienes ${a.cubiertoPor} para defenderte.</div>`;
+            });
+        }
+        document.getElementById('analisis-debilidades').innerHTML = htmlDebilidades;
+
+        // 3. EXTRAER MEJORES RESISTENCIAS
+        const mejoresDefensas = reporte.filter(r => r.cubiertoPor >= 3).sort((a,b) => b.cubiertoPor - a.cubiertoPor);
+        let htmlResistencias = '';
+        if (mejoresDefensas.length > 0) {
+            htmlResistencias = 'Tienes una excelente defensa natural contra ataques de tipo: ';
+            htmlResistencias += mejoresDefensas.map(d => `<span class="badge bg-secondary border border-success text-success">${d.tipo.toUpperCase()}</span>`).join(' ');
+        } else {
+            htmlResistencias = 'Tu equipo tiene una cobertura decente, pero no destaca por ser una "muralla" contra ningún tipo en concreto.';
+        }
+        document.getElementById('analisis-resistencias').innerHTML = htmlResistencias;
+
+        // 4. GENERAR SUGERENCIAS BUSCANDO EN EL PC
+        let htmlSugerencias = '';
+        
+        if (amenazasGrave.length > 0 && pc.length > 0) {
+            // Buscamos Pokémon en el PC que resistan a nuestra mayor amenaza
+            const peorAmenaza = amenazasGrave[0].tipo; 
+            
+            const salvadores = pc.filter(pokeCaja => {
+                if (!pokeCaja.tipos || pokeCaja.tipos.length === 0) return false;
+                const mult = calcularMultiplicadorDefensivo(peorAmenaza, pokeCaja.tipos);
+                return mult <= 0.5; // Si resiste o es inmune, nos sirve
+            });
+
+            if (salvadores.length > 0) {
+                htmlSugerencias = `<div class="col-12 text-white-50 small mb-2">Encontramos en tu PC a estos Pokémon que resisten al tipo <b>${peorAmenaza.toUpperCase()}</b>:</div>`;
+                salvadores.slice(0, 4).forEach(salvador => {
+                    htmlSugerencias += `
+                    <div class="col-6 col-md-3">
+                        <div class="manage-card p-2 text-center border-primary bg-black bg-opacity-25 h-100">
+                            <img src="${salvador.imagen}" class="mx-auto" style="width:40px; height:40px; object-fit:contain;">
+                            <span class="fw-bold text-info text-capitalize d-block mt-1" style="font-size: 0.8rem;">${salvador.especie}</span>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Revisamos tu PC, pero actualmente no tienes ningún Pokémon que resista el tipo ${peorAmenaza.toUpperCase()}. Intenta capturar Pokémon de tipo Planta, Agua o Fuego según corresponda.</div>`;
+            }
+        } else if (amenazasGrave.length === 0) {
+            htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Tu equipo principal ya está bien equilibrado. No necesitas hacer cambios urgentes desde tu PC.</div>`;
+        } else if (pc.length === 0) {
+            htmlSugerencias = `<div class="col-12 text-muted small fst-italic">Tu PC está vacío. Sal a capturar más Pokémon para tener opciones de reemplazo.</div>`;
+        }
+
+        document.getElementById('analisis-sugerencias').innerHTML = htmlSugerencias;
+
+    } catch (error) {
+        console.error("Error en análisis:", error);
+        document.getElementById('analisis-debilidades').innerHTML = '<span class="text-danger">Error de conexión al analizar el equipo.</span>';
+    }
+};

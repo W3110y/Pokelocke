@@ -49,6 +49,10 @@
                 <div class="d-flex justify-content-between align-items-end mb-3 px-2 border-bottom border-white-10 pb-2">
                     <div class="d-flex align-items-center gap-3">
                         <h4 class="fw-bold m-0 text-warning"><i class="bi bi-backpack-fill me-2"></i>Equipo Activo</h4>
+                        <!-- NUEVO BOTÓN DE ANÁLISIS -->
+                        <button onclick="abrirAnalizadorSinergias()" class="btn btn-sm btn-outline-info opacity-75 hover-opacity-100 py-1 fw-bold" style="font-size: 0.75rem;">
+                            <i class="bi bi-radar me-1"></i> Analizar Sinergias
+                        </button>
                     </div>
                     <span id="team-counter" class="badge bg-warning text-dark fw-bold fs-6">0/6</span>
                 </div>
@@ -88,6 +92,37 @@
         </div>
     </main>
 
+    <!-- MODAL DE ANÁLISIS DE SINERGIAS -->
+    <div class="modal fade" id="analisisModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-white-10">
+                    <h5 class="modal-title fw-bold text-info"><i class="bi bi-radar me-2"></i>Análisis de Equipo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Sección 1: Debilidades del Equipo -->
+                    <h6 class="text-warning fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Puntos Débiles (Peligro Crítico)</h6>
+                    <div id="analisis-debilidades" class="mb-4 text-white-50 small">
+                        <!-- Generado por JS -->
+                    </div>
+
+                    <!-- Sección 2: Resistencias del Equipo -->
+                    <h6 class="text-success fw-bold mb-3"><i class="bi bi-shield-fill-check me-2"></i>Cobertura Defensiva</h6>
+                    <div id="analisis-resistencias" class="mb-4 text-white-50 small">
+                        <!-- Generado por JS -->
+                    </div>
+
+                    <!-- Sección 3: Sugerencias del PC -->
+                    <h6 class="text-primary fw-bold mb-3"><i class="bi bi-lightbulb-fill me-2"></i>Sugerencias de Mejora (Desde tu PC)</h6>
+                    <div id="analisis-sugerencias" class="row g-2">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- MODAL DE CAPTURA SIMPLIFICADO -->
     <div class="modal fade" id="captureModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
